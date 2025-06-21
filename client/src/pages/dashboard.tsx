@@ -30,18 +30,16 @@ import type { Doctor, Appointment, Testimonial, ContactMessage } from "@shared/s
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
-  const [selectedSidebarItem, setSelectedSidebarItem] = useState("dashboard");
+  const [selectedSidebarItem, setSelectedSidebarItem] = useState("agenda");
 
   // Sidebar navigation items
   const sidebarItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "agenda", label: "Agenda Semanal", icon: CalendarDays, highlight: true },
     { id: "clinicas", label: "Clínicas", icon: Building2 },
     { id: "profissionais", label: "Profissionais", icon: UserCheck },
     { id: "especialidades", label: "Especialidades", icon: Heart },
     { id: "servicos", label: "Serviços", icon: Activity },
     { id: "pacientes", label: "Pacientes", icon: Users },
-    { id: "agendamentos", label: "Agendamentos", icon: Calendar },
     { id: "configuracoes", label: "Configurações", icon: Settings },
   ];
 

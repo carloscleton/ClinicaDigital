@@ -125,6 +125,7 @@ San Mathews Clínica e Laboratório is a comprehensive medical clinic platform b
 - June 21, 2025. Added comprehensive sidebar navigation to dashboard with 9 sections: Dashboard, Agenda Semanal (highlighted), Clínicas, Profissionais, Especialidades, Serviços, Pacientes, Agendamentos, and Configurações
 - June 21, 2025. Removed sidebar navigation from dashboard per user request, returning to clean single-page layout with tabs for different sections
 - June 21, 2025. Restored sidebar navigation in dashboard per user request to return to previous state with 9 navigation sections
+- June 21, 2025. Removed "Dashboard" and "Agendamentos" options from sidebar navigation, keeping 7 sections: Agenda Semanal (highlighted), Clínicas, Profissionais, Especialidades, Serviços, Pacientes, and Configurações
 
 ## User Preferences
 
