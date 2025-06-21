@@ -249,7 +249,7 @@ export default function Contact() {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Localização da Clínica MedCare"
+              title="Localização da San Mathews Clínica e Laboratório"
             ></iframe>
           </div>
 

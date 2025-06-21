@@ -20,7 +20,7 @@ export default function HeroSection() {
               Cuidando da Sua <span className="text-green-400">Saúde</span> com Excelência
             </h1>
             <p className="text-xl text-gray-200 mb-8 leading-relaxed">
-              Na Clínica MedCare, oferecemos atendimento médico de qualidade superior com profissionais especializados e tecnologia de ponta. Sua saúde é nossa prioridade.
+              Na San Mathews Clínica e Laboratório, oferecemos atendimento médico de qualidade superior com profissionais especializados e tecnologia de ponta. Sua saúde é nossa prioridade.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/contact">

@@ -35,8 +35,8 @@ export default function Header() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-blue-800">MedCare</h1>
-              <p className="text-xs text-gray-600">Clínica Médica</p>
+              <h1 className="text-2xl font-bold text-blue-800">San Mathews</h1>
+              <p className="text-xs text-gray-600">Clínica e Laboratório</p>
             </div>
           </Link>
           

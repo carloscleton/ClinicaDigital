@@ -1,8 +1,8 @@
-# MedCare Medical Clinic Platform
+# San Mathews Clínica e Laboratório Platform
 
 ## Overview
 
-MedCare is a comprehensive medical clinic platform built as a full-stack web application. It serves as both a patient-facing website and an administrative portal for managing appointments, doctors, testimonials, and contact messages. The application is designed to provide a seamless experience for patients to learn about services, book appointments, and connect with healthcare providers.
+San Mathews Clínica e Laboratório is a comprehensive medical clinic platform built as a full-stack web application. It serves as both a patient-facing website and an administrative portal for managing appointments, doctors, testimonials, and contact messages. The application is designed to provide a seamless experience for patients to learn about services, book appointments, and connect with healthcare providers.
 
 ## System Architecture
 
@@ -119,6 +119,7 @@ MedCare is a comprehensive medical clinic platform built as a full-stack web app
 - June 21, 2025. Initial setup
 - June 21, 2025. Updated contact information to real clinic address in Baturité, CE: R Vereador Francisco Francilino, 1431 - Centro, Baturité, CE - CEP: 62.760-000, phone: 55(85)99408-6263, email: georgelucasamaro@hotmail.com
 - June 21, 2025. Added Google Maps embed to contact page showing real clinic location in Baturité
+- June 21, 2025. Updated clinic name throughout the website from "MedCare" to "San Mathews Clínica e Laboratório Ltda"
 
 ## User Preferences
 

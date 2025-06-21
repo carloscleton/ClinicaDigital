@@ -14,12 +14,12 @@ export default function Footer() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-2xl font-bold">MedCare</h3>
-                <p className="text-gray-400 text-sm">Clínica Médica</p>
+                <h3 className="text-2xl font-bold">San Mathews</h3>
+                <p className="text-gray-400 text-sm">Clínica e Laboratório</p>
               </div>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
-              A Clínica MedCare está comprometida em oferecer atendimento médico de excelência, 
+              A San Mathews Clínica e Laboratório está comprometida em oferecer atendimento médico de excelência, 
               combinando tecnologia avançada com o cuidado humanizado que nossos pacientes merecem.
             </p>
             <div className="flex space-x-4">
