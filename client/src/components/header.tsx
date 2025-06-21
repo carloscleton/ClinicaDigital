@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Phone, Calendar } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
+import SanMathewsLogo from "@/components/san-mathews-logo";
 
 export default function Header() {
   const [location] = useLocation();
@@ -30,16 +31,8 @@ export default function Header() {
     <header className="bg-white dark:bg-gray-950 shadow-md sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800">
       <nav className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-blue-800 dark:text-blue-400">San Mathews</h1>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Clínica e Laboratório</p>
-            </div>
+          <Link href="/" className="flex items-center">
+            <SanMathewsLogo size="md" className="hover:opacity-90 transition-opacity" />
           </Link>
           
           <div className="hidden lg:flex space-x-8">

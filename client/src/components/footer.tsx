@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
+import SanMathewsLogo from "@/components/san-mathews-logo";
 
 export default function Footer() {
   return (
@@ -7,16 +8,8 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-4 gap-8">
           <div className="lg:col-span-2">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold">San Mathews</h3>
-                <p className="text-gray-400 text-sm">Clínica e Laboratório</p>
-              </div>
+            <div className="mb-6">
+              <SanMathewsLogo size="lg" className="filter brightness-0 invert" />
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
               A San Mathews Clínica e Laboratório está comprometida em oferecer atendimento médico de excelência, 
