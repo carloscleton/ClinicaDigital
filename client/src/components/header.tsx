@@ -31,11 +31,9 @@ export default function Header() {
     <header className="bg-white dark:bg-gray-950 shadow-md sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800">
       <nav className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              San Mathews
-            </span>
-          </Link>
+          <div className="flex items-center">
+            {/* Logo space - removed per user request */}
+          </div>
           
           <div className="hidden lg:flex space-x-8">
             {navItems.map((item) => (
