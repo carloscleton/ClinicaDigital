@@ -14,14 +14,16 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const specialties = [
-  "Cardiologia",
-  "Neurologia",
-  "Ortopedia",
-  "Pediatria",
+  "Ultrassonografia",
+  "Clínica Médica",
+  "Medicina Preventiva",
+  "Pequenas Cirurgias",
+  "Nutrologia",
+  "Endoscopia Digestiva",
+  "Psicanálise",
   "Ginecologia",
-  "Oftalmologia",
-  "Pneumologia",
-  "Endocrinologia",
+  "Neurologia",
+  "Dermatologia",
 ];
 
 export default function AppointmentForm() {

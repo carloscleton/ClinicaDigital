@@ -18,116 +18,144 @@ import {
 export default function Specialties() {
   const specialties = [
     {
-      icon: Heart,
-      name: "Cardiologia",
-      description: "Cuidados especializados para o coração e sistema cardiovascular",
-      details: "Nossos cardiologistas oferecem diagnóstico e tratamento completo para doenças cardíacas, incluindo hipertensão, arritmias, insuficiência cardíaca e prevenção de infartos.",
+      icon: Activity,
+      name: "Ultrassonografia",
+      description: "Exames de imagem para diagnóstico preciso e não invasivo",
+      details: "Nossa equipe de ultrassonografistas realiza exames diagnósticos com equipamentos de alta resolução, oferecendo imagens precisas para auxílio médico.",
       treatments: [
-        "Eletrocardiograma (ECG)",
-        "Ecocardiograma",
-        "Teste ergométrico",
-        "Holter 24h",
-        "Cateterismo cardíaco"
-      ],
-      color: "bg-red-100 text-red-600 border-red-200"
-    },
-    {
-      icon: Brain,
-      name: "Neurologia",
-      description: "Diagnóstico e tratamento de doenças neurológicas",
-      details: "Especialistas em doenças do sistema nervoso, oferecendo tratamento para enxaquecas, epilepsia, AVC, Parkinson, Alzheimer e outras condições neurológicas.",
-      treatments: [
-        "Eletroencefalograma (EEG)",
-        "Ressonância magnética",
-        "Tomografia computadorizada",
-        "Punção lombar",
-        "Eletromiografia"
-      ],
-      color: "bg-purple-100 text-purple-600 border-purple-200"
-    },
-    {
-      icon: Bone,
-      name: "Ortopedia",
-      description: "Tratamento de lesões e doenças do sistema músculo-esquelético",
-      details: "Cuidamos de fraturas, lesões esportivas, problemas na coluna, artrose, artrite e realizamos cirurgias ortopédicas com técnicas minimamente invasivas.",
-      treatments: [
-        "Raio-X digital",
-        "Ressonância magnética",
-        "Artroscopia",
-        "Infiltrações",
-        "Fisioterapia especializada"
+        "Ultrassom abdominal total",
+        "Ultrassom pélvico e transvaginal",
+        "Ultrassom obstétrico",
+        "Ultrassom de tireoide",
+        "Doppler vascular"
       ],
       color: "bg-blue-100 text-blue-600 border-blue-200"
     },
     {
-      icon: Eye,
-      name: "Oftalmologia",
-      description: "Cuidados especializados para a saúde dos olhos",
-      details: "Tratamento completo para problemas de visão, glaucoma, catarata, retinopatia diabética e cirurgias oftalmológicas de alta precisão.",
+      icon: Stethoscope,
+      name: "Clínica Médica",
+      description: "Atendimento clínico geral abrangente e humanizado",
+      details: "Nossos clínicos gerais oferecem consultas completas, diagnóstico de doenças comuns, acompanhamento de pacientes crônicos e medicina preventiva.",
       treatments: [
-        "Exame de fundo de olho",
-        "Tonometria",
-        "Campimetria",
-        "OCT de retina",
-        "Cirurgia de catarata"
+        "Consultas clínicas gerais",
+        "Check-up médico completo",
+        "Acompanhamento de hipertensão",
+        "Controle de diabetes",
+        "Avaliação geriátrica"
       ],
       color: "bg-green-100 text-green-600 border-green-200"
     },
     {
-      icon: Baby,
-      name: "Pediatria",
-      description: "Atendimento especializado para crianças e adolescentes",
-      details: "Cuidados médicos completos desde o nascimento até a adolescência, incluindo puericultura, vacinação e tratamento de doenças infantis.",
+      icon: Heart,
+      name: "Medicina Preventiva",
+      description: "Prevenção e promoção da saúde em todas as idades",
+      details: "Especialistas em medicina preventiva focados em programas de saúde, check-ups periódicos e orientação para manutenção da qualidade de vida.",
       treatments: [
-        "Consultas de puericultura",
-        "Vacinação completa",
-        "Teste do pezinho",
-        "Avaliação do desenvolvimento",
-        "Atendimento de urgências pediátricas"
+        "Check-up executivo",
+        "Avaliação de risco cardiovascular",
+        "Programas de vacinação",
+        "Orientação nutricional",
+        "Medicina do trabalho"
       ],
-      color: "bg-pink-100 text-pink-600 border-pink-200"
+      color: "bg-red-100 text-red-600 border-red-200"
+    },
+    {
+      icon: UserCheck,
+      name: "Pequenas Cirurgias",
+      description: "Procedimentos cirúrgicos ambulatoriais seguros",
+      details: "Realizamos pequenos procedimentos cirúrgicos com técnicas minimamente invasivas, garantindo rápida recuperação e máximo conforto.",
+      treatments: [
+        "Remoção de lipomas",
+        "Biópsia de pele",
+        "Cauterização de verrugas",
+        "Sutura de ferimentos",
+        "Drenagem de abscessos"
+      ],
+      color: "bg-purple-100 text-purple-600 border-purple-200"
+    },
+    {
+      icon: Pill,
+      name: "Nutrologia",
+      description: "Especialização em nutrição clínica e terapia nutricional",
+      details: "Nutrólogos especializados no diagnóstico e tratamento de doenças relacionadas à alimentação, oferecendo planos nutricionais personalizados.",
+      treatments: [
+        "Avaliação nutricional completa",
+        "Bioimpedância corporal",
+        "Plano alimentar personalizado",
+        "Suplementação nutricional",
+        "Tratamento da obesidade"
+      ],
+      color: "bg-orange-100 text-orange-600 border-orange-200"
+    },
+    {
+      icon: Activity,
+      name: "Endoscopia Digestiva",
+      description: "Diagnóstico avançado do sistema digestivo",
+      details: "Procedimentos endoscópicos para diagnóstico e tratamento de doenças do esôfago, estômago e duodeno com equipamentos de última geração.",
+      treatments: [
+        "Endoscopia digestiva alta (EDA)",
+        "Colonoscopia",
+        "Biópsia endoscópica",
+        "Remoção de pólipos",
+        "pH-metria esofágica"
+      ],
+      color: "bg-teal-100 text-teal-600 border-teal-200"
+    },
+    {
+      icon: Brain,
+      name: "Psicanálise",
+      description: "Terapia psicanalítica para bem-estar mental",
+      details: "Atendimento psicanalítico individualizado com foco no autoconhecimento, resolução de conflitos internos e melhoria da qualidade de vida emocional.",
+      treatments: [
+        "Sessões de psicanálise individual",
+        "Análise de sonhos",
+        "Terapia psicanalítica",
+        "Acompanhamento psicológico",
+        "Orientação familiar"
+      ],
+      color: "bg-indigo-100 text-indigo-600 border-indigo-200"
     },
     {
       icon: Users,
       name: "Ginecologia",
       description: "Saúde integral da mulher em todas as fases da vida",
-      details: "Acompanhamento ginecológico, pré-natal, planejamento familiar, menopausa e tratamento de patologias ginecológicas.",
+      details: "Cuidados ginecológicos completos incluindo prevenção, diagnóstico e tratamento de doenças, além de acompanhamento da saúde reprodutiva.",
       treatments: [
+        "Exame ginecológico completo",
         "Papanicolau",
         "Ultrassom pélvico",
         "Colposcopia",
-        "Densitometria óssea",
-        "Acompanhamento pré-natal"
+        "Planejamento familiar"
       ],
-      color: "bg-rose-100 text-rose-600 border-rose-200"
+      color: "bg-pink-100 text-pink-600 border-pink-200"
     },
     {
-      icon: Activity,
-      name: "Pneumologia",
-      description: "Especialistas em doenças respiratórias e pulmonares",
-      details: "Tratamento de asma, bronquite, pneumonia, DPOC, apneia do sono e outras doenças do sistema respiratório.",
+      icon: Brain,
+      name: "Neurologia",
+      description: "Diagnóstico e tratamento especializado de doenças neurológicas",
+      details: "Neurologistas experientes no tratamento de doenças do sistema nervoso, oferecendo diagnóstico preciso e terapias avançadas.",
       treatments: [
-        "Espirometria",
-        "Gasometria arterial",
-        "Tomografia de tórax",
-        "Broncoscopia",
-        "Polissonografia"
+        "Consulta neurológica completa",
+        "Eletroencefalograma (EEG)",
+        "Avaliação de cefaleia",
+        "Diagnóstico de epilepsia",
+        "Acompanhamento neurológico"
       ],
-      color: "bg-cyan-100 text-cyan-600 border-cyan-200"
+      color: "bg-violet-100 text-violet-600 border-violet-200"
     },
     {
-      icon: Pill,
-      name: "Endocrinologia",
-      description: "Tratamento de distúrbios hormonais e metabólicos",
-      details: "Especialistas em diabetes, tireoide, obesidade, distúrbios hormonais e síndrome metabólica.",
+      icon: Eye,
+      name: "Dermatologia",
+      description: "Cuidados especializados para saúde da pele",
+      details: "Dermatologistas dedicados ao diagnóstico e tratamento de doenças da pele, cabelo e unhas, incluindo procedimentos estéticos.",
       treatments: [
-        "Glicemia e hemoglobina glicada",
-        "Perfil hormonal completo",
-        "Ultrassom de tireoide",
-        "Densitometria óssea",
-        "Bioimpedância"
+        "Consulta dermatológica",
+        "Dermatoscopia digital",
+        "Biópsia de pele",
+        "Tratamento de acne",
+        "Remoção de lesões cutâneas"
       ],
-      color: "bg-amber-100 text-amber-600 border-amber-200"
+      color: "bg-yellow-100 text-yellow-600 border-yellow-200"
     }
   ];
 

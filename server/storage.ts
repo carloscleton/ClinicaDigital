@@ -74,25 +74,109 @@ export class MemStorage implements IStorage {
     // Seed doctors
     const doctorsData: InsertDoctor[] = [
       {
-        name: "Dra. Ana Silva",
-        specialty: "Cardiologia",
-        description: "Especialista em cardiologia com mais de 15 anos de experiência. Formada pela USP com pós-graduação em Harvard.",
+        name: "Dra. Barbara",
+        specialty: "Ultrassonografia",
+        description: "Especialista em ultrassonografia diagnóstica com vasta experiência em exames de imagem. Atende nos períodos matutino.",
         crm: "12345-SP",
-        experience: "15 anos"
-      },
-      {
-        name: "Dr. Carlos Santos",
-        specialty: "Neurologia",
-        description: "Neurologista renomado com expertise em doenças neurodegenerativas. Doutor pela UNIFESP.",
-        crm: "23456-SP",
         experience: "12 anos"
       },
       {
-        name: "Dra. Maria Oliveira",
-        specialty: "Pediatria",
-        description: "Pediatra dedicada ao cuidado infantil com abordagem humanizada. Especialização em neonatologia.",
+        name: "Dr. Epitácio",
+        specialty: "Ultrassonografia",
+        description: "Médico ultrassonografista com formação em radiologia e diagnóstico por imagem. Especialista em ultrassom geral.",
+        crm: "23456-SP",
+        experience: "15 anos"
+      },
+      {
+        name: "Dr. Rodrigues",
+        specialty: "Ultrassonografia",
+        description: "Ultrassonografista experiente com especialização em ultrassom abdominal, pélvico e obstétrico.",
         crm: "34567-SP",
+        experience: "18 anos"
+      },
+      {
+        name: "Dra. Letícia",
+        specialty: "Clínica Médica",
+        description: "Clínica geral com abordagem integral ao paciente. Especialista em medicina preventiva e diagnóstico clínico.",
+        crm: "45678-SP",
         experience: "10 anos"
+      },
+      {
+        name: "Dr. George",
+        specialty: "Clínica Médica",
+        description: "Médico clínico geral com ampla experiência em atendimento ambulatorial. Atende nos períodos vespertino e matutino.",
+        crm: "56789-SP",
+        experience: "14 anos"
+      },
+      {
+        name: "Dra. Paula",
+        specialty: "Medicina Preventiva",
+        description: "Especialista em medicina preventiva e promoção da saúde. Foco em prevenção de doenças e check-ups.",
+        crm: "67890-SP",
+        experience: "8 anos"
+      },
+      {
+        name: "Dra. Patrícia",
+        specialty: "Medicina Preventiva",
+        description: "Médica preventivista com expertise em medicina do trabalho e programas de saúde ocupacional.",
+        crm: "78901-SP",
+        experience: "11 anos"
+      },
+      {
+        name: "Dr. Luis",
+        specialty: "Pequenas Cirurgias",
+        description: "Cirurgião especializado em pequenos procedimentos cirúrgicos ambulatoriais. Técnicas minimamente invasivas.",
+        crm: "89012-SP",
+        experience: "16 anos"
+      },
+      {
+        name: "Dr. Lucas",
+        specialty: "Nutrologia",
+        description: "Nutrólogo especializado em nutrição clínica e terapia nutricional. Tratamento de distúrbios nutricionais.",
+        crm: "90123-SP",
+        experience: "9 anos"
+      },
+      {
+        name: "Dr. Daniel",
+        specialty: "Endoscopia Digestiva",
+        description: "Gastroenterologista especialista em endoscopia digestiva alta (EDA). Diagnóstico de doenças do trato digestivo.",
+        crm: "01234-SP",
+        experience: "13 anos"
+      },
+      {
+        name: "Dr. Tarcísio",
+        specialty: "Endoscopia Digestiva",
+        description: "Endoscopista com vasta experiência em procedimentos diagnósticos e terapêuticos do aparelho digestivo.",
+        crm: "12340-SP",
+        experience: "17 anos"
+      },
+      {
+        name: "Dra. Dagneide",
+        specialty: "Psicanálise",
+        description: "Psicanalista clínica com formação em psicanálise freudiana. Especialista em terapia psicanalítica individual.",
+        crm: "23401-SP",
+        experience: "12 anos"
+      },
+      {
+        name: "Dra. Alyce",
+        specialty: "Ginecologia",
+        description: "Ginecologista especializada em saúde da mulher, prevenção ginecológica e acompanhamento obstétrico.",
+        crm: "34012-SP",
+        experience: "14 anos"
+      },
+      {
+        name: "Dr. Lívio",
+        specialty: "Neurologia",
+        description: "Neurologista especialista em doenças do sistema nervoso central e periférico. Diagnóstico neurológico avançado.",
+        crm: "40123-SP",
+        experience: "19 anos"
+      },
+      {
+        name: "Dra. Renata",
+        specialty: "Dermatologia",
+        description: "Dermatologista clínica e cirúrgica. Especialista em doenças da pele, cabelo e unhas.",
+        crm: "51234-SP",
+        experience: "11 anos"
       }
     ];
 
@@ -121,6 +205,45 @@ export class MemStorage implements IStorage {
     ];
 
     testimonialsData.forEach(testimonial => this.createTestimonial(testimonial));
+    
+    // Update testimonials with relevant content
+    const updatedTestimonialsData: InsertTestimonial[] = [
+      {
+        authorName: "Carlos Eduardo",
+        location: "São Paulo, SP",
+        content: "Excelente atendimento! A Dra. Barbara realizou meu ultrassom com muito cuidado e explicou tudo detalhadamente. Equipamentos modernos e resultados rápidos.",
+        rating: 5
+      },
+      {
+        authorName: "Ana Beatriz",
+        location: "Guarulhos, SP",
+        content: "Dr. George é um clínico excepcional. Consulta completa, diagnóstico preciso e tratamento eficaz. Recomendo a clínica para toda família.",
+        rating: 5
+      },
+      {
+        authorName: "Roberto Silva",
+        location: "Osasco, SP",
+        content: "Dr. Lucas (nutrólogo) mudou minha vida! Plano alimentar personalizado e acompanhamento constante. Perdi 15kg de forma saudável.",
+        rating: 5
+      },
+      {
+        authorName: "Fernanda Costa",
+        location: "Santos, SP",
+        content: "Dra. Patricia (medicina preventiva) é muito atenciosa. Check-up completo me ajudou a identificar problemas antes que se tornassem sérios.",
+        rating: 5
+      },
+      {
+        authorName: "João Carlos",
+        location: "São Bernardo, SP",
+        content: "Dr. Daniel realizou minha endoscopia com total profissionalismo. Procedimento tranquilo e diagnóstico preciso. Muito satisfeito!",
+        rating: 5
+      }
+    ];
+    
+    // Clear existing testimonials and add updated ones
+    this.testimonials.clear();
+    this.currentTestimonialId = 1;
+    updatedTestimonialsData.forEach(testimonial => this.createTestimonial(testimonial));
   }
 
   // Users
@@ -156,7 +279,12 @@ export class MemStorage implements IStorage {
 
   async createDoctor(insertDoctor: InsertDoctor): Promise<Doctor> {
     const id = this.currentDoctorId++;
-    const doctor: Doctor = { ...insertDoctor, id };
+    const doctor: Doctor = { 
+      ...insertDoctor, 
+      id,
+      imageUrl: insertDoctor.imageUrl || null,
+      experience: insertDoctor.experience || null
+    };
     this.doctors.set(id, doctor);
     return doctor;
   }
@@ -175,6 +303,7 @@ export class MemStorage implements IStorage {
     const appointment: Appointment = { 
       ...insertAppointment, 
       id, 
+      message: insertAppointment.message || null,
       status: "pending",
       createdAt: new Date()
     };
@@ -199,7 +328,12 @@ export class MemStorage implements IStorage {
 
   async createTestimonial(insertTestimonial: InsertTestimonial): Promise<Testimonial> {
     const id = this.currentTestimonialId++;
-    const testimonial: Testimonial = { ...insertTestimonial, id };
+    const testimonial: Testimonial = { 
+      ...insertTestimonial, 
+      id,
+      imageUrl: insertTestimonial.imageUrl || null,
+      rating: insertTestimonial.rating || 5
+    };
     this.testimonials.set(id, testimonial);
     return testimonial;
   }

@@ -16,38 +16,38 @@ import {
 export default function Services() {
   const mainServices = [
     {
-      icon: Stethoscope,
-      title: "Consultas Médicas",
-      description: "Atendimento clínico geral e especializado com profissionais experientes e dedicados ao seu bem-estar.",
+      icon: Activity,
+      title: "Ultrassonografia",
+      description: "Exames de imagem diagnóstica com equipamentos de alta resolução para diagnósticos precisos e não invasivos.",
       features: [
-        "Consultas de urgência e rotina",
-        "Avaliação médica completa", 
-        "Acompanhamento contínuo",
-        "Atendimento personalizado"
+        "Ultrassom abdominal e pélvico",
+        "Ultrassom obstétrico completo", 
+        "Doppler vascular",
+        "Laudos em tempo real"
+      ],
+      price: "A partir de R$ 120"
+    },
+    {
+      icon: Stethoscope,
+      title: "Clínica Médica",
+      description: "Atendimento clínico geral abrangente com médicos experientes para cuidado integral da sua saúde.",
+      features: [
+        "Consultas clínicas gerais",
+        "Check-up médico completo", 
+        "Acompanhamento de doenças crônicas",
+        "Medicina preventiva"
       ],
       price: "A partir de R$ 150"
     },
     {
-      icon: Activity,
-      title: "Exames Diagnósticos",
-      description: "Tecnologia de ponta para diagnósticos precisos e rápidos, garantindo o melhor tratamento para você.",
-      features: [
-        "Exames laboratoriais completos",
-        "Ultrassonografia e radiologia", 
-        "Resultados em até 24h",
-        "Laudos digitais"
-      ],
-      price: "Valores variados"
-    },
-    {
       icon: UserCheck,
-      title: "Tratamentos Especializados",
-      description: "Tratamentos personalizados com foco na recuperação completa e prevenção de doenças.",
+      title: "Procedimentos Especializados",
+      description: "Procedimentos médicos especializados incluindo pequenas cirurgias e endoscopia digestiva.",
       features: [
-        "Planos de tratamento individualizados",
-        "Acompanhamento multidisciplinar",
-        "Medicina preventiva",
-        "Reabilitação completa"
+        "Pequenas cirurgias ambulatoriais",
+        "Endoscopia digestiva alta",
+        "Procedimentos minimamente invasivos",
+        "Recuperação rápida"
       ],
       price: "Consulte valores"
     }

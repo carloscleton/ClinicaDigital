@@ -62,11 +62,11 @@ export default function Home() {
   ];
 
   const specialties = [
-    { icon: Heart, name: "Cardiologia", description: "Cuidados especializados para o coração e sistema cardiovascular", color: "bg-red-100 text-red-600" },
-    { icon: Brain, name: "Neurologia", description: "Diagnóstico e tratamento de doenças neurológicas", color: "bg-purple-100 text-purple-600" },
-    { icon: Bone, name: "Ortopedia", description: "Tratamento de lesões e doenças do sistema músculo-esquelético", color: "bg-blue-100 text-blue-600" },
-    { icon: Eye, name: "Oftalmologia", description: "Cuidados especializados para a saúde dos olhos", color: "bg-green-100 text-green-600" },
-    { icon: Baby, name: "Pediatria", description: "Atendimento especializado para crianças e adolescentes", color: "bg-pink-100 text-pink-600" },
+    { icon: Activity, name: "Ultrassonografia", description: "Exames de imagem para diagnóstico preciso", color: "bg-blue-100 text-blue-600" },
+    { icon: Stethoscope, name: "Clínica Médica", description: "Atendimento clínico geral e especializado", color: "bg-green-100 text-green-600" },
+    { icon: Heart, name: "Medicina Preventiva", description: "Prevenção e promoção da saúde", color: "bg-red-100 text-red-600" },
+    { icon: UserCheck, name: "Pequenas Cirurgias", description: "Procedimentos cirúrgicos ambulatoriais", color: "bg-purple-100 text-purple-600" },
+    { icon: Brain, name: "Neurologia", description: "Diagnóstico e tratamento neurológico", color: "bg-indigo-100 text-indigo-600" },
   ];
 
   return (

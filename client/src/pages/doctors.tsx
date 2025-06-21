@@ -114,9 +114,9 @@ export default function Doctors() {
           <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Especialidades Disponíveis</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[
-              "Cardiologia", "Neurologia", "Ortopedia", "Pediatria",
-              "Ginecologia", "Oftalmologia", "Pneumologia", "Endocrinologia",
-              "Dermatologia", "Urologia", "Psiquiatria", "Gastroenterologia"
+              "Ultrassonografia", "Clínica Médica", "Medicina Preventiva", "Pequenas Cirurgias",
+              "Nutrologia", "Endoscopia Digestiva", "Psicanálise", "Ginecologia",
+              "Neurologia", "Dermatologia", "Cardiologia", "Ortopedia"
             ].map((specialty, index) => (
               <div key={index} className="bg-white rounded-lg p-4 text-center hover:shadow-md transition-shadow">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mb-2 mx-auto">
