@@ -126,6 +126,7 @@ San Mathews Clínica e Laboratório is a comprehensive medical clinic platform b
 - June 21, 2025. Removed sidebar navigation from dashboard per user request, returning to clean single-page layout with tabs for different sections
 - June 21, 2025. Restored sidebar navigation in dashboard per user request to return to previous state with 9 navigation sections
 - June 21, 2025. Removed "Dashboard" and "Agendamentos" options from sidebar navigation, keeping 7 sections: Agenda Semanal (highlighted), Clínicas, Profissionais, Especialidades, Serviços, Pacientes, and Configurações
+- June 21, 2025. Migrated to Supabase integration with @supabase/supabase-js client library using provided API credentials (URL: https://zdqcyemiwglybvpfczya.supabase.co). System configured for both in-memory storage and Supabase connectivity, currently using memory storage due to RLS policies on Supabase tables. Database schema supports doctors, testimonials, appointments, users, and contact_messages tables.
 
 ## User Preferences
 
