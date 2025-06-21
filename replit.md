@@ -120,6 +120,7 @@ San Mathews Clínica e Laboratório is a comprehensive medical clinic platform b
 - June 21, 2025. Updated contact information to real clinic address in Baturité, CE: R Vereador Francisco Francilino, 1431 - Centro, Baturité, CE - CEP: 62.760-000, phone: 55(85)99408-6263, email: georgelucasamaro@hotmail.com
 - June 21, 2025. Added Google Maps embed to contact page showing real clinic location in Baturité
 - June 21, 2025. Updated clinic name throughout the website from "MedCare" to "San Mathews Clínica e Laboratório Ltda"
+- June 21, 2025. Updated phone number in header to 55(85)99408-6263 for both desktop and mobile views
 
 ## User Preferences
 
