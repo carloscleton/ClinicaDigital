@@ -22,10 +22,16 @@ export const appointments = pgTable("appointments", {
   fullName: text("full_name").notNull(),
   email: text("email").notNull(),
   phone: text("phone").notNull(),
+  cpf: text("cpf"),
+  dateOfBirth: text("date_of_birth"),
   specialty: text("specialty").notNull(),
+  doctorId: integer("doctor_id").references(() => doctors.id),
   preferredDate: text("preferred_date").notNull(),
+  preferredTime: text("preferred_time").notNull(),
+  appointmentType: text("appointment_type").notNull().default("consultation"),
   message: text("message"),
   status: text("status").notNull().default("pending"),
+  urgency: text("urgency").notNull().default("normal"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -59,6 +65,10 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   id: true,
   status: true,
   createdAt: true,
+}).extend({
+  preferredTime: z.string().min(1, "Horário preferencial é obrigatório"),
+  appointmentType: z.enum(["consultation", "exam", "followup", "urgent"]).default("consultation"),
+  urgency: z.enum(["normal", "high", "emergency"]).default("normal"),
 });
 
 export const insertTestimonialSchema = createInsertSchema(testimonials).omit({

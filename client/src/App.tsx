@@ -12,6 +12,7 @@ import Specialties from "@/pages/specialties";
 import Doctors from "@/pages/doctors";
 import Testimonials from "@/pages/testimonials";
 import Contact from "@/pages/contact";
+import Booking from "@/pages/booking";
 import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/doctors" component={Doctors} />
       <Route path="/testimonials" component={Testimonials} />
       <Route path="/contact" component={Contact} />
+      <Route path="/booking" component={Booking} />
       <Route path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>

@@ -216,7 +216,11 @@ export class MemStorage implements IStorage {
     const appointment: Appointment = { 
       ...insertAppointment, 
       id,
-      status: insertAppointment.status || "pending",
+      cpf: insertAppointment.cpf || null,
+      dateOfBirth: insertAppointment.dateOfBirth || null,
+      doctorId: insertAppointment.doctorId || null,
+      message: insertAppointment.message || null,
+      status: "pending",
       createdAt: new Date()
     };
     this.appointments.set(id, appointment);
@@ -438,9 +442,15 @@ export class SupabaseStorage implements IStorage {
         full_name: appointment.fullName,
         email: appointment.email,
         phone: appointment.phone,
+        cpf: appointment.cpf || null,
+        date_of_birth: appointment.dateOfBirth || null,
         specialty: appointment.specialty,
+        doctor_id: appointment.doctorId || null,
         preferred_date: appointment.preferredDate,
-        message: appointment.message,
+        preferred_time: appointment.preferredTime,
+        appointment_type: appointment.appointmentType || 'consultation',
+        message: appointment.message || null,
+        urgency: appointment.urgency || 'normal',
         status: 'pending'
       })
       .select('*')
@@ -450,10 +460,16 @@ export class SupabaseStorage implements IStorage {
       fullName: data!.full_name,
       email: data!.email,
       phone: data!.phone,
+      cpf: data!.cpf,
+      dateOfBirth: data!.date_of_birth,
       specialty: data!.specialty,
+      doctorId: data!.doctor_id,
       preferredDate: data!.preferred_date,
+      preferredTime: data!.preferred_time,
+      appointmentType: data!.appointment_type,
       message: data!.message,
       status: data!.status,
+      urgency: data!.urgency,
       createdAt: data!.created_at
     };
   }

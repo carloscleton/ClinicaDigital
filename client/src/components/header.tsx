@@ -17,6 +17,7 @@ export default function Header() {
     { href: "/doctors", label: "Médicos" },
     { href: "/testimonials", label: "Depoimentos" },
     { href: "/contact", label: "Contato" },
+    { href: "/booking", label: "Agendamento", cta: true },
   ];
 
   const isActive = (href: string) => {
@@ -50,10 +51,14 @@ export default function Header() {
                   isActive(item.href)
                     ? item.highlight 
                       ? "text-white bg-blue-600 px-4 py-2 rounded-lg font-bold"
-                      : "text-blue-600 dark:text-blue-400"
+                      : item.cta
+                        ? "text-white bg-green-600 px-4 py-2 rounded-lg font-bold"
+                        : "text-blue-600 dark:text-blue-400"
                     : item.highlight
                       ? "text-blue-600 bg-blue-50 px-4 py-2 rounded-lg font-bold hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
-                      : "text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+                      : item.cta
+                        ? "text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold"
+                        : "text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
                 }`}
               >
                 {item.label}

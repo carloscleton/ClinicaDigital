@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import type { Doctor, Appointment, Testimonial, ContactMessage } from "@shared/schema";
 import ProfessionalsManagement from "@/components/professionals-management";
+import AppointmentsManagement from "@/components/appointments-management";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -36,6 +37,7 @@ export default function Dashboard() {
   // Sidebar navigation items
   const sidebarItems = [
     { id: "agenda", label: "Agenda Semanal", icon: CalendarDays, highlight: true },
+    { id: "agendamentos", label: "Agendamentos", icon: Calendar },
     { id: "clinicas", label: "Clínicas", icon: Building2 },
     { id: "profissionais", label: "Profissionais", icon: UserCheck },
     { id: "especialidades", label: "Especialidades", icon: Heart },
@@ -145,7 +147,9 @@ export default function Dashboard() {
           </div>
 
           {/* Content based on sidebar selection */}
-          {selectedSidebarItem === "profissionais" ? (
+          {selectedSidebarItem === "agendamentos" ? (
+            <AppointmentsManagement />
+          ) : selectedSidebarItem === "profissionais" ? (
             <ProfessionalsManagement />
           ) : (
             <>
