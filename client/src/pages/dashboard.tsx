@@ -100,11 +100,11 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar Navigation */}
-      <div className="w-80 bg-white shadow-lg border-r border-gray-200">
+      <div className="w-80 bg-white dark:bg-gray-950 shadow-lg border-r border-gray-200 dark:border-gray-800">
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-6">Navegação</h2>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-6">Navegação</h2>
           
           <nav className="space-y-2">
             {sidebarItems.map((item) => {
@@ -120,10 +120,10 @@ export default function Dashboard() {
                     isActive
                       ? isHighlighted
                         ? "bg-blue-600 text-white"
-                        : "bg-blue-50 text-blue-600"
+                        : "bg-blue-50 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
                       : isHighlighted
-                        ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
+                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                   }`}
                 >
                   <Icon className={`w-5 h-5 ${isActive && isHighlighted ? "text-white" : ""}`} />
@@ -140,8 +140,8 @@ export default function Dashboard() {
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard Administrativo</h1>
-            <p className="text-gray-600">Visão geral e gerenciamento da San Mathews Clínica e Laboratório</p>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Dashboard Administrativo</h1>
+            <p className="text-gray-600 dark:text-gray-400">Visão geral e gerenciamento da San Mathews Clínica e Laboratório</p>
           </div>
 
           {/* Content based on sidebar selection */}
@@ -155,26 +155,11 @@ export default function Dashboard() {
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 mb-1 truncate">Total de Médicos</p>
-                    <p className="text-2xl lg:text-3xl font-bold text-blue-600">{stats.totalDoctors}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate">Total de Médicos</p>
+                    <p className="text-2xl lg:text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.totalDoctors}</p>
                   </div>
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
-                    <Stethoscope className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-4 lg:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 mb-1 truncate">Agendamentos</p>
-                    <p className="text-2xl lg:text-3xl font-bold text-green-600">{stats.totalAppointments}</p>
-                    <p className="text-xs text-gray-500 truncate">{stats.pendingAppointments} pendentes</p>
-                  </div>
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
-                    <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                    <Stethoscope className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
               </CardContent>
@@ -184,12 +169,12 @@ export default function Dashboard() {
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 mb-1 truncate">Avaliação Média</p>
-                    <p className="text-2xl lg:text-3xl font-bold text-yellow-600">{stats.averageRating.toFixed(1)}</p>
-                    <p className="text-xs text-gray-500 truncate">{stats.totalTestimonials} depoimentos</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate">Agendamentos</p>
+                    <p className="text-2xl lg:text-3xl font-bold text-green-600 dark:text-green-400">{stats.totalAppointments}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{stats.pendingAppointments} pendentes</p>
                   </div>
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
-                    <Star className="w-5 h-5 lg:w-6 lg:h-6 text-yellow-600" />
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                    <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
               </CardContent>
@@ -199,12 +184,27 @@ export default function Dashboard() {
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 mb-1 truncate">Mensagens</p>
-                    <p className="text-2xl lg:text-3xl font-bold text-purple-600">{stats.totalContacts}</p>
-                    <p className="text-xs text-gray-500 truncate">{stats.recentContacts} esta semana</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate">Avaliação Média</p>
+                    <p className="text-2xl lg:text-3xl font-bold text-yellow-600 dark:text-yellow-400">{stats.averageRating.toFixed(1)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{stats.totalTestimonials} depoimentos</p>
                   </div>
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
-                    <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" />
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                    <Star className="w-5 h-5 lg:w-6 lg:h-6 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 lg:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate">Mensagens</p>
+                    <p className="text-2xl lg:text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.totalContacts}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{stats.recentContacts} esta semana</p>
+                  </div>
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                    <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
                   </div>
                 </div>
               </CardContent>

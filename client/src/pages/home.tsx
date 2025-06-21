@@ -75,11 +75,11 @@ export default function Home() {
       <StatsSection />
       
       {/* Services Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-800 mb-4">Nossos Serviços</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4">Nossos Serviços</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Oferecemos uma ampla gama de serviços médicos com tecnologia avançada e atendimento humanizado
             </p>
           </div>
@@ -88,15 +88,15 @@ export default function Home() {
             {services.map((service, index) => (
               <Card key={index} className="hover:shadow-xl transition-shadow">
                 <CardContent className="p-8">
-                  <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
-                    <service.icon className="w-8 h-8 text-blue-600" />
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-6">
+                    <service.icon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h3 className="text-2xl font-semibold text-gray-800 mb-4">{service.title}</h3>
-                  <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+                  <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">{service.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">{service.description}</p>
                   <ul className="space-y-2">
                     {service.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center text-gray-600">
-                        <Check className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" />
+                      <li key={idx} className="flex items-center text-gray-600 dark:text-gray-400">
+                        <Check className="w-4 h-4 text-green-600 dark:text-green-400 mr-2 flex-shrink-0" />
                         {feature}
                       </li>
                     ))}
@@ -109,11 +109,11 @@ export default function Home() {
       </section>
 
       {/* Specialties Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-gray-950">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-800 mb-4">Especialidades Médicas</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4">Especialidades Médicas</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Contamos com profissionais altamente qualificados em diversas especialidades médicas
             </p>
           </div>
@@ -125,8 +125,8 @@ export default function Home() {
                   <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 mx-auto ${specialty.color}`}>
                     <specialty.icon className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{specialty.name}</h3>
-                  <p className="text-sm text-gray-600">{specialty.description}</p>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">{specialty.name}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{specialty.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -143,11 +143,11 @@ export default function Home() {
       </section>
 
       {/* Doctors Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-800 mb-4">Nossa Equipe Médica</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4">Nossa Equipe Médica</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Profissionais experientes e dedicados, comprometidos com a excelência no atendimento
             </p>
           </div>
@@ -158,15 +158,15 @@ export default function Home() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {doctors?.slice(0, 3).map((doctor) => (
                 <Card key={doctor.id} className="overflow-hidden hover:shadow-xl transition-shadow">
-                  <div className="h-64 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                    <UserCheck className="w-20 h-20 text-blue-600" />
+                  <div className="h-64 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-900 flex items-center justify-center">
+                    <UserCheck className="w-20 h-20 text-blue-600 dark:text-blue-400" />
                   </div>
                   <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{doctor.name}</h3>
-                    <p className="text-blue-600 font-medium mb-3">{doctor.specialty}</p>
-                    <p className="text-gray-600 text-sm mb-4">{doctor.description}</p>
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">{doctor.name}</h3>
+                    <p className="text-blue-600 dark:text-blue-400 font-medium mb-3">{doctor.specialty}</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{doctor.description}</p>
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-gray-500">
                         <span>{doctor.crm}</span>
                       </div>
                       <Button variant="outline" size="sm">
@@ -190,11 +190,11 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-gray-950">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-800 mb-4">O Que Nossos Pacientes Dizem</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4">O Que Nossos Pacientes Dizem</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               A satisfação dos nossos pacientes é nossa maior recompensa
             </p>
           </div>
