@@ -32,7 +32,11 @@ export default function Header() {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center">
-            <SanMathewsLogo size="md" className="hover:opacity-90 transition-opacity" />
+            <img 
+              src="/attached_assets/Captura de tela 2025-06-19 130533_1750545380083.png" 
+              alt="San Mathews Clínica e Laboratório" 
+              className="h-12 w-auto object-contain hover:opacity-90 transition-opacity"
+            />
           </Link>
           
           <div className="hidden lg:flex space-x-8">

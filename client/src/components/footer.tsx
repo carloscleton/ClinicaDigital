@@ -9,7 +9,11 @@ export default function Footer() {
         <div className="grid lg:grid-cols-4 gap-8">
           <div className="lg:col-span-2">
             <div className="mb-6">
-              <SanMathewsLogo size="lg" className="filter brightness-0 invert" />
+              <img 
+                src="/attached_assets/Captura de tela 2025-06-19 130533_1750545380083.png" 
+                alt="San Mathews Clínica e Laboratório" 
+                className="h-16 w-auto object-contain filter brightness-0 invert"
+              />
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
               A San Mathews Clínica e Laboratório está comprometida em oferecer atendimento médico de excelência, 
