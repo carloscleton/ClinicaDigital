@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { supabase } from "./supabase";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -22,6 +23,33 @@ export async function apiRequest(
   await throwIfResNotOk(res);
   return res;
 }
+
+// Direct Supabase operations for frontend use
+export const supabaseAPI = {
+  async getDoctors() {
+    const { data, error } = await supabase.from('doctors').select('*');
+    if (error) throw error;
+    return data || [];
+  },
+  
+  async createDoctor(doctor: any) {
+    const { data, error } = await supabase.from('doctors').insert(doctor).select().single();
+    if (error) throw error;
+    return data;
+  },
+  
+  async updateDoctor(id: number, doctor: any) {
+    const { data, error } = await supabase.from('doctors').update(doctor).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+  },
+  
+  async deleteDoctor(id: number) {
+    const { error } = await supabase.from('doctors').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  }
+};
 
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {

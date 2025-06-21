@@ -551,6 +551,5 @@ export class SupabaseStorage implements IStorage {
   }
 }
 
-// Use MemStorage for now due to Supabase RLS policies
-// export const storage = new SupabaseStorage();
-export const storage = new MemStorage();
+// Using SupabaseStorage for direct database integration
+export const storage = new SupabaseStorage();
