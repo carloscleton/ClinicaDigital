@@ -81,12 +81,7 @@ export default function Header() {
                 Login
               </Button>
             </Link>
-            <Link href="/contact">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Calendar className="w-4 h-4 mr-2" />
-                Agendar Consulta
-              </Button>
-            </Link>
+
             
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
