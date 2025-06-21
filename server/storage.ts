@@ -489,10 +489,16 @@ export class SupabaseStorage implements IStorage {
       fullName: data.full_name,
       email: data.email,
       phone: data.phone,
+      cpf: data.cpf,
+      dateOfBirth: data.date_of_birth,
       specialty: data.specialty,
+      doctorId: data.doctor_id,
       preferredDate: data.preferred_date,
+      preferredTime: data.preferred_time,
+      appointmentType: data.appointment_type,
       message: data.message,
       status: data.status,
+      urgency: data.urgency,
       createdAt: data.created_at
     };
   }
@@ -567,5 +573,7 @@ export class SupabaseStorage implements IStorage {
   }
 }
 
-// Using SupabaseStorage for direct database integration
-export const storage = new SupabaseStorage();
+import { PostgresStorage } from "./postgres-storage";
+
+// Using PostgreSQL native database from Replit
+export const storage = new PostgresStorage();
