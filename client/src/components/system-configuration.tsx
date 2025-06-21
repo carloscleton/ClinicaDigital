@@ -104,6 +104,32 @@ const customColors = [
   { name: "Roxo Suave", value: "#8b5cf6", category: "Secundárias" },
 ];
 
+// Utility function for hex to HSL conversion
+const hexToHsl = (hex: string) => {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0, s, l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
+
 export default function SystemConfiguration() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -112,14 +138,51 @@ export default function SystemConfiguration() {
   const [previewMode, setPreviewMode] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
 
+  // Apply saved color settings automatically
+  const applySavedColors = (scheme: ColorScheme | null, customColor: string) => {
+    const root = document.documentElement;
+    
+    if (scheme) {
+      const primaryHsl = hexToHsl(scheme.primary);
+      const secondaryHsl = hexToHsl(scheme.secondary);
+      const accentHsl = hexToHsl(scheme.accent);
+
+      root.style.setProperty('--primary', primaryHsl);
+      root.style.setProperty('--secondary', secondaryHsl);
+      root.style.setProperty('--accent', accentHsl);
+      root.style.setProperty('--ring', primaryHsl);
+    } else if (customColor) {
+      const primaryHsl = hexToHsl(customColor);
+      const [h, s, l] = primaryHsl.split(' ').map(v => parseInt(v));
+      const secondaryHsl = `${h} ${s}% ${Math.max(20, l - 15)}%`;
+      const accentHsl = `${h} ${Math.min(100, s + 10)}% ${Math.min(80, l + 10)}%`;
+
+      root.style.setProperty('--primary', primaryHsl);
+      root.style.setProperty('--secondary', secondaryHsl);
+      root.style.setProperty('--accent', accentHsl);
+      root.style.setProperty('--ring', primaryHsl);
+    }
+  };
+
   // Load saved settings on component mount
   useEffect(() => {
     const savedSettings = localStorage.getItem('san-mathews-color-settings');
     if (savedSettings) {
       try {
         const settings = JSON.parse(savedSettings);
-        setSelectedScheme(settings.colorScheme || "medical-blue");
-        setCustomColor(settings.customColor || "#2563eb");
+        const schemeId = settings.colorScheme || "medical-blue";
+        const savedCustomColor = settings.customColor || "#2563eb";
+        
+        setSelectedScheme(schemeId);
+        setCustomColor(savedCustomColor);
+        
+        // Apply the saved colors immediately
+        if (schemeId === 'custom') {
+          applySavedColors(null, savedCustomColor);
+        } else {
+          const scheme = colorSchemes.find(s => s.id === schemeId);
+          if (scheme) applySavedColors(scheme, savedCustomColor);
+        }
       } catch (error) {
         console.error('Failed to load saved settings:', error);
       }
@@ -129,23 +192,44 @@ export default function SystemConfiguration() {
   const applyColorScheme = async (scheme: ColorScheme) => {
     setIsApplying(true);
     try {
-      // Apply CSS variables to document root
       const root = document.documentElement;
       
-      // Set primary colors
-      root.style.setProperty('--primary', scheme.primary);
-      root.style.setProperty('--primary-foreground', '#ffffff');
+      // Apply comprehensive color scheme with Tailwind CSS variables
+      const primaryHsl = hexToHsl(scheme.primary);
+      const secondaryHsl = hexToHsl(scheme.secondary);
+      const accentHsl = hexToHsl(scheme.accent);
+
+      // Apply primary color system
+      root.style.setProperty('--primary', primaryHsl);
+      root.style.setProperty('--primary-foreground', '0 0% 98%');
       
-      // Set secondary colors
-      root.style.setProperty('--secondary', scheme.secondary);
-      root.style.setProperty('--secondary-foreground', '#ffffff');
+      // Apply secondary color system
+      root.style.setProperty('--secondary', secondaryHsl);
+      root.style.setProperty('--secondary-foreground', '0 0% 98%');
       
-      // Set accent colors
-      root.style.setProperty('--accent', scheme.accent);
-      root.style.setProperty('--accent-foreground', '#ffffff');
+      // Apply accent color system
+      root.style.setProperty('--accent', accentHsl);
+      root.style.setProperty('--accent-foreground', '0 0% 9%');
       
-      // Set background
-      root.style.setProperty('--background', scheme.background);
+      // Apply destructive colors
+      root.style.setProperty('--destructive', '0 84.2% 60.2%');
+      root.style.setProperty('--destructive-foreground', '0 0% 98%');
+      
+      // Apply ring and border colors
+      root.style.setProperty('--ring', primaryHsl);
+      root.style.setProperty('--border', '214.3 31.8% 91.4%');
+      
+      // Apply muted colors
+      root.style.setProperty('--muted', '210 40% 96%');
+      root.style.setProperty('--muted-foreground', '215.4 16.3% 46.9%');
+      
+      // Apply popover colors
+      root.style.setProperty('--popover', '0 0% 100%');
+      root.style.setProperty('--popover-foreground', '222.2 84% 4.9%');
+      
+      // Apply card colors
+      root.style.setProperty('--card', '0 0% 100%');
+      root.style.setProperty('--card-foreground', '222.2 84% 4.9%');
       
       // Save to localStorage
       const settings = { colorScheme: scheme.id, customColor, theme };
@@ -155,7 +239,7 @@ export default function SystemConfiguration() {
       
       toast({
         title: "Esquema aplicado com sucesso!",
-        description: `${scheme.name} foi aplicado ao sistema.`,
+        description: `${scheme.name} está agora ativo em todo o sistema.`,
       });
       
     } catch (error) {
@@ -173,25 +257,62 @@ export default function SystemConfiguration() {
     setIsApplying(true);
     try {
       const root = document.documentElement;
-      root.style.setProperty('--primary', customColor);
       
-      // Generate lighter/darker variants
-      const hex = customColor.replace('#', '');
-      const r = parseInt(hex.substr(0, 2), 16);
-      const g = parseInt(hex.substr(2, 2), 16);
-      const b = parseInt(hex.substr(4, 2), 16);
+      // Convert hex to HSL
+      const hexToHsl = (hex: string) => {
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max === min) {
+          h = s = 0;
+        } else {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+          h /= 6;
+        }
+
+        return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+      };
+
+      const primaryHsl = hexToHsl(customColor);
       
-      // Darker version for secondary
-      const darkerColor = `rgb(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)})`;
-      root.style.setProperty('--secondary', darkerColor);
+      // Generate professional color variations
+      const [h, s, l] = primaryHsl.split(' ').map(v => parseInt(v));
+      const secondaryHsl = `${h} ${s}% ${Math.max(20, l - 15)}%`;
+      const accentHsl = `${h} ${Math.min(100, s + 10)}% ${Math.min(80, l + 10)}%`;
+
+      // Apply comprehensive color system
+      root.style.setProperty('--primary', primaryHsl);
+      root.style.setProperty('--primary-foreground', '0 0% 98%');
+      
+      root.style.setProperty('--secondary', secondaryHsl);
+      root.style.setProperty('--secondary-foreground', '0 0% 98%');
+      
+      root.style.setProperty('--accent', accentHsl);
+      root.style.setProperty('--accent-foreground', '0 0% 9%');
+      
+      // Update ring and border to match
+      root.style.setProperty('--ring', primaryHsl);
+      root.style.setProperty('--border', `${h} 30% 91%`);
       
       // Save settings
       const settings = { colorScheme: 'custom', customColor, theme };
       localStorage.setItem('san-mathews-color-settings', JSON.stringify(settings));
+      setSelectedScheme('custom');
       
       toast({
         title: "Cor personalizada aplicada!",
-        description: "Sua cor personalizada foi aplicada ao sistema.",
+        description: "Sistema atualizado com sua cor personalizada. Recarregue para ver todas as mudanças.",
       });
       
     } catch (error) {
@@ -478,8 +599,13 @@ export default function SystemConfiguration() {
                         size="sm"
                         onClick={applyCustomColor}
                         disabled={isApplying}
+                        className="bg-green-600 hover:bg-green-700 text-white border-green-600"
                       >
-                        <Check className="w-4 h-4" />
+                        {isApplying ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Check className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
