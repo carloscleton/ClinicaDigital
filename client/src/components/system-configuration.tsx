@@ -74,6 +74,25 @@ const colorSchemes: ColorScheme[] = [
   }
 ];
 
+const colorPalette = [
+  // Row 1 - Reds
+  "#ff6b6b", "#ff5722", "#f44336", "#e91e63", "#ff1744", "#d32f2f", "#c62828", "#b71c1c",
+  // Row 2 - Oranges/Yellows
+  "#ff9800", "#ff6f00", "#ffc107", "#ffeb3b", "#ffff00", "#f57f17", "#f9a825", "#ffc400",
+  // Row 3 - Greens
+  "#4caf50", "#8bc34a", "#cddc39", "#689f38", "#388e3c", "#2e7d32", "#1b5e20", "#33691e",
+  // Row 4 - Teals/Cyans
+  "#00bcd4", "#26c6da", "#4dd0e1", "#00acc1", "#0097a7", "#00838f", "#006064", "#009688",
+  // Row 5 - Blues
+  "#2196f3", "#03a9f4", "#00bcd4", "#3f51b5", "#1976d2", "#1565c0", "#0d47a1", "#0277bd",
+  // Row 6 - Purples
+  "#9c27b0", "#673ab7", "#3f51b5", "#7b1fa2", "#6a1b9a", "#4a148c", "#512da8", "#311b92",
+  // Row 7 - Browns/Grays
+  "#795548", "#8d6e63", "#a1887f", "#6d4c41", "#5d4037", "#4e342e", "#3e2723", "#424242",
+  // Row 8 - More Grays
+  "#607d8b", "#78909c", "#90a4ae", "#546e7a", "#455a64", "#37474f", "#263238", "#212121"
+];
+
 const customColors = [
   { name: "Azul Corporativo", value: "#1e40af", category: "Primárias" },
   { name: "Verde Clínico", value: "#059669", category: "Primárias" },
@@ -437,8 +456,8 @@ export default function SystemConfiguration() {
             <CardContent>
               <div className="space-y-6">
                 {/* Color Picker */}
-                <div className="flex items-center space-x-4">
-                  <div className="flex-1">
+                <div className="space-y-4">
+                  <div>
                     <label className="block text-sm font-medium mb-2">Cor Principal Personalizada</label>
                     <div className="flex items-center space-x-3">
                       <input
@@ -462,6 +481,26 @@ export default function SystemConfiguration() {
                       >
                         <Check className="w-4 h-4" />
                       </Button>
+                    </div>
+                  </div>
+
+                  {/* Color Palette Grid */}
+                  <div>
+                    <label className="block text-sm font-medium mb-3">Paleta de Cores</label>
+                    <div className="grid grid-cols-8 gap-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      {colorPalette.map((color, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCustomColor(color)}
+                          className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-110 hover:shadow-lg ${
+                            customColor === color 
+                              ? 'border-white shadow-lg ring-2 ring-blue-500' 
+                              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                          }`}
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>
