@@ -1,5 +1,4 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/neon-serverless";
 import { eq } from "drizzle-orm";
 import { 
   users, 
@@ -19,10 +18,7 @@ import {
   type InsertContactMessage
 } from "@shared/schema";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-const db = drizzle(pool);
+const db = drizzle(process.env.DATABASE_URL!);
 
 export interface IStorage {
   // Users
