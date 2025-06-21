@@ -3,7 +3,7 @@ import { Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-800 text-white py-16">
+    <footer className="bg-gray-800 dark:bg-gray-950 text-white py-16">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-4 gap-8">
           <div className="lg:col-span-2">

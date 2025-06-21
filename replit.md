@@ -128,6 +128,7 @@ San Mathews Clínica e Laboratório is a comprehensive medical clinic platform b
 - June 21, 2025. Removed "Dashboard" and "Agendamentos" options from sidebar navigation, keeping 7 sections: Agenda Semanal (highlighted), Clínicas, Profissionais, Especialidades, Serviços, Pacientes, and Configurações
 - June 21, 2025. Migrated to Supabase integration with @supabase/supabase-js client library using provided API credentials (URL: https://zdqcyemiwglybvpfczya.supabase.co). System configured for both in-memory storage and Supabase connectivity, currently using memory storage due to RLS policies on Supabase tables. Database schema supports doctors, testimonials, appointments, users, and contact_messages tables.
 - June 21, 2025. Implemented complete CRUD system for professionals management with full API endpoints (POST, GET, PUT, DELETE /api/doctors) and comprehensive dashboard interface. System includes form validation, real-time updates, and professional management UI integrated in dashboard sidebar navigation under "Profissionais" section. All CRUD operations tested and verified working with authentic clinic data.
+- June 21, 2025. Added comprehensive dark mode support with light/dark/system theme toggle. Implemented ThemeProvider context, ThemeToggle component with dropdown interface matching user's design requirements (Light, Dark, System theme with chevron). Updated all components (header, footer, dashboard) with dark mode classes and integrated theme toggle in both desktop and mobile navigation.
 
 ## User Preferences
 
