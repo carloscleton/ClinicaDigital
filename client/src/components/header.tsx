@@ -15,6 +15,7 @@ export default function Header() {
     { href: "/doctors", label: "Médicos" },
     { href: "/testimonials", label: "Depoimentos" },
     { href: "/contact", label: "Contato" },
+    { href: "/dashboard", label: "Dashboard" },
   ];
 
   const isActive = (href: string) => {
