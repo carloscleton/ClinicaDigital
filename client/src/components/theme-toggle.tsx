@@ -46,19 +46,18 @@ export function ThemeToggle() {
           <ChevronDown className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2">
+      <DropdownMenuContent align="end" className="w-36">
+        <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2 justify-start">
           <Sun className="h-4 w-4" />
           <span>Light</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2">
+        <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2 justify-start">
           <Moon className="h-4 w-4" />
           <span>Dark</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2">
+        <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2 justify-start">
           <Monitor className="h-4 w-4" />
           <span>System theme</span>
-          <ChevronDown className="h-3 w-3 ml-auto" />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
