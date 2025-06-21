@@ -63,33 +63,28 @@ export default function Header() {
             ))}
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-2 text-sm">
               <Phone className="w-4 h-4 text-green-600" />
               <span className="text-gray-700 dark:text-gray-300">55(85)99408-6263</span>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <ThemeToggle />
-              
-              <Link href="/login">
-                <Button 
-                  variant="ghost"
-                  className="hidden lg:inline-flex text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 px-3"
-                  size="sm"
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Login
-                </Button>
-              </Link>
-            </div>
-            
-            <Link href="/booking">
-              <Button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2">
+            <ThemeToggle />
+            <Link href="/login">
+              <Button 
+                variant="outline"
+                className="hidden lg:inline-flex border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                size="sm"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Login
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button className="bg-blue-600 hover:bg-blue-700">
                 <Calendar className="w-4 h-4 mr-2" />
-                Agendamento
+                Agendar Consulta
               </Button>
             </Link>
             
@@ -120,16 +115,10 @@ export default function Header() {
                     </Link>
                   ))}
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
-                    <Link href="/booking" onClick={() => setIsOpen(false)}>
-                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Agendamento
-                      </Button>
-                    </Link>
                     <Link href="/login" onClick={() => setIsOpen(false)}>
                       <Button 
-                        variant="ghost"
-                        className="w-full text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                        variant="outline"
+                        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
                       >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
