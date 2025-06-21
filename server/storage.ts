@@ -1,4 +1,5 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { eq } from "drizzle-orm";
 import { 
   users, 
@@ -18,7 +19,10 @@ import {
   type InsertContactMessage
 } from "@shared/schema";
 
-const db = drizzle(process.env.DATABASE_URL!);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+const db = drizzle(pool);
 
 export interface IStorage {
   // Users
@@ -361,9 +365,14 @@ export class MemStorage implements IStorage {
 
 export class DatabaseStorage implements IStorage {
   private async seedData() {
-    // Check if data already exists
-    const existingDoctors = await db.select().from(doctors).limit(1);
-    if (existingDoctors.length > 0) return;
+    try {
+      // Check if data already exists
+      const existingDoctors = await db.select().from(doctors).limit(1);
+      if (existingDoctors.length > 0) return;
+    } catch (error) {
+      console.log("Database seeding skipped - tables may not exist yet");
+      return;
+    }
 
     // Seed doctors
     const doctorsData: InsertDoctor[] = [

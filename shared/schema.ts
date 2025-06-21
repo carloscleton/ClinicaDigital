@@ -14,7 +14,6 @@ export const doctors = pgTable("doctors", {
   specialty: text("specialty").notNull(),
   description: text("description").notNull(),
   crm: text("crm").notNull(),
-  imageUrl: text("image_url"),
   experience: text("experience"),
 });
 
@@ -36,7 +35,6 @@ export const testimonials = pgTable("testimonials", {
   location: text("location").notNull(),
   content: text("content").notNull(),
   rating: integer("rating").notNull().default(5),
-  imageUrl: text("image_url"),
 });
 
 export const contactMessages = pgTable("contact_messages", {
