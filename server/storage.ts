@@ -14,7 +14,11 @@ import {
 
 const supabaseUrl = 'https://zdqcyemiwglybvpfczya.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkcWN5ZW1pd2dseWJ2cGZjenlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1MzIwMjksImV4cCI6MjA2NjEwODAyOX0.eRUuO0H3nuJwHMljwxAhlaZpOFRcc2LN4puAfbZvvrI';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false
+  }
+});
 
 export interface IStorage {
   // Users
@@ -99,7 +103,11 @@ export class MemStorage implements IStorage {
 
     doctorsData.forEach(doctorData => {
       const id = this.currentDoctorId++;
-      const doctor: Doctor = { ...doctorData, id };
+      const doctor: Doctor = { 
+        ...doctorData, 
+        id,
+        experience: doctorData.experience || null
+      };
       this.doctors.set(id, doctor);
     });
 
@@ -543,4 +551,6 @@ export class SupabaseStorage implements IStorage {
   }
 }
 
-export const storage = new SupabaseStorage();
+// Use MemStorage for now due to Supabase RLS policies
+// export const storage = new SupabaseStorage();
+export const storage = new MemStorage();
