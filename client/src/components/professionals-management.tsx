@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit, Plus, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +33,27 @@ interface Doctor {
   crm: string;
   experience: string | null;
 }
+
+const medicalSpecialties = [
+  "Ultrassonografia",
+  "Cardiologia",
+  "Clínica Geral",
+  "Dermatologia",
+  "Endocrinologia",
+  "Gastroenterologia",
+  "Ginecologia",
+  "Neurologia",
+  "Obstetrícia",
+  "Oftalmologia",
+  "Ortopedia",
+  "Otorrinolaringologia",
+  "Pediatria",
+  "Pneumologia",
+  "Psiquiatria",
+  "Radiologia",
+  "Reumatologia",
+  "Urologia"
+];
 
 export default function ProfessionalsManagement() {
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
@@ -210,9 +232,20 @@ export default function ProfessionalsManagement() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Especialidade</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Ultrassonografia" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a especialidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {medicalSpecialties.map((specialty) => (
+                            <SelectItem key={specialty} value={specialty}>
+                              {specialty}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
