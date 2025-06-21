@@ -32,11 +32,9 @@ export default function Header() {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center">
-            <img 
-              src="/attached_assets/Captura de tela 2025-06-19 130533_1750546625531.png" 
-              alt="San Mathews Clínica e Laboratório" 
-              className="h-12 w-auto object-contain hover:opacity-90 transition-opacity"
-            />
+            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              San Mathews
+            </span>
           </Link>
           
           <div className="hidden lg:flex space-x-8">
