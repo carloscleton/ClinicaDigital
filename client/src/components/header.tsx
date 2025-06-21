@@ -31,9 +31,13 @@ export default function Header() {
     <header className="bg-white dark:bg-gray-950 shadow-md sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800">
       <nav className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            {/* Logo space - removed per user request */}
-          </div>
+          <Link href="/" className="flex items-center">
+            <img 
+              src="/attached_assets/Captura de tela 2025-06-19 130533_1750547060203.png" 
+              alt="San Mathews Clínica e Laboratório" 
+              className="h-10 w-auto object-contain hover:opacity-90 transition-opacity"
+            />
+          </Link>
           
           <div className="hidden lg:flex space-x-8">
             {navItems.map((item) => (
