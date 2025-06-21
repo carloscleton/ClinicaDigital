@@ -32,11 +32,16 @@ export default function Header() {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center">
-            <img 
-              src="/attached_assets/Captura de tela 2025-06-19 130533_1750547060203.png" 
-              alt="San Mathews Clínica e Laboratório" 
-              className="h-10 w-auto object-contain hover:opacity-90 transition-opacity"
-            />
+            <div className="w-40 h-14 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
+              <img 
+                src="/attached_assets/Captura de tela 2025-06-19 130533_1750547060203.png" 
+                alt="San Mathews Clínica e Laboratório" 
+                className="h-12 w-auto object-contain"
+                onError={(e) => {
+                  e.currentTarget.parentElement.innerHTML = '<span class="text-green-600 font-bold text-sm">San Mathews</span>';
+                }}
+              />
+            </div>
           </Link>
           
           <div className="hidden lg:flex space-x-8">
