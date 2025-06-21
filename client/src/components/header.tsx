@@ -10,12 +10,12 @@ export default function Header() {
 
   const navItems = [
     { href: "/", label: "Início" },
+    { href: "/dashboard", label: "Dashboard", highlight: true },
     { href: "/services", label: "Serviços" },
     { href: "/specialties", label: "Especialidades" },
     { href: "/doctors", label: "Médicos" },
     { href: "/testimonials", label: "Depoimentos" },
     { href: "/contact", label: "Contato" },
-    { href: "/dashboard", label: "Dashboard" },
   ];
 
   const isActive = (href: string) => {
@@ -47,8 +47,12 @@ export default function Header() {
                 href={item.href}
                 className={`transition-colors font-medium ${
                   isActive(item.href)
-                    ? "text-blue-600"
-                    : "text-gray-700 hover:text-blue-600"
+                    ? item.highlight 
+                      ? "text-white bg-blue-600 px-4 py-2 rounded-lg font-bold"
+                      : "text-blue-600"
+                    : item.highlight
+                      ? "text-blue-600 bg-blue-50 px-4 py-2 rounded-lg font-bold hover:bg-blue-100"
+                      : "text-gray-700 hover:text-blue-600"
                 }`}
               >
                 {item.label}
@@ -83,8 +87,12 @@ export default function Header() {
                       onClick={() => setIsOpen(false)}
                       className={`text-lg font-medium transition-colors ${
                         isActive(item.href)
-                          ? "text-blue-600"
-                          : "text-gray-700 hover:text-blue-600"
+                          ? item.highlight 
+                            ? "text-white bg-blue-600 px-4 py-3 rounded-lg font-bold"
+                            : "text-blue-600"
+                          : item.highlight
+                            ? "text-blue-600 bg-blue-50 px-4 py-3 rounded-lg font-bold hover:bg-blue-100"
+                            : "text-gray-700 hover:text-blue-600"
                       }`}
                     >
                       {item.label}
