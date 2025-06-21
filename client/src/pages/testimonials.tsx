@@ -2,8 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Star, UserCheck, Quote, Calendar, TrendingUp } from "lucide-react";
+import { Star, UserCheck, Quote, Calendar, TrendingUp, MessageSquare } from "lucide-react";
 import type { Testimonial } from "@shared/schema";
+import TestimonialForm from "@/components/testimonial-form";
 
 export default function Testimonials() {
   const { data: testimonials, isLoading } = useQuery<Testimonial[]>({
@@ -155,8 +156,21 @@ export default function Testimonials() {
           </div>
         </div>
 
+        {/* Testimonial Form Section */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+              Compartilhe Sua Experiência
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Seu depoimento é muito importante para nós e ajuda outros pacientes a conhecer nosso trabalho.
+            </p>
+          </div>
+          <TestimonialForm />
+        </div>
+
         {/* CTA Section */}
-        <div className="text-center bg-blue-600 rounded-2xl p-8 lg:p-12 text-white">
+        <div className="text-center bg-blue-600 dark:bg-blue-700 rounded-2xl p-8 lg:p-12 text-white">
           <h2 className="text-3xl font-bold mb-4">Faça Parte dos Nossos Pacientes Satisfeitos</h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             Experimente o atendimento de excelência que nossos pacientes tanto elogiam. 
