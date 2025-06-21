@@ -14,6 +14,7 @@ import Testimonials from "@/pages/testimonials";
 import Contact from "@/pages/contact";
 import Booking from "@/pages/booking";
 import Dashboard from "@/pages/dashboard";
+import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -37,13 +38,22 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="san-mathews-theme">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <div className="min-h-screen flex flex-col bg-background text-foreground">
-            <Header />
-            <main className="flex-1">
-              <Router />
-            </main>
-            <Footer />
-          </div>
+          <Switch>
+            <Route path="/login">
+              <div className="min-h-screen bg-background text-foreground">
+                <Login />
+              </div>
+            </Route>
+            <Route>
+              <div className="min-h-screen flex flex-col bg-background text-foreground">
+                <Header />
+                <main className="flex-1">
+                  <Router />
+                </main>
+                <Footer />
+              </div>
+            </Route>
+          </Switch>
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>

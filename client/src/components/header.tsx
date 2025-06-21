@@ -33,7 +33,7 @@ export default function Header() {
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center">
             <img 
-              src="/attached_assets/Captura de tela 2025-06-19 130533_1750545380083.png" 
+              src="/attached_assets/Captura de tela 2025-06-19 130533_1750545678237.png" 
               alt="San Mathews Clínica e Laboratório" 
               className="h-12 w-auto object-contain hover:opacity-90 transition-opacity"
             />
@@ -69,6 +69,18 @@ export default function Header() {
               <span className="text-gray-700 dark:text-gray-300">55(85)99408-6263</span>
             </div>
             <ThemeToggle />
+            <Link href="/login">
+              <Button 
+                variant="outline"
+                className="hidden lg:inline-flex border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                size="sm"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Login
+              </Button>
+            </Link>
             <Link href="/contact">
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <Calendar className="w-4 h-4 mr-2" />
@@ -102,12 +114,25 @@ export default function Header() {
                       {item.label}
                     </Link>
                   ))}
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Phone className="w-4 h-4 text-green-600" />
-                      <span className="text-gray-700 dark:text-gray-300">55(85)99408-6263</span>
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
+                    <Link href="/login" onClick={() => setIsOpen(false)}>
+                      <Button 
+                        variant="outline"
+                        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Login do Sistema
+                      </Button>
+                    </Link>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Phone className="w-4 h-4 text-green-600" />
+                        <span className="text-gray-700 dark:text-gray-300">55(85)99408-6263</span>
+                      </div>
+                      <ThemeToggle />
                     </div>
-                    <ThemeToggle />
                   </div>
                 </nav>
               </SheetContent>
