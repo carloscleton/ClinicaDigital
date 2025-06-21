@@ -29,6 +29,7 @@ import {
 import type { Doctor, Appointment, Testimonial, ContactMessage } from "@shared/schema";
 import ProfessionalsManagement from "@/components/professionals-management";
 import AppointmentsManagement from "@/components/appointments-management";
+import SystemConfiguration from "@/components/system-configuration";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -151,6 +152,8 @@ export default function Dashboard() {
             <AppointmentsManagement />
           ) : selectedSidebarItem === "profissionais" ? (
             <ProfessionalsManagement />
+          ) : selectedSidebarItem === "configuracoes" ? (
+            <SystemConfiguration />
           ) : (
             <>
               {/* Overview Stats */}
