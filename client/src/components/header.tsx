@@ -11,7 +11,7 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { href: "/dashboard", label: "Dashboard" },
+    { href: "/dashboard", label: "Dashboard", highlight: true },
     { href: "/", label: "Início" },
     { href: "/services", label: "Serviços" },
     { href: "/specialties", label: "Especialidades" },
@@ -29,10 +29,10 @@ export default function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
-      <nav className="container mx-auto px-6 py-3">
+      <nav className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-            <div className="flex items-center space-x-3">
+          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity mr-8">
+            <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
                 <span className="text-white font-bold text-sm">S</span>
               </div>
@@ -48,26 +48,30 @@ export default function Header() {
           </Link>
           
           <div className="hidden lg:flex items-center space-x-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive(item.href)
-                    ? item.highlight 
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : item.cta
-                        ? "bg-green-600 text-white shadow-sm"
-                        : "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                    : item.highlight
-                      ? "text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-800/30"
-                      : item.cta
-                        ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
-                        : "text-gray-600 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800/50"
-                }`}
-              >
-                {item.label}
-              </Link>
+            {navItems.map((item, index) => (
+              <div key={item.href} className="flex items-center">
+                <Link
+                  href={item.href}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive(item.href)
+                      ? item.highlight 
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : item.cta
+                          ? "bg-green-600 text-white shadow-sm"
+                          : "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                      : item.highlight
+                        ? "text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-800/30"
+                        : item.cta
+                          ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
+                          : "text-gray-600 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800/50"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+                {index === 0 && (
+                  <div className="mx-3 h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+                )}
+              </div>
             ))}
           </div>
           
