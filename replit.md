@@ -124,6 +124,7 @@ San Mathews Clínica e Laboratório is a comprehensive medical clinic platform b
 - June 21, 2025. Moved Dashboard menu item to first position (before Início) and added highlight styling with blue background
 - June 21, 2025. Added comprehensive sidebar navigation to dashboard with 9 sections: Dashboard, Agenda Semanal (highlighted), Clínicas, Profissionais, Especialidades, Serviços, Pacientes, Agendamentos, and Configurações
 - June 21, 2025. Removed sidebar navigation from dashboard per user request, returning to clean single-page layout with tabs for different sections
+- June 21, 2025. Restored sidebar navigation in dashboard per user request to return to previous state with 9 navigation sections
 
 ## User Preferences
 
