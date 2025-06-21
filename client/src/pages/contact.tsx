@@ -93,8 +93,8 @@ export default function Contact() {
                 <div>
                   <h3 className="font-semibold text-gray-800 mb-1">Endereço</h3>
                   <p className="text-gray-600">
-                    Rua das Flores, 123 - Centro<br />
-                    São Paulo, SP - CEP: 01234-567
+                    R Vereador Francisco Francilino, 1431 - Centro<br />
+                    Baturité, CE - CEP: 62.760-000
                   </p>
                 </div>
               </div>
@@ -106,8 +106,7 @@ export default function Contact() {
                 <div>
                   <h3 className="font-semibold text-gray-800 mb-1">Telefone</h3>
                   <p className="text-gray-600">
-                    (11) 3456-7890<br />
-                    (11) 98765-4321
+                    55(85)99408-6263
                   </p>
                 </div>
               </div>
@@ -145,7 +144,7 @@ export default function Contact() {
               <AlertTriangle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-700">
                 <strong>Atendimento de Emergência:</strong><br />
-                Para emergências médicas, ligue para nosso plantão 24h: <strong>(11) 99999-0000</strong>
+                Para emergências médicas, ligue para nosso plantão 24h: <strong>55(85)99408-6263</strong>
               </AlertDescription>
             </Alert>
 
@@ -246,7 +245,7 @@ export default function Contact() {
             <div className="text-center text-gray-500">
               <MapPin className="w-12 h-12 mx-auto mb-4" />
               <p className="text-lg font-medium">Localização da Clínica</p>
-              <p className="text-sm">Rua das Flores, 123 - Centro, São Paulo</p>
+              <p className="text-sm">R Vereador Francisco Francilino, 1431 - Centro, Baturité</p>
             </div>
           </div>
 
@@ -258,16 +257,16 @@ export default function Contact() {
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">Transporte Público</h4>
                 <p className="text-gray-600 text-sm">
-                  • Metrô: Estação República (Linhas 3-Vermelha e 4-Amarela)<br />
-                  • Ônibus: Linhas 107, 205, 306 - Ponto na Rua das Flores
+                  • Terminal Rodoviário de Baturité: 500m da clínica<br />
+                  • Ônibus: Linhas municipais com parada próxima
                 </p>
               </div>
               
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">Estacionamento</h4>
                 <p className="text-gray-600 text-sm">
-                  Estacionamento próprio com 50 vagas gratuitas para pacientes. 
-                  Entrada pela Rua das Acácias, 45.
+                  Estacionamento na rua disponível. 
+                  Localização central de fácil acesso no centro de Baturité.
                 </p>
               </div>
               
