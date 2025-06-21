@@ -543,4 +543,4 @@ export class SupabaseStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new SupabaseStorage();
