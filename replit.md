@@ -121,7 +121,7 @@ San Mathews Clínica e Laboratório is a comprehensive medical clinic platform b
 - June 21, 2025. Added Google Maps embed to contact page showing real clinic location in Baturité
 - June 21, 2025. Updated clinic name throughout the website from "MedCare" to "San Mathews Clínica e Laboratório Ltda"
 - June 21, 2025. Updated phone number in header to 55(85)99408-6263 for both desktop and mobile views
-- June 21, 2025. Moved Dashboard menu item to second position (after Início) and added highlight styling with blue background
+- June 21, 2025. Moved Dashboard menu item to first position (before Início) and added highlight styling with blue background
 
 ## User Preferences
 

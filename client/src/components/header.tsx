@@ -9,8 +9,8 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { href: "/", label: "Início" },
     { href: "/dashboard", label: "Dashboard", highlight: true },
+    { href: "/", label: "Início" },
     { href: "/services", label: "Serviços" },
     { href: "/specialties", label: "Especialidades" },
     { href: "/doctors", label: "Médicos" },
