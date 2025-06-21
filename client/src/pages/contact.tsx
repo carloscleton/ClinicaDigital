@@ -118,8 +118,7 @@ export default function Contact() {
                 <div>
                   <h3 className="font-semibold text-gray-800 mb-1">E-mail</h3>
                   <p className="text-gray-600">
-                    contato@clinicamedcare.com.br<br />
-                    agendamento@clinicamedcare.com.br
+                    georgelucasamaro@hotmail.com
                   </p>
                 </div>
               </div>
