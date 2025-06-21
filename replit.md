@@ -123,6 +123,7 @@ San Mathews Clínica e Laboratório is a comprehensive medical clinic platform b
 - June 21, 2025. Updated phone number in header to 55(85)99408-6263 for both desktop and mobile views
 - June 21, 2025. Moved Dashboard menu item to first position (before Início) and added highlight styling with blue background
 - June 21, 2025. Redesigned dashboard as default landing page with comprehensive left sidebar navigation including: Dashboard, Agenda Semanal, Clínicas, Profissionais, Especialidades, Serviços, Pacientes, Agendamentos, and Configurações. Implemented CRUD interface structure for all sections with proper routing and responsive design.
+- June 21, 2025. Enhanced Agenda Semanal section with professional weekly calendar view featuring: doctor selection dropdown, week navigation, time slots (8:00-18:00), appointment visualization, blocked days indication, and appointment status tracking. Based on user-provided design mockup with improved functionality.
 
 ## User Preferences
 

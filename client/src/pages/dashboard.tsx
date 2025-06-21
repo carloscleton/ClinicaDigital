@@ -30,6 +30,10 @@ export default function Dashboard() {
   const params = useParams();
   const [location] = useLocation();
   const activeSection = params.section || "overview";
+  
+  // State for agenda section
+  const [selectedDoctor, setSelectedDoctor] = useState(1);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
 
   const { data: doctors, isLoading: doctorsLoading } = useQuery<Doctor[]>({
     queryKey: ["/api/doctors"],
@@ -311,38 +315,270 @@ export default function Dashboard() {
     }
   };
 
-  const renderAgendaSection = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Agenda Semanal</h1>
-          <p className="text-gray-600">Gerencie agendamentos e disponibilidade</p>
-        </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Agendamento
-        </Button>
-      </div>
+  const renderAgendaSection = () => {
+    
+    // Get current week dates
+    const getWeekDates = (date: Date) => {
+      const week = [];
+      const startOfWeek = new Date(date);
+      const dayOfWeek = startOfWeek.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Make Monday the start
+      startOfWeek.setDate(startOfWeek.getDate() + mondayOffset);
       
-      <div className="grid grid-cols-7 gap-4">
-        {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((day) => (
-          <Card key={day} className="p-4">
-            <h3 className="font-semibold text-center mb-4">{day}</h3>
-            <div className="space-y-2">
-              <div className="bg-blue-100 p-2 rounded text-sm">
-                <p className="font-medium">08:00 - Dr. Silva</p>
-                <p className="text-gray-600">Consulta Geral</p>
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + i);
+        week.push(day);
+      }
+      return week;
+    };
+
+    const weekDates = getWeekDates(currentWeek);
+    const weekDays = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo'];
+    
+    // Time slots from 08:00 to 18:00 with 30-minute intervals
+    const timeSlots = [];
+    for (let hour = 8; hour <= 18; hour++) {
+      timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+      if (hour < 18) {
+        timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+      }
+    }
+
+    const navigateWeek = (direction: 'prev' | 'next') => {
+      const newWeek = new Date(currentWeek);
+      newWeek.setDate(currentWeek.getDate() + (direction === 'next' ? 7 : -7));
+      setCurrentWeek(newWeek);
+    };
+
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('pt-BR', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+    };
+
+    const selectedDoctorData = doctors?.find(d => d.id === selectedDoctor);
+
+    // Sample appointment data for demonstration
+    const sampleAppointments = [
+      { 
+        id: 1, 
+        day: 'quinta', 
+        time: '12:00', 
+        patient: 'Carlos de Oliveira', 
+        type: 'Consulta', 
+        status: 'confirmed' 
+      },
+      { 
+        id: 2, 
+        day: 'quinta', 
+        time: '14:30', 
+        patient: 'Maria Silva', 
+        type: 'Retorno', 
+        status: 'pending' 
+      },
+      { 
+        id: 3, 
+        day: 'sexta', 
+        time: '09:00', 
+        patient: 'João Santos', 
+        type: 'Consulta', 
+        status: 'confirmed' 
+      }
+    ];
+
+    const getAppointmentForSlot = (day: string, time: string) => {
+      return sampleAppointments.find(apt => apt.day === day && apt.time === time);
+    };
+
+    const isDayBlocked = (day: string) => {
+      // Sample blocked days - quinta, sexta, domingo
+      return ['quinta', 'sexta', 'domingo'].includes(day);
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+          <div className="flex items-center space-x-4">
+            {/* Doctor Selection */}
+            <div className="flex items-center space-x-3 bg-white border border-gray-300 rounded-lg px-4 py-2">
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <Stethoscope className="w-4 h-4 text-gray-600" />
               </div>
-              <div className="bg-green-100 p-2 rounded text-sm">
-                <p className="font-medium">10:00 - Dra. Santos</p>
-                <p className="text-gray-600">Cardiologia</p>
+              <div>
+                <select 
+                  value={selectedDoctor} 
+                  onChange={(e) => setSelectedDoctor(Number(e.target.value))}
+                  className="font-medium text-gray-800 bg-transparent border-none outline-none"
+                >
+                  {doctors?.map(doctor => (
+                    <option key={doctor.id} value={doctor.id}>
+                      {doctor.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-sm text-gray-500">{selectedDoctorData?.specialty}</p>
               </div>
             </div>
-          </Card>
-        ))}
+            
+            <div className="text-sm text-gray-600">
+              {sampleAppointments.length} horários disponíveis
+            </div>
+          </div>
+
+          {/* Week Navigation */}
+          <div className="flex items-center space-x-4">
+            <div className="text-sm font-medium">Hoje</div>
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigateWeek('prev')}
+              >
+                <span>‹</span>
+              </Button>
+              <div className="text-lg font-semibold px-4">
+                {formatDate(weekDates[0])} - {formatDate(weekDates[6])}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigateWeek('next')}
+              >
+                <span>›</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {/* Header Row */}
+          <div className="grid grid-cols-8 border-b border-gray-200">
+            <div className="p-4 text-sm font-medium text-gray-600 bg-gray-50 flex items-center">
+              <Clock className="w-4 h-4 mr-2" />
+              Horários
+            </div>
+            {weekDates.map((date, index) => {
+              const isToday = date.toDateString() === new Date().toDateString();
+              const dayBlocked = isDayBlocked(weekDays[index]);
+              
+              return (
+                <div 
+                  key={index} 
+                  className={`p-4 text-center border-l border-gray-200 ${
+                    isToday ? 'bg-blue-50' : dayBlocked ? 'bg-red-50' : 'bg-gray-50'
+                  }`}
+                >
+                  <div className={`font-medium text-lg ${
+                    isToday ? 'text-blue-600' : dayBlocked ? 'text-red-600' : 'text-gray-800'
+                  }`}>
+                    {date.getDate()}
+                  </div>
+                  <div className={`text-sm capitalize ${
+                    isToday ? 'text-blue-600' : dayBlocked ? 'text-red-600' : 'text-gray-600'
+                  }`}>
+                    {weekDays[index]}
+                  </div>
+                  {dayBlocked && (
+                    <div className="text-xs text-red-500 mt-1 flex items-center justify-center">
+                      <span className="mr-1">✖</span>
+                      Fechada
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Time Slots */}
+          <div className="max-h-96 overflow-y-auto">
+            {timeSlots.map((time) => (
+              <div key={time} className="grid grid-cols-8 border-b border-gray-100">
+                {/* Time Column */}
+                <div className="p-3 text-sm text-gray-600 bg-gray-50 border-r border-gray-200 font-medium">
+                  {time}
+                </div>
+                
+                {/* Day Columns */}
+                {weekDays.map((day, dayIndex) => {
+                  const appointment = getAppointmentForSlot(day, time);
+                  const dayBlocked = isDayBlocked(day);
+                  
+                  return (
+                    <div 
+                      key={`${day}-${time}`}
+                      className={`p-2 border-l border-gray-100 min-h-[60px] ${
+                        dayBlocked ? 'bg-red-50' : 'hover:bg-gray-50 cursor-pointer'
+                      }`}
+                    >
+                      {dayBlocked ? (
+                        <div className="h-full flex items-center justify-center">
+                          <div className="text-red-400 text-2xl">✖</div>
+                        </div>
+                      ) : appointment ? (
+                        <div className={`rounded-lg p-2 text-xs border-l-4 h-full ${
+                          appointment.status === 'confirmed' 
+                            ? 'bg-orange-100 border-orange-400 text-orange-800' 
+                            : 'bg-yellow-100 border-yellow-400 text-yellow-800'
+                        }`}>
+                          <div className="font-semibold truncate">{appointment.patient}</div>
+                          <div className="text-xs opacity-75">{appointment.type}</div>
+                          <div className="flex items-center mt-1">
+                            <div className={`w-2 h-2 rounded-full mr-1 ${
+                              appointment.status === 'confirmed' ? 'bg-green-400' : 'bg-yellow-400'
+                            }`}></div>
+                            <span className="text-xs">
+                              {appointment.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                          <Plus className="w-4 h-4 text-gray-400" />
+                        </div>
+                      )}
+                      
+                      {dayBlocked && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-red-400 text-lg">
+                            <span className="block text-center">Agenda</span>
+                            <span className="block text-center">Fechada</span>
+                            <div className="text-xs mt-1 text-center">
+                              Não é possível<br/>agendar neste dia
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex space-x-4">
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Agendamento
+          </Button>
+          <Button variant="outline">
+            <Calendar className="w-4 h-4 mr-2" />
+            Configurar Disponibilidade
+          </Button>
+          <Button variant="outline">
+            <Settings className="w-4 h-4 mr-2" />
+            Gerenciar Horários
+          </Button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderClinicasSection = () => (
     <div className="space-y-6">
