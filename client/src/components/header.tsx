@@ -64,9 +64,9 @@ export default function Header() {
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2 text-sm">
+            <div className="hidden lg:flex items-center space-x-2 text-sm">
               <Phone className="w-4 h-4 text-green-600" />
-              <span className="text-gray-700 dark:text-gray-300">(85) 99408-6263</span>
+              <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">(85) 99408-6263</span>
             </div>
             <ThemeToggle />
             <Link href="/login">
