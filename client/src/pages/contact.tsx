@@ -138,15 +138,6 @@ export default function Contact() {
               </div>
             </div>
             
-            {/* Emergency Info */}
-            <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-700">
-                <strong>Atendimento de Emergência:</strong><br />
-                Para emergências médicas, ligue para nosso plantão 24h: <strong>55(85)99408-6263</strong>
-              </AlertDescription>
-            </Alert>
-
             {/* Contact Form */}
             <Card className="mt-8">
               <CardContent className="p-6">
