@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Palette, 
   Settings, 
@@ -14,7 +15,8 @@ import {
   RefreshCw,
   Save,
   Download,
-  Upload
+  Upload,
+  Check
 } from "lucide-react";
 import { useTheme } from "@/contexts/theme-context";
 
@@ -85,14 +87,103 @@ const customColors = [
 
 export default function SystemConfiguration() {
   const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
   const [selectedScheme, setSelectedScheme] = useState("medical-blue");
   const [customColor, setCustomColor] = useState("#2563eb");
   const [previewMode, setPreviewMode] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
 
-  const applyColorScheme = (scheme: ColorScheme) => {
-    // Simula aplicação do esquema de cores
-    console.log(`Aplicando esquema: ${scheme.name}`);
-    setSelectedScheme(scheme.id);
+  // Load saved settings on component mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('san-mathews-color-settings');
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        setSelectedScheme(settings.colorScheme || "medical-blue");
+        setCustomColor(settings.customColor || "#2563eb");
+      } catch (error) {
+        console.error('Failed to load saved settings:', error);
+      }
+    }
+  }, []);
+
+  const applyColorScheme = async (scheme: ColorScheme) => {
+    setIsApplying(true);
+    try {
+      // Apply CSS variables to document root
+      const root = document.documentElement;
+      
+      // Set primary colors
+      root.style.setProperty('--primary', scheme.primary);
+      root.style.setProperty('--primary-foreground', '#ffffff');
+      
+      // Set secondary colors
+      root.style.setProperty('--secondary', scheme.secondary);
+      root.style.setProperty('--secondary-foreground', '#ffffff');
+      
+      // Set accent colors
+      root.style.setProperty('--accent', scheme.accent);
+      root.style.setProperty('--accent-foreground', '#ffffff');
+      
+      // Set background
+      root.style.setProperty('--background', scheme.background);
+      
+      // Save to localStorage
+      const settings = { colorScheme: scheme.id, customColor, theme };
+      localStorage.setItem('san-mathews-color-settings', JSON.stringify(settings));
+      
+      setSelectedScheme(scheme.id);
+      
+      toast({
+        title: "Esquema aplicado com sucesso!",
+        description: `${scheme.name} foi aplicado ao sistema.`,
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Erro ao aplicar esquema",
+        description: "Não foi possível aplicar o esquema de cores.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  const applyCustomColor = async () => {
+    setIsApplying(true);
+    try {
+      const root = document.documentElement;
+      root.style.setProperty('--primary', customColor);
+      
+      // Generate lighter/darker variants
+      const hex = customColor.replace('#', '');
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+      
+      // Darker version for secondary
+      const darkerColor = `rgb(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)})`;
+      root.style.setProperty('--secondary', darkerColor);
+      
+      // Save settings
+      const settings = { colorScheme: 'custom', customColor, theme };
+      localStorage.setItem('san-mathews-color-settings', JSON.stringify(settings));
+      
+      toast({
+        title: "Cor personalizada aplicada!",
+        description: "Sua cor personalizada foi aplicada ao sistema.",
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Erro ao aplicar cor",
+        description: "Não foi possível aplicar a cor personalizada.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   const exportSettings = () => {
@@ -100,16 +191,88 @@ export default function SystemConfiguration() {
       theme,
       colorScheme: selectedScheme,
       customColor,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      version: "1.0"
     };
     
     const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'san-mathews-theme-config.json';
+    a.download = `san-mathews-config-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Configurações exportadas!",
+      description: "Arquivo de configuração baixado com sucesso.",
+    });
+  };
+
+  const importSettings = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const settings = JSON.parse(e.target?.result as string);
+        
+        if (settings.theme) setTheme(settings.theme);
+        if (settings.colorScheme) setSelectedScheme(settings.colorScheme);
+        if (settings.customColor) setCustomColor(settings.customColor);
+        
+        // Apply the imported scheme
+        const scheme = colorSchemes.find(s => s.id === settings.colorScheme);
+        if (scheme) {
+          applyColorScheme(scheme);
+        }
+        
+        toast({
+          title: "Configurações importadas!",
+          description: "Suas configurações foram restauradas com sucesso.",
+        });
+        
+      } catch (error) {
+        toast({
+          title: "Erro na importação",
+          description: "Arquivo de configuração inválido.",
+          variant: "destructive",
+        });
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const resetToDefaults = () => {
+    setTheme('system');
+    setSelectedScheme('medical-blue');
+    setCustomColor('#2563eb');
+    
+    // Reset CSS variables
+    const root = document.documentElement;
+    root.style.removeProperty('--primary');
+    root.style.removeProperty('--secondary');
+    root.style.removeProperty('--accent');
+    root.style.removeProperty('--background');
+    
+    // Clear localStorage
+    localStorage.removeItem('san-mathews-color-settings');
+    
+    toast({
+      title: "Configurações restauradas!",
+      description: "Todas as configurações foram restauradas ao padrão.",
+    });
+  };
+
+  const saveConfiguration = () => {
+    const settings = { colorScheme: selectedScheme, customColor, theme };
+    localStorage.setItem('san-mathews-color-settings', JSON.stringify(settings));
+    
+    toast({
+      title: "Configurações salvas!",
+      description: "Suas preferências foram salvas com sucesso.",
+    });
   };
 
   return (
@@ -288,11 +451,16 @@ export default function SystemConfiguration() {
                         type="text"
                         value={customColor}
                         onChange={(e) => setCustomColor(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                         placeholder="#000000"
                       />
-                      <Button variant="outline" size="sm">
-                        <RefreshCw className="w-4 h-4" />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={applyCustomColor}
+                        disabled={isApplying}
+                      >
+                        <Check className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -345,10 +513,21 @@ export default function SystemConfiguration() {
               <div>
                 <h3 className="text-lg font-medium mb-4">Backup e Restauração</h3>
                 <div className="flex space-x-3">
-                  <Button variant="outline" className="flex items-center">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Importar Configuração
-                  </Button>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={importSettings}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      id="import-settings"
+                    />
+                    <Button variant="outline" className="flex items-center" asChild>
+                      <label htmlFor="import-settings" className="cursor-pointer">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Importar Configuração
+                      </label>
+                    </Button>
+                  </div>
                   <Button onClick={exportSettings} className="flex items-center">
                     <Download className="w-4 h-4 mr-2" />
                     Exportar Configuração
@@ -363,11 +542,7 @@ export default function SystemConfiguration() {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
-                    onClick={() => {
-                      setTheme('system');
-                      setSelectedScheme('medical-blue');
-                      setCustomColor('#2563eb');
-                    }}
+                    onClick={resetToDefaults}
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Restaurar Configurações Padrão
@@ -377,7 +552,7 @@ export default function SystemConfiguration() {
                     variant="destructive" 
                     className="w-full justify-start"
                     onClick={() => {
-                      if (confirm('Tem certeza que deseja resetar todas as configurações?')) {
+                      if (confirm('Tem certeza que deseja resetar todas as configurações? Esta ação irá recarregar a página.')) {
                         localStorage.clear();
                         window.location.reload();
                       }
@@ -420,12 +595,19 @@ export default function SystemConfiguration() {
 
       {/* Save Button */}
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <Button variant="outline">
-          Cancelar
+        <Button 
+          variant="outline"
+          onClick={resetToDefaults}
+        >
+          Restaurar Padrão
         </Button>
-        <Button className="flex items-center bg-green-600 hover:bg-green-700">
+        <Button 
+          className="flex items-center bg-green-600 hover:bg-green-700"
+          onClick={saveConfiguration}
+          disabled={isApplying}
+        >
           <Save className="w-4 h-4 mr-2" />
-          Salvar Configurações
+          {isApplying ? "Salvando..." : "Salvar Configurações"}
         </Button>
       </div>
     </div>
