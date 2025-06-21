@@ -37,10 +37,10 @@ export default function Header() {
                 <span className="text-white font-bold text-sm">S</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                <span className="text-lg font-bold text-gray-900 dark:text-white leading-tight whitespace-nowrap">
                   San Mathews
                 </span>
-                <span className="text-xs text-green-600 dark:text-green-400 leading-tight">
+                <span className="text-xs text-green-600 dark:text-green-400 leading-tight whitespace-nowrap">
                   Clínica e Laboratório
                 </span>
               </div>
@@ -104,10 +104,10 @@ export default function Header() {
                       <span className="text-white font-bold text-sm">S</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                      <span className="text-lg font-bold text-gray-900 dark:text-white leading-tight whitespace-nowrap">
                         San Mathews
                       </span>
-                      <span className="text-xs text-green-600 dark:text-green-400 leading-tight">
+                      <span className="text-xs text-green-600 dark:text-green-400 leading-tight whitespace-nowrap">
                         Clínica e Laboratório
                       </span>
                     </div>
