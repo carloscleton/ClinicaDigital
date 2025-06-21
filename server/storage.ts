@@ -27,6 +27,8 @@ export interface IStorage {
   getDoctorById(id: number): Promise<Doctor | undefined>;
   getDoctorsBySpecialty(specialty: string): Promise<Doctor[]>;
   createDoctor(doctor: InsertDoctor): Promise<Doctor>;
+  updateDoctor(id: number, doctor: Partial<InsertDoctor>): Promise<Doctor | undefined>;
+  deleteDoctor(id: number): Promise<boolean>;
   
   // Appointments
   getAllAppointments(): Promise<Appointment[]>;
@@ -169,10 +171,28 @@ export class MemStorage implements IStorage {
     const id = this.currentDoctorId++;
     const doctor: Doctor = { 
       ...insertDoctor, 
-      id
+      id,
+      experience: insertDoctor.experience || null
     };
     this.doctors.set(id, doctor);
     return doctor;
+  }
+
+  async updateDoctor(id: number, updateData: Partial<InsertDoctor>): Promise<Doctor | undefined> {
+    const existingDoctor = this.doctors.get(id);
+    if (!existingDoctor) return undefined;
+    
+    const updatedDoctor: Doctor = {
+      ...existingDoctor,
+      ...updateData,
+      experience: updateData.experience !== undefined ? updateData.experience : existingDoctor.experience
+    };
+    this.doctors.set(id, updatedDoctor);
+    return updatedDoctor;
+  }
+
+  async deleteDoctor(id: number): Promise<boolean> {
+    return this.doctors.delete(id);
   }
 
   async getAllAppointments(): Promise<Appointment[]> {
@@ -366,6 +386,24 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .single();
     return data!;
+  }
+
+  async updateDoctor(id: number, updateData: Partial<InsertDoctor>): Promise<Doctor | undefined> {
+    const { data } = await supabase
+      .from('doctors')
+      .update(updateData)
+      .eq('id', id)
+      .select('*')
+      .single();
+    return data || undefined;
+  }
+
+  async deleteDoctor(id: number): Promise<boolean> {
+    const { error } = await supabase
+      .from('doctors')
+      .delete()
+      .eq('id', id);
+    return !error;
   }
 
   // Appointments

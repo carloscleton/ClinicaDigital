@@ -27,6 +27,7 @@ import {
   LayoutDashboard
 } from "lucide-react";
 import type { Doctor, Appointment, Testimonial, ContactMessage } from "@shared/schema";
+import ProfessionalsManagement from "@/components/professionals-management";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -143,8 +144,13 @@ export default function Dashboard() {
             <p className="text-gray-600">Visão geral e gerenciamento da San Mathews Clínica e Laboratório</p>
           </div>
 
-          {/* Overview Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+          {/* Content based on sidebar selection */}
+          {selectedSidebarItem === "profissionais" ? (
+            <ProfessionalsManagement />
+          ) : (
+            <>
+              {/* Overview Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
             <Card className="hover:shadow-lg transition-shadow">
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
@@ -445,6 +451,8 @@ export default function Dashboard() {
             </div>
           </TabsContent>
         </Tabs>
+            </>
+          )}
         </div>
       </div>
     </div>

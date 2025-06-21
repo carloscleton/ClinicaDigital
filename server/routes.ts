@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAppointmentSchema, insertContactMessageSchema } from "@shared/schema";
+import { insertAppointmentSchema, insertContactMessageSchema, insertDoctorSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -37,6 +37,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(doctors);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch doctors by specialty" });
+    }
+  });
+
+  // Create new doctor
+  app.post("/api/doctors", async (req, res) => {
+    try {
+      const validatedData = insertDoctorSchema.parse(req.body);
+      const doctor = await storage.createDoctor(validatedData);
+      res.status(201).json(doctor);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid doctor data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create doctor" });
+    }
+  });
+
+  // Update doctor
+  app.put("/api/doctors/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertDoctorSchema.partial().parse(req.body);
+      const doctor = await storage.updateDoctor(id, validatedData);
+      if (!doctor) {
+        return res.status(404).json({ message: "Doctor not found" });
+      }
+      res.json(doctor);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid doctor data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update doctor" });
+    }
+  });
+
+  // Delete doctor
+  app.delete("/api/doctors/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteDoctor(id);
+      if (!success) {
+        return res.status(404).json({ message: "Doctor not found" });
+      }
+      res.json({ message: "Doctor deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete doctor" });
     }
   });
 
