@@ -407,14 +407,7 @@ export default function ProfessionalsManagementWithSupabase() {
                       placeholder="(85) 99999-9999"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="experience">Experiência</Label>
-                    <Input
-                      id="experience"
-                      {...form.register("experience")}
-                      placeholder="Ex: 10 anos"
-                    />
-                  </div>
+
                 </div>
                 <div>
                   <Label htmlFor="description">Descrição</Label>
