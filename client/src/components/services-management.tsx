@@ -177,8 +177,13 @@ export default function ServicesManagement() {
     professionalCount: new Set(services.filter(s => s.idProfissional).map(s => s.idProfissional)).size,
   };
 
-  // Group services by professional
-  const groupedServices = services.reduce((acc, service) => {
+  // Filter services based on selected professional first
+  const filteredServices = selectedProfessional === "all" 
+    ? services 
+    : services.filter(s => s.idProfissional?.toString() === selectedProfessional);
+
+  // Group filtered services by professional
+  const groupedServices = filteredServices.reduce((acc, service) => {
     const professionalId = service.idProfissional;
     if (!professionalId) return acc;
 
@@ -194,11 +199,6 @@ export default function ServicesManagement() {
     acc[professionalId].totalValue += service.valorServicos || 0;
     return acc;
   }, {} as Record<number, { professional?: Professional; services: SupabaseService[]; totalValue: number }>);
-
-  // Filter services based on selected professional
-  const filteredServices = selectedProfessional === "all" 
-    ? services 
-    : services.filter(s => s.idProfissional?.toString() === selectedProfessional);
 
   const handleViewServices = (professionalId: number, professionalName: string) => {
     const professionalServices = services.filter(s => s.idProfissional === professionalId);
