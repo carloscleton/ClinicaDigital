@@ -645,6 +645,182 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supabase CAD_Clientes endpoints
+  
+  // Get all patients from CAD_Clientes
+  app.get("/api/supabase/patients", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('CAD_Clientes')
+        .select(`
+          id,
+          created_at,
+          nomeCliente,
+          telefoneCliente,
+          emailCliente,
+          nascimentoCliente,
+          CPF,
+          statusAgendamento,
+          statusPagamento,
+          valor,
+          ultimo_pagamento,
+          ultimaMensagem,
+          etapa,
+          desejo,
+          id_Empresa
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar pacientes do Supabase:', error);
+        return res.status(500).json({ 
+          message: "Erro ao conectar com Supabase",
+          error: error.message 
+        });
+      }
+
+      res.json(data || []);
+    } catch (error) {
+      console.error("Erro na conexão com Supabase:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Create new patient in CAD_Clientes
+  app.post("/api/supabase/patients", async (req, res) => {
+    try {
+      const { 
+        nomeCliente, 
+        telefoneCliente, 
+        emailCliente, 
+        nascimentoCliente, 
+        CPF,
+        statusAgendamento,
+        statusPagamento,
+        valor,
+        desejo,
+        id_Empresa 
+      } = req.body;
+
+      const { data, error } = await supabase
+        .from('CAD_Clientes')
+        .insert([{
+          nomeCliente,
+          telefoneCliente,
+          emailCliente,
+          nascimentoCliente: nascimentoCliente || null,
+          CPF,
+          statusAgendamento: statusAgendamento || false,
+          statusPagamento: statusPagamento || false,
+          valor: valor || null,
+          desejo,
+          id_Empresa: id_Empresa || 1
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar paciente no Supabase:', error);
+        return res.status(500).json({ 
+          message: "Erro ao criar paciente",
+          error: error.message 
+        });
+      }
+
+      res.json(data);
+    } catch (error) {
+      console.error("Erro ao criar paciente:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Update patient in CAD_Clientes
+  app.put("/api/supabase/patients/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { 
+        nomeCliente, 
+        telefoneCliente, 
+        emailCliente, 
+        nascimentoCliente, 
+        CPF,
+        statusAgendamento,
+        statusPagamento,
+        valor,
+        desejo,
+        id_Empresa 
+      } = req.body;
+
+      const { data, error } = await supabase
+        .from('CAD_Clientes')
+        .update({
+          nomeCliente,
+          telefoneCliente,
+          emailCliente,
+          nascimentoCliente: nascimentoCliente || null,
+          CPF,
+          statusAgendamento: statusAgendamento || false,
+          statusPagamento: statusPagamento || false,
+          valor: valor || null,
+          desejo,
+          id_Empresa: id_Empresa || 1
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar paciente no Supabase:', error);
+        return res.status(500).json({ 
+          message: "Erro ao atualizar paciente",
+          error: error.message 
+        });
+      }
+
+      res.json(data);
+    } catch (error) {
+      console.error("Erro ao atualizar paciente:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Delete patient from CAD_Clientes
+  app.delete("/api/supabase/patients/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+
+      const { error } = await supabase
+        .from('CAD_Clientes')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Erro ao deletar paciente do Supabase:', error);
+        return res.status(500).json({ 
+          message: "Erro ao deletar paciente",
+          error: error.message 
+        });
+      }
+
+      res.json({ message: "Paciente removido com sucesso" });
+    } catch (error) {
+      console.error("Erro ao deletar paciente:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
   // Supabase CAD_Especialidade endpoints
   
   // Get all specialties from CAD_Especialidade table

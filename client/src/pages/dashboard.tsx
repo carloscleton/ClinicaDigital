@@ -38,6 +38,7 @@ import PatientManagement from "@/components/patient-management";
 import ProfessionalsManagementWithSupabase from "@/components/specialties-management";
 import SpecialtiesCRUD from "@/components/specialties-crud";
 import ServicesManagement from "@/components/services-management";
+import PatientsManagement from "@/components/patients-management";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -202,7 +203,7 @@ export default function Dashboard() {
           ) : selectedSidebarItem === "profissionais" ? (
             <ProfessionalsManagementWithSupabase />
           ) : selectedSidebarItem === "pacientes" ? (
-            <PatientManagement />
+            <PatientsManagement />
           ) : selectedSidebarItem === "servicos" ? (
             <ServicesManagement />
           ) : selectedSidebarItem === "configuracoes" ? (
