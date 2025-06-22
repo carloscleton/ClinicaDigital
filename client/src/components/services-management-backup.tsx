@@ -17,7 +17,7 @@ import { z } from "zod";
 import { Stethoscope, Plus, Edit, Trash2, DollarSign, RefreshCw, Loader2, CheckCircle, XCircle, Users, TrendingUp, Eye, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Types
+// Service interface for Supabase CAD_Servicos data
 interface SupabaseService {
   id: number;
   servicos: string;
@@ -28,16 +28,17 @@ interface SupabaseService {
   professionalName?: string;
 }
 
+// Professional interface for dropdown
 interface Professional {
   id: number;
   name: string;
   specialty: string;
 }
 
-// Validation schema
+// Form validation schema for services
 const serviceSchema = z.object({
-  servicos: z.string().min(1, "Nome do serviço é obrigatório"),
-  valorServicos: z.number().min(0, "Valor deve ser positivo").optional(),
+  servicos: z.string().min(2, "Nome do serviço deve ter pelo menos 2 caracteres"),
+  valorServicos: z.number().min(0, "Valor deve ser maior ou igual a zero").optional(),
   idProfissional: z.number().optional(),
   id_Empresa: z.number().optional(),
 });
@@ -45,33 +46,51 @@ const serviceSchema = z.object({
 type ServiceFormData = z.infer<typeof serviceSchema>;
 
 export default function ServicesManagement() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<SupabaseService | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grouped" | "detailed">("grouped");
   const [isServicesPopupOpen, setIsServicesPopupOpen] = useState(false);
   const [selectedProfessionalServices, setSelectedProfessionalServices] = useState<SupabaseService[]>([]);
-  const [selectedProfessionalName, setSelectedProfessionalName] = useState("");
+  const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"grouped" | "detailed">("grouped");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  // Fetch services
-  const { data: services = [], isLoading, refetch } = useQuery<SupabaseService[]>({
+  // Fetch services from CAD_Servicos table
+  const { data: services = [], isLoading, error, refetch } = useQuery<SupabaseService[]>({
     queryKey: ["/api/supabase/services"],
-    queryFn: async () => {
-      const response = await fetch("/api/supabase/services");
-      if (!response.ok) throw new Error("Erro ao carregar serviços");
-      return response.json();
-    },
   });
 
-  // Fetch professionals
+  // Fetch professionals for dropdown
   const { data: professionals = [] } = useQuery<Professional[]>({
     queryKey: ["/api/supabase/professionals"],
-    queryFn: async () => {
-      const response = await fetch("/api/supabase/professionals");
-      if (!response.ok) throw new Error("Erro ao carregar profissionais");
+    select: (data: any[]) => data.map(p => ({
+      id: p.id,
+      name: p.name,
+      specialty: p.specialty
+    }))
+  });
+
+  // Test connection mutation
+  const testConnection = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/supabase/test");
+      if (!response.ok) throw new Error("Falha na conexão");
       return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Conexão bem-sucedida",
+        description: "Sistema conectado ao banco de dados",
+      });
+      refetch();
+    },
+    onError: () => {
+      toast({
+        title: "Erro de conexão",
+        description: "Falha ao conectar com o banco de dados",
+        variant: "destructive",
+      });
     },
   });
 
@@ -89,7 +108,6 @@ export default function ServicesManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supabase/services"] });
       setIsAddDialogOpen(false);
-      setEditingService(null);
       toast({
         title: "Serviço adicionado",
         description: "Novo serviço cadastrado com sucesso",
@@ -122,7 +140,7 @@ export default function ServicesManagement() {
       setEditingService(null);
       toast({
         title: "Serviço atualizado",
-        description: "Informações salvas com sucesso",
+        description: "Dados do serviço atualizados com sucesso",
       });
       form.reset();
     },
@@ -148,7 +166,7 @@ export default function ServicesManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/supabase/services"] });
       toast({
         title: "Serviço removido",
-        description: "Serviço excluído com sucesso",
+        description: "Serviço removido do sistema",
       });
     },
     onError: (error: any) => {
@@ -181,21 +199,21 @@ export default function ServicesManagement() {
   const groupedServices = services.reduce((acc, service) => {
     const professionalId = service.idProfissional;
     if (!professionalId) return acc;
-
+    
     if (!acc[professionalId]) {
       acc[professionalId] = {
         professional: professionals.find(p => p.id === professionalId),
         services: [],
-        totalValue: 0
+        totalValue: 0,
       };
     }
-
+    
     acc[professionalId].services.push(service);
     acc[professionalId].totalValue += service.valorServicos || 0;
     return acc;
   }, {} as Record<number, { professional?: Professional; services: SupabaseService[]; totalValue: number }>);
 
-  // Filter services based on selected professional
+  // Filter services by professional
   const filteredServices = selectedProfessional === "all" 
     ? services 
     : services.filter(s => s.idProfissional?.toString() === selectedProfessional);
@@ -228,37 +246,49 @@ export default function ServicesManagement() {
 
   const handleCloseDialog = () => {
     setIsAddDialogOpen(false);
-    setTimeout(() => {
-      setEditingService(null);
-      form.reset({
-        servicos: "",
-        valorServicos: 0,
-        idProfissional: undefined,
-        id_Empresa: 1,
-      });
-    }, 100);
+    setEditingService(null);
+    form.reset({
+      servicos: "",
+      valorServicos: 0,
+      idProfissional: undefined,
+      id_Empresa: 1,
+    });
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando serviços...</span>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <XCircle className="h-4 w-4" />
+        <AlertDescription>
+          Erro ao carregar serviços. Tente novamente.
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Gerenciamento de Serviços</h2>
-          <p className="text-gray-600 dark:text-gray-400">Administração dos serviços médicos oferecidos pela clínica</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+            Gerenciamento de Serviços
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Administração dos serviços médicos oferecidos pela clínica
+          </p>
         </div>
-        
-        <div className="flex flex-wrap gap-2">
-          {/* View Mode Toggle */}
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex gap-2">
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
             <Button
               variant={viewMode === "grouped" ? "default" : "ghost"}
               size="sm"
@@ -278,20 +308,18 @@ export default function ServicesManagement() {
               Detalhado
             </Button>
           </div>
-
-          <Button
+          <Button 
+            onClick={() => testConnection.mutate()} 
             variant="outline"
-            onClick={() => refetch()}
-            disabled={isLoading}
+            disabled={testConnection.isPending}
           >
-            {isLoading ? (
+            {testConnection.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
             )}
             Sincronizar
           </Button>
-          
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
