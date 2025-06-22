@@ -175,7 +175,11 @@ export default function OnlineBookingForm() {
                       <FormItem>
                         <FormLabel>CPF</FormLabel>
                         <FormControl>
-                          <Input placeholder="000.000.000-00" {...field} />
+                          <Input 
+                            placeholder="000.000.000-00" 
+                            {...field} 
+                            value={field.value || ""} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -226,7 +230,11 @@ export default function OnlineBookingForm() {
                     <FormItem>
                       <FormLabel>Data de Nascimento</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input 
+                          type="date" 
+                          {...field} 
+                          value={field.value || ""} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -374,6 +382,7 @@ export default function OnlineBookingForm() {
                             placeholder="Descreva seus sintomas ou motivo da consulta..."
                             className="min-h-[100px]"
                             {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <FormMessage />

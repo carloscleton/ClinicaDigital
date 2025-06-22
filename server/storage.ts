@@ -137,7 +137,8 @@ export class MemStorage implements IStorage {
       const id = this.currentTestimonialId++;
       const testimonial: Testimonial = { 
         ...testimonialData, 
-        id
+        id,
+        rating: testimonialData.rating || 5
       };
       this.testimonials.set(id, testimonial);
     });
@@ -148,12 +149,8 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    for (const user of this.users.values()) {
-      if (user.username === username) {
-        return user;
-      }
-    }
-    return undefined;
+    const users = Array.from(this.users.values());
+    return users.find(user => user.username === username);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -245,7 +242,8 @@ export class MemStorage implements IStorage {
     const id = this.currentTestimonialId++;
     const testimonial: Testimonial = { 
       ...insertTestimonial, 
-      id
+      id,
+      rating: insertTestimonial.rating || 5
     };
     this.testimonials.set(id, testimonial);
     return testimonial;

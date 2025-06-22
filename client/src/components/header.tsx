@@ -5,6 +5,7 @@ import { Menu, X, Phone, Calendar } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import SanMathewsLogo from "@/components/san-mathews-logo";
+import NotificationSystem from "@/components/notification-system";
 
 export default function Header() {
   const [location] = useLocation();
@@ -80,6 +81,7 @@ export default function Header() {
               <Phone className="w-4 h-4 text-green-600" />
               <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">(85) 99408-6263</span>
             </div>
+            {location === "/dashboard" && <NotificationSystem />}
             <div className="hidden sm:block">
               <ThemeToggle />
             </div>
