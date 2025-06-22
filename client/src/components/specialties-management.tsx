@@ -657,7 +657,7 @@ export default function ProfessionalsManagementWithSupabase() {
                       <TableCell>{professional.crm || "—"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm">{professional.experience || "Não informado"}</span>
+                          <span className="text-sm">{professional.experience || ""}</span>
                           <Button
                             variant="ghost"
                             size="sm"
