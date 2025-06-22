@@ -186,9 +186,7 @@ export default function ServicesManagement() {
   // Calculate statistics
   const stats = {
     totalServices: services.length,
-    totalValue: services.reduce((sum, service) => sum + (service.valorServicos || 0), 0),
     professionalCount: new Set(services.filter(s => s.idProfissional).map(s => s.idProfissional)).size,
-    averagePrice: services.length > 0 ? services.reduce((sum, service) => sum + (service.valorServicos || 0), 0) / services.length : 0,
   };
 
   // Filter services by professional
@@ -384,19 +382,7 @@ export default function ServicesManagement() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Valor Total</p>
-                <p className="text-2xl font-bold text-green-600">
-                  R$ {stats.totalValue.toFixed(2)}
-                </p>
-              </div>
-              <DollarSign className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
+
 
         <Card>
           <CardContent className="p-4">
@@ -410,19 +396,7 @@ export default function ServicesManagement() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Preço Médio</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  R$ {stats.averagePrice.toFixed(2)}
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
 
       {/* Professional Filter */}
