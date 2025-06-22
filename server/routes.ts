@@ -192,6 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email,
           CRM,
           atendimentos,
+          Telefone,
           Profissão,
           id_Especialidade,
           CAD_Especialidade(id, Especialidade)
@@ -215,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         crm: prof.CRM || "CRM não informado",
         description: prof.atendimentos ? `Horários: ${prof.atendimentos.split('\n')[0]}` : "",
         experience: prof.atendimentos ? prof.atendimentos : "",
-        phone: "",
+        phone: prof.Telefone || "",
         email: prof.email || ""
       }));
 
@@ -271,7 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         crm: data.CRM || "CRM não informado",
         description: data.atendimentos ? `Horários: ${data.atendimentos.split('\n')[0]}` : "",
         experience: data.atendimentos || "",
-        phone: "",
+        phone: data.Telefone || "",
         email: data.email || ""
       };
 
@@ -311,7 +312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         crm: prof.CRM || "CRM não informado",
         description: prof.atendimentos ? `Horários: ${prof.atendimentos.split('\n')[0]}` : "",
         experience: prof.atendimentos || "",
-        phone: "",
+        phone: prof.Telefone || "",
         email: prof.email || ""
       }));
 
@@ -535,9 +536,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.atendimentos = atendimentos;
       }
       
-      // Add telefone if provided (will only work when column exists in Supabase)
+      // Add telefone if provided (column name is "Telefone" with capital T)
       if (phone !== undefined && phone !== '') {
-        updateData.telefone = phone;
+        updateData.Telefone = phone;
       }
 
       // First update the data
@@ -563,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email,
           CRM,
           atendimentos,
-          telefone,
+          Telefone,
           id_Especialidade,
           CAD_Especialidade(id, Especialidade)
         `)
@@ -587,7 +588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: data.atendimentos ? `Horários: ${data.atendimentos.split('\n')[0]}` : "",
         experience: data.atendimentos || "",
         atendimentos: data.atendimentos || "",
-        phone: data.telefone || "",
+        phone: data.Telefone || "",
         email: data.email || ""
       };
 
