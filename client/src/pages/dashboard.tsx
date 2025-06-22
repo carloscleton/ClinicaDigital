@@ -35,7 +35,7 @@ import SystemConfiguration from "@/components/system-configuration";
 import AppointmentCalendar from "@/components/appointment-calendar";
 import MedicalReports from "@/components/medical-reports";
 import PatientManagement from "@/components/patient-management";
-import SupabaseProfessionalsTest from "@/components/supabase-professionals-test";
+import SpecialtiesManagement from "@/components/specialties-management";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -51,7 +51,6 @@ export default function Dashboard() {
     { id: "especialidades", label: "Especialidades", icon: Heart },
     { id: "servicos", label: "Serviços", icon: Activity },
     { id: "pacientes", label: "Pacientes", icon: Users },
-    { id: "supabase", label: "CAD_Profissional", icon: LayoutDashboard },
     { id: "configuracoes", label: "Configurações", icon: Settings },
   ];
 
@@ -206,8 +205,6 @@ export default function Dashboard() {
             <MedicalReports />
           ) : selectedSidebarItem === "configuracoes" ? (
             <SystemConfiguration />
-          ) : selectedSidebarItem === "supabase" ? (
-            <SupabaseProfessionalsTest />
           ) : selectedSidebarItem === "clinicas" ? (
             <>
               <div className="mb-6">
@@ -233,29 +230,7 @@ export default function Dashboard() {
               </Card>
             </>
           ) : selectedSidebarItem === "especialidades" ? (
-            <>
-              <div className="mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                  Especialidades
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Gestão de especialidades médicas oferecidas
-                </p>
-              </div>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center py-12">
-                    <Heart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      Especialidades Médicas
-                    </h3>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                      Cadastro e configuração das especialidades médicas, procedimentos e tratamentos oferecidos.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
+            <SpecialtiesManagement />
           ) : (
             <>
               {/* Overview Stats */}
