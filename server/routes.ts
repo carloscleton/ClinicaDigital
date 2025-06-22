@@ -490,10 +490,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.atendimentos = atendimentos;
       }
 
-      const { data, error } = await supabase
+      // First update the data
+      const { error: updateError } = await supabase
         .from('CAD_Profissional')
         .update(updateData)
-        .eq('id', id)
+        .eq('id', id);
+
+      if (updateError) {
+        console.error('Erro ao atualizar profissional:', updateError);
+        return res.status(500).json({ 
+          message: "Erro ao atualizar profissional",
+          error: updateError.message 
+        });
+      }
+
+      // Then fetch the updated data
+      const { data, error } = await supabase
+        .from('CAD_Profissional')
         .select(`
           id,
           Profissional,
@@ -503,12 +516,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id_Especialidade,
           CAD_Especialidade(id, Especialidade)
         `)
+        .eq('id', id)
         .single();
 
       if (error) {
-        console.error('Erro ao atualizar profissional:', error);
+        console.error('Erro ao buscar profissional atualizado:', error);
         return res.status(500).json({ 
-          message: "Erro ao atualizar profissional",
+          message: "Erro ao buscar dados atualizados",
           error: error.message 
         });
       }
