@@ -464,6 +464,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supabase CAD_Servicos endpoints
+  
+  // Get all services from CAD_Servicos with professional relationship
+  app.get("/api/supabase/services", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('CAD_Servicos')
+        .select(`
+          id,
+          servicos,
+          valorServicos,
+          id_Empresa,
+          idProfissional,
+          created_at,
+          CAD_Profissional(id, Profissional)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar serviços do Supabase:', error);
+        return res.status(500).json({ 
+          message: "Erro ao conectar com Supabase",
+          error: error.message 
+        });
+      }
+
+      // Format services data
+      const formattedServices = (data || []).map((service: any) => ({
+        id: service.id,
+        servicos: service.servicos || "Serviço não informado",
+        valorServicos: service.valorServicos || 0,
+        id_Empresa: service.id_Empresa,
+        idProfissional: service.idProfissional,
+        created_at: service.created_at,
+        professionalName: service.CAD_Profissional?.Profissional || null
+      }));
+
+      res.json(formattedServices);
+    } catch (error) {
+      console.error("Erro na conexão com Supabase:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Create new service in CAD_Servicos
+  app.post("/api/supabase/services", async (req, res) => {
+    try {
+      const { servicos, valorServicos, idProfissional, id_Empresa } = req.body;
+
+      const { data, error } = await supabase
+        .from('CAD_Servicos')
+        .insert([{
+          servicos,
+          valorServicos: valorServicos || null,
+          idProfissional: idProfissional || null,
+          id_Empresa: id_Empresa || 1
+        }])
+        .select(`
+          id,
+          servicos,
+          valorServicos,
+          id_Empresa,
+          idProfissional,
+          created_at,
+          CAD_Profissional(id, Profissional)
+        `)
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar serviço no Supabase:', error);
+        return res.status(500).json({ 
+          message: "Erro ao criar serviço",
+          error: error.message 
+        });
+      }
+
+      const formattedService = {
+        id: data.id,
+        servicos: data.servicos,
+        valorServicos: data.valorServicos || 0,
+        id_Empresa: data.id_Empresa,
+        idProfissional: data.idProfissional,
+        created_at: data.created_at,
+        professionalName: data.CAD_Profissional?.Profissional || null
+      };
+
+      res.json(formattedService);
+    } catch (error) {
+      console.error("Erro ao criar serviço:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Update service in CAD_Servicos
+  app.put("/api/supabase/services/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { servicos, valorServicos, idProfissional, id_Empresa } = req.body;
+
+      const { data, error } = await supabase
+        .from('CAD_Servicos')
+        .update({
+          servicos,
+          valorServicos: valorServicos || null,
+          idProfissional: idProfissional || null,
+          id_Empresa: id_Empresa || 1
+        })
+        .eq('id', id)
+        .select(`
+          id,
+          servicos,
+          valorServicos,
+          id_Empresa,
+          idProfissional,
+          created_at,
+          CAD_Profissional(id, Profissional)
+        `)
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar serviço no Supabase:', error);
+        return res.status(500).json({ 
+          message: "Erro ao atualizar serviço",
+          error: error.message 
+        });
+      }
+
+      const formattedService = {
+        id: data.id,
+        servicos: data.servicos,
+        valorServicos: data.valorServicos || 0,
+        id_Empresa: data.id_Empresa,
+        idProfissional: data.idProfissional,
+        created_at: data.created_at,
+        professionalName: data.CAD_Profissional?.Profissional || null
+      };
+
+      res.json(formattedService);
+    } catch (error) {
+      console.error("Erro ao atualizar serviço:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Delete service from CAD_Servicos
+  app.delete("/api/supabase/services/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+
+      const { error } = await supabase
+        .from('CAD_Servicos')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Erro ao deletar serviço do Supabase:', error);
+        return res.status(500).json({ 
+          message: "Erro ao deletar serviço",
+          error: error.message 
+        });
+      }
+
+      res.json({ message: "Serviço removido com sucesso" });
+    } catch (error) {
+      console.error("Erro ao deletar serviço:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
   // Supabase CAD_Especialidade endpoints
   
   // Get all specialties from CAD_Especialidade table
