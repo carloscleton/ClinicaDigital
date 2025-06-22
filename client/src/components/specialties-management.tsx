@@ -478,7 +478,7 @@ export default function ProfessionalsManagementWithSupabase() {
                       id="phone"
                       value={form.watch("phone") || ""}
                       onChange={(value) => form.setValue("phone", value)}
-                      placeholder="55(84) 9 9807-1213"
+                      placeholder="55(84) 9 99807-1213"
                     />
                   </div>
 
