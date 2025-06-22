@@ -71,7 +71,7 @@ const specialtiesList = [
   "Patologia"
 ];
 
-export default function SpecialtiesManagement() {
+export default function ProfessionalsManagementWithSupabase() {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingProfessional, setEditingProfessional] = useState<SupabaseProfessional | null>(null);
@@ -265,10 +265,10 @@ export default function SpecialtiesManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            Especialidades e Profissionais
+            Profissionais da Clínica
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Gerencie especialidades médicas e profissionais da clínica
+            Gerenciamento completo dos profissionais e suas especialidades
           </p>
         </div>
         <div className="flex gap-2">
