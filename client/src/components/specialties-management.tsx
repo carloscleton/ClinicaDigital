@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Heart, Plus, Edit, Trash2, Users, RefreshCw, Loader2, CheckCircle, XCircle, Database, UserCheck, Activity, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 
 // Professional interface for Supabase data
@@ -473,10 +474,11 @@ export default function ProfessionalsManagementWithSupabase() {
                   </div>
                   <div>
                     <Label htmlFor="phone">Telefone</Label>
-                    <Input
+                    <PhoneInput
                       id="phone"
-                      {...form.register("phone")}
-                      placeholder="(85) 99999-9999"
+                      value={form.watch("phone") || ""}
+                      onChange={(value) => form.setValue("phone", value)}
+                      placeholder="55(84) 9 9807-1213"
                     />
                   </div>
 
