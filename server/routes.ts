@@ -197,15 +197,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Convert to format compatible with current system
+      // Convert to format compatible with current system using correct Supabase column names
       const formattedProfessionals = (data || []).map((prof: any) => ({
         id: prof.id,
-        name: prof.nome || prof.name || "Nome não informado",
-        specialty: prof.especialidade || prof.specialty || "Especialidade não informada",
-        crm: prof.crm || "CRM não informado",
-        description: prof.descricao || prof.description || "",
-        experience: prof.experiencia || prof.experience || "",
-        phone: prof.telefone || prof.phone || "",
+        name: prof.Profissional || "Nome não informado",
+        specialty: prof.Profissão || "Especialidade não informada", 
+        crm: prof.CRM || "CRM não informado",
+        description: prof.atendimentos ? `Horários: ${prof.atendimentos.split('\n')[0]}` : "",
+        experience: prof.atendimentos ? prof.atendimentos : "",
+        phone: "",
         email: prof.email || ""
       }));
 
@@ -237,11 +237,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const formattedProfessional = {
         id: data.id,
-        name: data.nome || data.name || "Nome não informado",
-        specialty: data.especialidade || data.specialty || "Especialidade não informada",
-        crm: data.crm || "CRM não informado",
-        description: data.descricao || data.description || "",
-        experience: data.experiencia || data.experience || ""
+        name: data.Profissional || "Nome não informado",
+        specialty: data.Profissão || "Especialidade não informada",
+        crm: data.CRM || "CRM não informado",
+        description: data.atendimentos ? `Horários: ${data.atendimentos.split('\n')[0]}` : "",
+        experience: data.atendimentos || "",
+        phone: "",
+        email: data.email || ""
       };
 
       res.json(formattedProfessional);
@@ -262,7 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { data, error } = await supabase
         .from('CAD_Profissional')
         .select('*')
-        .eq('especialidade', specialty)
+        .eq('Profissão', specialty)
         .limit(50);
 
       if (error) {
@@ -275,11 +277,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const formattedProfessionals = (data || []).map((prof: any) => ({
         id: prof.id,
-        name: prof.nome || prof.name || "Nome não informado",
-        specialty: prof.especialidade || prof.specialty || "Especialidade não informada",
-        crm: prof.crm || "CRM não informado",
-        description: prof.descricao || prof.description || "",
-        experience: prof.experiencia || prof.experience || ""
+        name: prof.Profissional || "Nome não informado",
+        specialty: prof.Profissão || "Especialidade não informada",
+        crm: prof.CRM || "CRM não informado",
+        description: prof.atendimentos ? `Horários: ${prof.atendimentos.split('\n')[0]}` : "",
+        experience: prof.atendimentos || "",
+        phone: "",
+        email: prof.email || ""
       }));
 
       res.json(formattedProfessionals);
@@ -297,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { data, error } = await supabase
         .from('CAD_Profissional')
-        .select('especialidade')
+        .select('Profissão')
         .limit(100);
 
       if (error) {
@@ -309,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Extract unique specialties
-      const specialties = Array.from(new Set((data || []).map((item: any) => item.especialidade).filter(Boolean)));
+      const specialties = Array.from(new Set((data || []).map((item: any) => item.Profissão).filter(Boolean)));
       res.json(specialties);
     } catch (error) {
       console.error("Erro ao buscar especialidades:", error);
@@ -347,6 +351,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         connected: false,
         message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Debug endpoint to inspect table structure
+  app.get("/api/supabase/debug", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('CAD_Profissional')
+        .select('*')
+        .limit(1);
+
+      if (error) {
+        console.error('Erro ao buscar dados para debug:', error);
+        return res.status(500).json({ 
+          error: error.message 
+        });
+      }
+
+      const structure = data && data.length > 0 ? {
+        availableColumns: Object.keys(data[0]),
+        sampleRecord: data[0],
+        totalFields: Object.keys(data[0]).length
+      } : {
+        message: "Nenhum registro encontrado"
+      };
+
+      res.json(structure);
+    } catch (error) {
+      console.error("Erro no debug:", error);
+      res.status(500).json({ 
         error: error instanceof Error ? error.message : "Erro desconhecido"
       });
     }
