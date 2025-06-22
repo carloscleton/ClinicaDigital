@@ -640,7 +640,6 @@ export default function ProfessionalsManagementWithSupabase() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Especialidade</TableHead>
                     <TableHead>CRM</TableHead>
-                    <TableHead>Experiência</TableHead>
                     <TableHead>Horários</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Ações</TableHead>
@@ -655,19 +654,6 @@ export default function ProfessionalsManagementWithSupabase() {
                         <Badge variant="secondary">{professional.specialty}</Badge>
                       </TableCell>
                       <TableCell>{professional.crm || "—"}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{professional.experience || ""}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditExperience(professional)}
-                            className="h-6 w-6 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                          >
-                            <Edit className="h-3 w-3 text-blue-600" />
-                          </Button>
-                        </div>
-                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span className="text-sm truncate max-w-[120px]">
