@@ -181,12 +181,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Supabase CAD_Profissional endpoints
   
-  // Get all professionals from Supabase
+  // Get all professionals from Supabase with specialty relationship
   app.get("/api/supabase/professionals", async (req, res) => {
     try {
       const { data, error } = await supabase
         .from('CAD_Profissional')
-        .select('*')
+        .select(`
+          id,
+          Profissional,
+          email,
+          CRM,
+          atendimentos,
+          Profissão,
+          id_Especialidade,
+          CAD_Especialidade(id, Especialidade)
+        `)
         .limit(50);
 
       if (error) {
@@ -197,11 +206,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Convert to format compatible with current system using correct Supabase column names
+      // Convert to format compatible with current system using JOIN data
       const formattedProfessionals = (data || []).map((prof: any) => ({
         id: prof.id,
         name: prof.Profissional || "Nome não informado",
-        specialty: prof.Profissão || "Especialidade não informada", 
+        specialty: prof.CAD_Especialidade?.Especialidade || prof.Profissão || "Especialidade não informada",
+        specialtyId: prof.id_Especialidade || null,
         crm: prof.CRM || "CRM não informado",
         description: prof.atendimentos ? `Horários: ${prof.atendimentos.split('\n')[0]}` : "",
         experience: prof.atendimentos ? prof.atendimentos : "",
@@ -235,10 +245,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Profissional não encontrado" });
       }
 
+      // Get specialty name from CAD_Especialidade if id_Especialidade exists
+      let specialtyName = data.Profissão || "Especialidade não informada";
+      if (data.id_Especialidade) {
+        try {
+          const { data: specialtyData, error: specialtyError } = await supabase
+            .from('CAD_Especialidade')
+            .select('Especialidade')
+            .eq('id', data.id_Especialidade)
+            .single();
+          
+          if (!specialtyError && specialtyData) {
+            specialtyName = specialtyData.Especialidade;
+          }
+        } catch (error) {
+          console.log('Erro ao buscar especialidade:', error);
+        }
+      }
+
       const formattedProfessional = {
         id: data.id,
         name: data.Profissional || "Nome não informado",
-        specialty: data.Profissão || "Especialidade não informada",
+        specialty: specialtyName,
+        specialtyId: data.id_Especialidade || null,
         crm: data.CRM || "CRM não informado",
         description: data.atendimentos ? `Horários: ${data.atendimentos.split('\n')[0]}` : "",
         experience: data.atendimentos || "",
@@ -383,6 +412,254 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Erro no debug:", error);
       res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Update professional specialty relationship
+  app.put("/api/supabase/professionals/:id/specialty", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { specialtyId } = req.body;
+
+      const { data, error } = await supabase
+        .from('CAD_Profissional')
+        .update({ id_Especialidade: specialtyId })
+        .eq('id', id)
+        .select(`
+          id,
+          Profissional,
+          email,
+          CRM,
+          id_Especialidade,
+          CAD_Especialidade(id, Especialidade)
+        `)
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar especialidade do profissional:', error);
+        return res.status(500).json({ 
+          message: "Erro ao atualizar especialidade",
+          error: error.message 
+        });
+      }
+
+      const formattedProfessional = {
+        id: data.id,
+        name: data.Profissional || "Nome não informado",
+        specialty: data.CAD_Especialidade?.Especialidade || "Especialidade não informada",
+        specialtyId: data.id_Especialidade,
+        crm: data.CRM || "CRM não informado",
+        email: data.email || ""
+      };
+
+      res.json(formattedProfessional);
+    } catch (error) {
+      console.error("Erro ao atualizar especialidade:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Supabase CAD_Especialidade endpoints
+  
+  // Get all specialties from CAD_Especialidade table
+  app.get("/api/supabase/especialidades", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('CAD_Especialidade')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao buscar especialidades:', error);
+        return res.status(500).json({ 
+          message: "Erro ao buscar especialidades",
+          error: error.message 
+        });
+      }
+
+      const formattedSpecialties = (data || []).map((specialty: any) => ({
+        id: specialty.id,
+        name: specialty.Especialidade || "Especialidade não informada",
+        idEmpresa: specialty.id_Empresa,
+        createdAt: specialty.created_at
+      }));
+
+      res.json(formattedSpecialties);
+    } catch (error) {
+      console.error("Erro ao buscar especialidades:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Get specialty by ID from CAD_Especialidade
+  app.get("/api/supabase/especialidades/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const { data, error } = await supabase
+        .from('CAD_Especialidade')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Erro ao buscar especialidade:', error);
+        return res.status(404).json({ message: "Especialidade não encontrada" });
+      }
+
+      const formattedSpecialty = {
+        id: data.id,
+        name: data.Especialidade || "Especialidade não informada",
+        idEmpresa: data.id_Empresa,
+        createdAt: data.created_at
+      };
+
+      res.json(formattedSpecialty);
+    } catch (error) {
+      console.error("Erro ao buscar especialidade:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Create new specialty in CAD_Especialidade
+  app.post("/api/supabase/especialidades", async (req, res) => {
+    try {
+      const { name, idEmpresa } = req.body;
+
+      if (!name || name.trim() === '') {
+        return res.status(400).json({ message: "Nome da especialidade é obrigatório" });
+      }
+
+      const { data, error } = await supabase
+        .from('CAD_Especialidade')
+        .insert([{
+          Especialidade: name.trim(),
+          id_Empresa: idEmpresa || 1
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar especialidade:', error);
+        return res.status(500).json({ 
+          message: "Erro ao criar especialidade",
+          error: error.message 
+        });
+      }
+
+      const formattedSpecialty = {
+        id: data.id,
+        name: data.Especialidade,
+        idEmpresa: data.id_Empresa,
+        createdAt: data.created_at
+      };
+
+      res.status(201).json(formattedSpecialty);
+    } catch (error) {
+      console.error("Erro ao criar especialidade:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Update specialty in CAD_Especialidade
+  app.put("/api/supabase/especialidades/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { name, idEmpresa } = req.body;
+
+      if (!name || name.trim() === '') {
+        return res.status(400).json({ message: "Nome da especialidade é obrigatório" });
+      }
+
+      const { data, error } = await supabase
+        .from('CAD_Especialidade')
+        .update({
+          Especialidade: name.trim(),
+          id_Empresa: idEmpresa
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar especialidade:', error);
+        return res.status(500).json({ 
+          message: "Erro ao atualizar especialidade",
+          error: error.message 
+        });
+      }
+
+      const formattedSpecialty = {
+        id: data.id,
+        name: data.Especialidade,
+        idEmpresa: data.id_Empresa,
+        createdAt: data.created_at
+      };
+
+      res.json(formattedSpecialty);
+    } catch (error) {
+      console.error("Erro ao atualizar especialidade:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Delete specialty from CAD_Especialidade
+  app.delete("/api/supabase/especialidades/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+
+      // Check if specialty is being used by professionals
+      const { data: professionalsUsingSpecialty, error: checkError } = await supabase
+        .from('CAD_Profissional')
+        .select('id, Profissional')
+        .eq('id_Especialidade', id);
+
+      if (checkError) {
+        console.error('Erro ao verificar uso da especialidade:', checkError);
+      }
+
+      if (professionalsUsingSpecialty && professionalsUsingSpecialty.length > 0) {
+        return res.status(400).json({ 
+          message: `Não é possível excluir esta especialidade pois está sendo usada por ${professionalsUsingSpecialty.length} profissional(is)`,
+          professionals: professionalsUsingSpecialty.map(p => p.Profissional)
+        });
+      }
+
+      const { error } = await supabase
+        .from('CAD_Especialidade')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Erro ao deletar especialidade:', error);
+        return res.status(500).json({ 
+          message: "Erro ao deletar especialidade",
+          error: error.message 
+        });
+      }
+
+      res.json({ message: "Especialidade excluída com sucesso" });
+    } catch (error) {
+      console.error("Erro ao deletar especialidade:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
         error: error instanceof Error ? error.message : "Erro desconhecido"
       });
     }
