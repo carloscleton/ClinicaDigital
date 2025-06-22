@@ -359,37 +359,37 @@ export default function AppointmentsManagement() {
       </Tabs>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-yellow-600">
+          <CardContent className="p-3 sm:p-6 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-yellow-600">
               {appointments.filter(a => a.status === 'pending').length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">Pendentes</div>
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Pendentes</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="p-3 sm:p-6 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">
               {appointments.filter(a => a.status === 'confirmed').length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">Confirmados</div>
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Confirmados</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-blue-600">
+          <CardContent className="p-3 sm:p-6 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">
               {appointments.filter(a => a.status === 'completed').length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">Concluídos</div>
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Concluídos</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-red-600">
+          <CardContent className="p-3 sm:p-6 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-red-600">
               {appointments.filter(a => a.urgency === 'emergency').length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">Emergências</div>
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Emergências</div>
           </CardContent>
         </Card>
       </div>

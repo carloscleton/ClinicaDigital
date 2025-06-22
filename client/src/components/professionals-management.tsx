@@ -319,23 +319,23 @@ export default function ProfessionalsManagement() {
         </Dialog>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {doctors.map((doctor) => (
           <Card key={doctor.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <User className="h-5 w-5 text-blue-600" />
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                    <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">{doctor.name}</CardTitle>
-                    <Badge variant="secondary" className="mt-1">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-base sm:text-lg truncate">{doctor.name}</CardTitle>
+                    <Badge variant="secondary" className="mt-1 text-xs">
                       {doctor.specialty}
                     </Badge>
                   </div>
                 </div>
-                <div className="flex space-x-1">
+                <div className="flex space-x-2 sm:space-x-1 self-end sm:self-start">
                   <Button
                     variant="ghost"
                     size="sm"

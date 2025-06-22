@@ -14,12 +14,12 @@ export default function HeroSection() {
           }}
           className="absolute inset-0"
         />
-        <div className="relative container mx-auto px-4 py-20 lg:py-32">
+        <div className="relative container mx-auto px-3 sm:px-4 py-16 sm:py-20 lg:py-32">
           <div className="max-w-3xl">
-            <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight">
               Cuidando da Sua <span className="text-green-400">Saúde</span> com Excelência
             </h1>
-            <p className="text-xl text-gray-200 mb-8 leading-relaxed">
+            <p className="text-lg sm:text-xl text-gray-200 mb-6 sm:mb-8 leading-relaxed">
               Na San Mathews Clínica e Laboratório, oferecemos atendimento médico de qualidade superior com profissionais especializados e tecnologia de ponta. Sua saúde é nossa prioridade.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">

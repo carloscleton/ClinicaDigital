@@ -89,17 +89,17 @@ export default function OnlineBookingForm() {
   const selectedDoctor = doctors.find(doctor => doctor.id === form.watch("doctorId"));
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
+    <div className="max-w-4xl mx-auto p-3 sm:p-6 space-y-6 sm:space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Agendamento Online
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
           Agende sua consulta ou exame de forma rápida e segura
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Appointment Type Selection */}
         <Card className="lg:col-span-1">
           <CardHeader>
@@ -153,7 +153,7 @@ export default function OnlineBookingForm() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Personal Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="fullName"
@@ -183,7 +183,7 @@ export default function OnlineBookingForm() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="email"
@@ -237,7 +237,7 @@ export default function OnlineBookingForm() {
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">Detalhes do Agendamento</h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="specialty"

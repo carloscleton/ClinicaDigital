@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
   Users, 
   Calendar, 
@@ -24,7 +25,8 @@ import {
   Heart,
   Settings,
   CalendarDays,
-  LayoutDashboard
+  LayoutDashboard,
+  Menu
 } from "lucide-react";
 import type { Doctor, Appointment, Testimonial, ContactMessage } from "@shared/schema";
 import ProfessionalsManagement from "@/components/professionals-management";
@@ -34,6 +36,7 @@ import SystemConfiguration from "@/components/system-configuration";
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedSidebarItem, setSelectedSidebarItem] = useState("agenda");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Sidebar navigation items
   const sidebarItems = [
@@ -102,48 +105,76 @@ export default function Dashboard() {
     );
   }
 
-  return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar Navigation */}
-      <div className="w-80 bg-white dark:bg-gray-950 shadow-lg border-r border-gray-200 dark:border-gray-800">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-6">Navegação</h2>
+  // Sidebar component for reuse
+  const SidebarContent = ({ onItemSelect }: { onItemSelect?: () => void }) => (
+    <div className="p-4 sm:p-6">
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-6">Navegação</h2>
+      
+      <nav className="space-y-2">
+        {sidebarItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = selectedSidebarItem === item.id;
+          const isHighlighted = item.highlight;
           
-          <nav className="space-y-2">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = selectedSidebarItem === item.id;
-              const isHighlighted = item.highlight;
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setSelectedSidebarItem(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                    isActive
-                      ? isHighlighted
-                        ? "bg-blue-600 text-white"
-                        : "bg-blue-50 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
-                      : isHighlighted
-                        ? "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
-                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 ${isActive && isHighlighted ? "text-white" : ""}`} />
-                  <span className="font-medium">{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                setSelectedSidebarItem(item.id);
+                onItemSelect?.();
+              }}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                isActive
+                  ? isHighlighted
+                    ? "bg-blue-600 text-white"
+                    : "bg-blue-50 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
+                  : isHighlighted
+                    ? "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
+                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              }`}
+            >
+              <Icon className={`w-5 h-5 ${isActive && isHighlighted ? "text-white" : ""}`} />
+              <span className="font-medium">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Mobile Header with Menu Button */}
+      <div className="lg:hidden bg-white dark:bg-gray-950 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40">
+        <div className="flex items-center justify-between p-4">
+          <div>
+            <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">Dashboard</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">San Mathews Clínica</p>
+          </div>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-white dark:bg-gray-950">
+              <SidebarContent onItemSelect={() => setIsMobileMenuOpen(false)} />
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 py-8">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Dashboard Administrativo</h1>
+      <div className="flex">
+        {/* Desktop Sidebar Navigation */}
+        <div className="hidden lg:block w-80 bg-white dark:bg-gray-950 shadow-lg border-r border-gray-200 dark:border-gray-800 min-h-screen">
+          <SidebarContent />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 p-4 sm:p-6 lg:p-8">
+          {/* Desktop Header */}
+          <div className="hidden lg:block mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Dashboard Administrativo</h1>
             <p className="text-gray-600 dark:text-gray-400">Visão geral e gerenciamento da San Mathews Clínica e Laboratório</p>
           </div>
 

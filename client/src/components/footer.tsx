@@ -4,18 +4,18 @@ import SanMathewsLogo from "@/components/san-mathews-logo";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-800 dark:bg-gray-950 text-white py-16">
-      <div className="container mx-auto px-4">
-        <div className="grid lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-2">
-            <div className="mb-6">
+    <footer className="bg-gray-800 dark:bg-gray-950 text-white py-8 sm:py-12 lg:py-16">
+      <div className="container mx-auto px-3 sm:px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="sm:col-span-2 lg:col-span-2">
+            <div className="mb-4 sm:mb-6">
               <img 
                 src="/attached_assets/Captura de tela 2025-06-19 130533_1750546625531.png" 
                 alt="San Mathews Clínica e Laboratório" 
-                className="h-16 w-auto object-contain"
+                className="h-12 sm:h-16 w-auto object-contain"
               />
             </div>
-            <p className="text-gray-300 mb-6 leading-relaxed">
+            <p className="text-gray-300 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">
               A San Mathews Clínica e Laboratório está comprometida em oferecer atendimento médico de excelência, 
               combinando tecnologia avançada com o cuidado humanizado que nossos pacientes merecem.
             </p>

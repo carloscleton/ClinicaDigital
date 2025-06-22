@@ -29,18 +29,18 @@ export default function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
-      <nav className="container mx-auto px-4 py-3">
+      <nav className="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
         <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity mr-8">
+          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity mr-2 sm:mr-8">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-sm">S</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-white font-bold text-xs sm:text-sm">S</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-bold text-gray-900 dark:text-white leading-tight whitespace-nowrap">
+                <span className="text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-tight">
                   San Mathews
                 </span>
-                <span className="text-xs text-green-600 dark:text-green-400 leading-tight whitespace-nowrap">
+                <span className="text-xs text-green-600 dark:text-green-400 leading-tight hidden xs:block">
                   Clínica e Laboratório
                 </span>
               </div>
@@ -75,16 +75,18 @@ export default function Header() {
             ))}
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="hidden xl:flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <Phone className="w-4 h-4 text-green-600" />
               <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">(85) 99408-6263</span>
             </div>
-            <ThemeToggle />
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
             <Link href="/login">
               <Button 
                 variant="outline"
-                className="hidden lg:inline-flex border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:border-gray-500 shadow-sm"
+                className="hidden md:inline-flex border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:border-gray-500 shadow-sm"
                 size="sm"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,6 +145,16 @@ export default function Header() {
                   </nav>
                   
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-4">
+                    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Tema</span>
+                      <ThemeToggle />
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <Phone className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">(85) 99408-6263</span>
+                    </div>
+                    
                     <Link href="/login" onClick={() => setIsOpen(false)}>
                       <Button 
                         variant="outline"
