@@ -43,8 +43,6 @@ const professionalSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   specialty: z.string().min(1, "Especialidade é obrigatória"),
   crm: z.string().optional(),
-  description: z.string().optional(),
-  experience: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   atendimentos: z.string().optional(),
@@ -258,8 +256,6 @@ export default function ProfessionalsManagementWithSupabase() {
       name: "",
       specialty: "",
       crm: "",
-      description: "",
-      experience: "",
       phone: "",
       email: "",
       atendimentos: "",
@@ -312,8 +308,6 @@ export default function ProfessionalsManagementWithSupabase() {
       name: professional.name,
       specialty: professional.specialty,
       crm: professional.crm || "",
-      description: professional.description || "",
-      experience: professional.experience || "",
       phone: professional.phone || "",
       email: professional.email || "",
       atendimentos: professional.atendimentos || "",
@@ -324,7 +318,14 @@ export default function ProfessionalsManagementWithSupabase() {
   const handleCloseDialog = () => {
     setIsAddDialogOpen(false);
     setEditingProfessional(null);
-    form.reset();
+    form.reset({
+      name: "",
+      specialty: "",
+      crm: "",
+      phone: "",
+      email: "",
+      atendimentos: "",
+    });
   };
 
   const handleEditExperience = (professional: SupabaseProfessional) => {
@@ -499,8 +500,9 @@ Sábado: 9h00 às 13h00
 Domingo: ❌ Fechado
 Duração da Consulta: 15 Minutos (Obrigatório)
 Intervalo entre Pacientes para atendimento: 5 minutos"
-                    className="font-mono text-sm mt-2"
+                    className="font-mono text-sm mt-2 resize-none"
                     rows={10}
+                    disabled={false}
                   />
                   <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs text-green-700 dark:text-green-300">
                     💡 Configure os horários de atendimento do profissional com duração de consultas e intervalos
