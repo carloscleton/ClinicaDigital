@@ -10,10 +10,10 @@ interface PhoneInputProps {
   disabled?: boolean;
 }
 
-export function PhoneInput({ value = "", onChange, placeholder = "55(84) 9 99807-1213", className, id, disabled }: PhoneInputProps) {
+export function PhoneInput({ value = "", onChange, placeholder = "55(84) 9 9807-1213", className, id, disabled }: PhoneInputProps) {
   const [displayValue, setDisplayValue] = useState("");
 
-  // Format number for display: 5584998071213 -> 55(84) 9 99807-1213
+  // Format number for display: 5584998071213 -> 55(84) 9 9807-1213
   const formatPhoneDisplay = (rawValue: string): string => {
     // Remove all non-digits
     let digits = rawValue.replace(/\D/g, "");
@@ -30,10 +30,10 @@ export function PhoneInput({ value = "", onChange, placeholder = "55(84) 9 99807
     if (digits.length <= 2) return digits;
     if (digits.length <= 4) return `${digits.slice(0, 2)}(${digits.slice(2)}`;
     if (digits.length <= 5) return `${digits.slice(0, 2)}(${digits.slice(2, 4)}) ${digits.slice(4)}`;
-    if (digits.length <= 10) return `${digits.slice(0, 2)}(${digits.slice(2, 4)}) ${digits.slice(4, 5)} ${digits.slice(5)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 2)}(${digits.slice(2, 4)}) ${digits.slice(4, 5)} ${digits.slice(5)}`;
     
-    // Full format: 55(84) 9 99807-1213
-    return `${digits.slice(0, 2)}(${digits.slice(2, 4)}) ${digits.slice(4, 5)} ${digits.slice(5, 10)}-${digits.slice(10)}`;
+    // Full format: 55(84) 9 9807-1213
+    return `${digits.slice(0, 2)}(${digits.slice(2, 4)}) ${digits.slice(4, 5)} ${digits.slice(5, 9)}-${digits.slice(9)}`;
   };
 
   // Extract raw digits from formatted string
