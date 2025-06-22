@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Heart, Plus, Edit, Trash2, Users, RefreshCw, Loader2, CheckCircle, XCircle, Database, UserCheck, Activity } from "lucide-react";
+import { Heart, Plus, Edit, Trash2, Users, RefreshCw, Loader2, CheckCircle, XCircle, Database, UserCheck, Activity, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -28,6 +28,7 @@ interface SupabaseProfessional {
   experience: string;
   phone: string;
   email: string;
+  atendimentos: string;
 }
 
 // Statistics interface
@@ -53,8 +54,14 @@ const experienceSchema = z.object({
   experience: z.string().min(1, "Experiência não pode estar vazia"),
 });
 
+// Schema específico para alterar apenas os horários de atendimento
+const scheduleSchema = z.object({
+  atendimentos: z.string().min(1, "Informações de atendimento são obrigatórias"),
+});
+
 type ProfessionalFormData = z.infer<typeof professionalSchema>;
 type ExperienceFormData = z.infer<typeof experienceSchema>;
+type ScheduleFormData = z.infer<typeof scheduleSchema>;
 
 
 
@@ -64,6 +71,8 @@ export default function ProfessionalsManagementWithSupabase() {
   const [editingProfessional, setEditingProfessional] = useState<SupabaseProfessional | null>(null);
   const [isExperienceDialogOpen, setIsExperienceDialogOpen] = useState(false);
   const [editingExperience, setEditingExperience] = useState<SupabaseProfessional | null>(null);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<SupabaseProfessional | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -185,6 +194,36 @@ export default function ProfessionalsManagementWithSupabase() {
     },
   });
 
+  // Update schedule only mutation
+  const updateSchedule = useMutation({
+    mutationFn: async ({ id, atendimentos }: { id: number; atendimentos: string }) => {
+      const response = await fetch(`/api/supabase/professionals/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ atendimentos }),
+      });
+      if (!response.ok) throw new Error("Erro ao atualizar horários");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
+      setIsScheduleDialogOpen(false);
+      setEditingSchedule(null);
+      scheduleForm.reset();
+      toast({
+        title: "Horários atualizados",
+        description: "Horários de atendimento atualizados com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar horários",
+        description: error.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete professional mutation
   const deleteProfessional = useMutation({
     mutationFn: async (id: number) => {
@@ -230,6 +269,14 @@ export default function ProfessionalsManagementWithSupabase() {
     resolver: zodResolver(experienceSchema),
     defaultValues: {
       experience: "",
+    },
+  });
+
+  // Form setup for schedule only
+  const scheduleForm = useForm<ScheduleFormData>({
+    resolver: zodResolver(scheduleSchema),
+    defaultValues: {
+      atendimentos: "",
     },
   });
 
@@ -294,6 +341,27 @@ export default function ProfessionalsManagementWithSupabase() {
       updateExperience.mutate({ 
         id: editingExperience.id, 
         experience: data.experience 
+      });
+    }
+  };
+
+  const handleEditSchedule = (professional: SupabaseProfessional) => {
+    setEditingSchedule(professional);
+    scheduleForm.reset({ atendimentos: professional.atendimentos || "" });
+    setIsScheduleDialogOpen(true);
+  };
+
+  const handleCloseScheduleDialog = () => {
+    setIsScheduleDialogOpen(false);
+    setEditingSchedule(null);
+    scheduleForm.reset();
+  };
+
+  const onScheduleSubmit = (data: ScheduleFormData) => {
+    if (editingSchedule) {
+      updateSchedule.mutate({ 
+        id: editingSchedule.id, 
+        atendimentos: data.atendimentos 
       });
     }
   };
@@ -573,6 +641,7 @@ export default function ProfessionalsManagementWithSupabase() {
                     <TableHead>Especialidade</TableHead>
                     <TableHead>CRM</TableHead>
                     <TableHead>Experiência</TableHead>
+                    <TableHead>Horários</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -596,6 +665,24 @@ export default function ProfessionalsManagementWithSupabase() {
                             className="h-6 w-6 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                           >
                             <Edit className="h-3 w-3 text-blue-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm truncate max-w-[120px]">
+                            {professional.atendimentos ? 
+                              professional.atendimentos.split('\n')[0] + '...' : 
+                              "Não configurado"
+                            }
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditSchedule(professional)}
+                            className="h-6 w-6 p-0 hover:bg-green-50 dark:hover:bg-green-900/20"
+                          >
+                            <Clock className="h-3 w-3 text-green-600" />
                           </Button>
                         </div>
                       </TableCell>
@@ -693,6 +780,89 @@ export default function ProfessionalsManagementWithSupabase() {
                     </>
                   ) : (
                     "Atualizar"
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Edit Dialog */}
+      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-green-600" />
+              Horários de Atendimento
+            </DialogTitle>
+          </DialogHeader>
+          {editingSchedule && (
+            <form onSubmit={scheduleForm.handleSubmit(onScheduleSubmit)} className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Profissional</Label>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  {editingSchedule.name} - {editingSchedule.specialty}
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="schedule-edit">Configuração de Horários</Label>
+                <Textarea
+                  id="schedule-edit"
+                  {...scheduleForm.register("atendimentos")}
+                  placeholder="🕒 Horário de Atendimento - para uso interno do sistema de marcação
+Segunda: 8h:00 às 13h00
+Terça:  14h:00 às 18h00
+Quarta: 8h:00 às 18h00
+Quinta: 8h:00 às 18h00
+Sexta:  8h:00 às 18h00
+Sábado:  9h00 às 13h00
+Domingo: ❌ Fechado
+Duração da Consulta: 15 Minutos (Obrigatório)
+Intervalo entre Pacientes para atendimento: 5 minutos"
+                  className="mt-1 min-h-[300px] font-mono text-sm"
+                  rows={15}
+                />
+                {scheduleForm.formState.errors.atendimentos && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {scheduleForm.formState.errors.atendimentos.message}
+                  </p>
+                )}
+                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                    💡 Dicas para configuração:
+                  </h4>
+                  <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Use formato: "Dia: Hora início às Hora fim"</li>
+                    <li>• Para dias fechados use: "Dia: ❌ Fechado"</li>
+                    <li>• Defina duração da consulta e intervalos</li>
+                    <li>• Inclua intervalo para almoço se necessário</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleCloseScheduleDialog}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateSchedule.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {updateSchedule.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Atualizando...
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-4 w-4 mr-2" />
+                      Atualizar Horários
+                    </>
                   )}
                 </Button>
               </div>

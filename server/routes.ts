@@ -464,6 +464,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update professional data (experience, schedule, etc.)
+  app.put("/api/supabase/professionals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { experience, atendimentos, ...otherData } = req.body;
+
+      // Build update object based on what fields are provided
+      const updateData: any = {};
+      
+      if (experience !== undefined) {
+        updateData.atendimentos = experience; // Using atendimentos for experience
+      }
+      
+      if (atendimentos !== undefined) {
+        updateData.atendimentos = atendimentos; // Direct schedule update
+      }
+
+      // Add other fields if provided
+      Object.keys(otherData).forEach(key => {
+        if (otherData[key] !== undefined) {
+          updateData[key] = otherData[key];
+        }
+      });
+
+      const { data, error } = await supabase
+        .from('CAD_Profissional')
+        .update(updateData)
+        .eq('id', id)
+        .select(`
+          id,
+          Profissional,
+          email,
+          CRM,
+          atendimentos,
+          id_Especialidade,
+          CAD_Especialidade(id, Especialidade)
+        `)
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar profissional:', error);
+        return res.status(500).json({ 
+          message: "Erro ao atualizar profissional",
+          error: error.message 
+        });
+      }
+
+      const formattedProfessional = {
+        id: data.id,
+        name: data.Profissional || "Nome não informado",
+        specialty: data.CAD_Especialidade?.Especialidade || "Especialidade não informada",
+        specialtyId: data.id_Especialidade,
+        crm: data.CRM || "CRM não informado",
+        description: data.atendimentos ? `Horários: ${data.atendimentos.split('\n')[0]}` : "",
+        experience: data.atendimentos || "",
+        atendimentos: data.atendimentos || "",
+        phone: "",
+        email: data.email || ""
+      };
+
+      res.json(formattedProfessional);
+    } catch (error) {
+      console.error("Erro ao atualizar profissional:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
   // Supabase CAD_Servicos endpoints
   
   // Get all services from CAD_Servicos with professional relationship
