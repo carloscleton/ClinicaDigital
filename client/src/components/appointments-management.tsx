@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   Calendar, 
   Clock, 
@@ -183,18 +184,43 @@ export default function AppointmentsManagement() {
                   <CheckCircle className="w-4 h-4 mr-1" />
                   Confirmar
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-red-600 border-red-200 hover:bg-red-50"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleStatusUpdate(appointment.id, 'cancelled');
-                  }}
-                >
-                  <XCircle className="w-4 h-4 mr-1" />
-                  Cancelar
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Cancelar
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar Cancelamento</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja cancelar o agendamento de <strong>{appointment.fullName}</strong> marcado para{" "}
+                        <strong>{new Date(appointment.preferredDate).toLocaleDateString('pt-BR')}</strong> às{" "}
+                        <strong>{appointment.preferredTime}</strong>?
+                        <br /><br />
+                        Esta ação mudará o status do agendamento para "Cancelado" e notificará o paciente.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Manter Agendamento</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusUpdate(appointment.id, 'cancelled');
+                        }}
+                        className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                      >
+                        Cancelar Agendamento
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             )}
             {appointment.status === 'confirmed' && (
