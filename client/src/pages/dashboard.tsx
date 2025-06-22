@@ -48,7 +48,7 @@ export default function Dashboard() {
   // Sidebar navigation items
   const sidebarItems = [
     { id: "agenda", label: "Agenda Semanal", icon: CalendarDays, highlight: true },
-    { id: "agendamentos", label: "Agendamentos", icon: Calendar },
+
     { id: "clinicas", label: "Clínicas", icon: Building2 },
     { id: "profissionais", label: "Profissionais", icon: UserCheck },
     { id: "especialidades", label: "Especialidades", icon: Heart },
@@ -198,8 +198,7 @@ export default function Dashboard() {
               </div>
               <AppointmentCalendar />
             </>
-          ) : selectedSidebarItem === "agendamentos" ? (
-            <AppointmentsManagement />
+
           ) : selectedSidebarItem === "profissionais" ? (
             <ProfessionalsManagementWithSupabase />
           ) : selectedSidebarItem === "pacientes" ? (
@@ -252,20 +251,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-4 lg:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate">Agendamentos</p>
-                    <p className="text-2xl lg:text-3xl font-bold text-green-600 dark:text-green-400">{stats.totalAppointments}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{stats.pendingAppointments} pendentes</p>
-                  </div>
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
-                    <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-green-600 dark:text-green-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
 
             <Card className="hover:shadow-lg transition-shadow">
               <CardContent className="p-4 lg:p-6">
@@ -300,10 +286,10 @@ export default function Dashboard() {
 
           {/* Main Dashboard Tabs */}
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4 mb-6">
+            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3 mb-6">
               <TabsTrigger value="overview" className="text-xs sm:text-sm">Visão Geral</TabsTrigger>
               <TabsTrigger value="doctors" className="text-xs sm:text-sm">Médicos</TabsTrigger>
-              <TabsTrigger value="appointments" className="text-xs sm:text-sm">Agendamentos</TabsTrigger>
+
               <TabsTrigger value="feedback" className="text-xs sm:text-sm">Feedback</TabsTrigger>
             </TabsList>
 
@@ -342,15 +328,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Novos agendamentos hoje</p>
-                        <p className="text-xs text-gray-500">3 consultas marcadas</p>
-                      </div>
-                    </div>
+
                     
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -405,75 +383,7 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
-          {/* Appointments Tab */}
-          <TabsContent value="appointments" className="space-y-6">
-            <div className="grid lg:grid-cols-3 gap-6 mb-6">
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Clock className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-yellow-600">{stats.pendingAppointments}</p>
-                  <p className="text-sm text-gray-600">Pendentes</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-green-600">{stats.confirmedAppointments}</p>
-                  <p className="text-sm text-gray-600">Confirmados</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Calendar className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-blue-600">{stats.totalAppointments}</p>
-                  <p className="text-sm text-gray-600">Total</p>
-                </CardContent>
-              </Card>
-            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Agendamentos Recentes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {appointments?.slice(0, 10).map((appointment) => (
-                    <div key={appointment.id} className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors space-y-3 lg:space-y-0">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-800 truncate">{appointment.fullName}</h3>
-                        <p className="text-sm text-gray-600 truncate">{appointment.specialty}</p>
-                        <div className="flex flex-col sm:flex-row sm:items-center text-xs text-gray-500 space-y-1 sm:space-y-0 sm:space-x-4">
-                          <div className="flex items-center">
-                            <Phone className="w-3 h-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">{appointment.phone}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">{appointment.email}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-row lg:flex-col items-start lg:items-end justify-between lg:justify-start lg:text-right space-x-2 lg:space-x-0 lg:space-y-2">
-                        <p className="text-sm font-medium text-gray-700 truncate">{appointment.preferredDate}</p>
-                        <Badge 
-                          variant={appointment.status === "pending" ? "secondary" : "default"}
-                          className={
-                            appointment.status === "pending" 
-                              ? "bg-yellow-100 text-yellow-800 flex-shrink-0" 
-                              : "bg-green-100 text-green-800 flex-shrink-0"
-                          }
-                        >
-                          {appointment.status === "pending" ? "Pendente" : "Confirmado"}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Feedback Tab */}
           <TabsContent value="feedback" className="space-y-6">
