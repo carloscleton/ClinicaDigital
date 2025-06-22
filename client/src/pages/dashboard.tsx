@@ -35,6 +35,7 @@ import SystemConfiguration from "@/components/system-configuration";
 import AppointmentCalendar from "@/components/appointment-calendar";
 import MedicalReports from "@/components/medical-reports";
 import PatientManagement from "@/components/patient-management";
+import SupabaseProfessionalsTest from "@/components/supabase-professionals-test";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -50,6 +51,7 @@ export default function Dashboard() {
     { id: "especialidades", label: "Especialidades", icon: Heart },
     { id: "servicos", label: "Serviços", icon: Activity },
     { id: "pacientes", label: "Pacientes", icon: Users },
+    { id: "supabase", label: "CAD_Profissional", icon: LayoutDashboard },
     { id: "configuracoes", label: "Configurações", icon: Settings },
   ];
 
@@ -204,6 +206,8 @@ export default function Dashboard() {
             <MedicalReports />
           ) : selectedSidebarItem === "configuracoes" ? (
             <SystemConfiguration />
+          ) : selectedSidebarItem === "supabase" ? (
+            <SupabaseProfessionalsTest />
           ) : selectedSidebarItem === "clinicas" ? (
             <>
               <div className="mb-6">
