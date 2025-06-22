@@ -50,26 +50,7 @@ const professionalSchema = z.object({
 
 type ProfessionalFormData = z.infer<typeof professionalSchema>;
 
-const specialtiesList = [
-  "Cardiologista",
-  "Dermatologista", 
-  "Ginecologista",
-  "Clínico Geral",
-  "Ultrassonografia",
-  "Pediatria",
-  "Ortopedia",
-  "Neurologia",
-  "Psiquiatria",
-  "Oftalmologia",
-  "Urologia",
-  "Endocrinologia",
-  "Gastroenterologia",
-  "Pneumologia",
-  "Reumatologia",
-  "Anestesiologia",
-  "Radiologia",
-  "Patologia"
-];
+
 
 export default function ProfessionalsManagementWithSupabase() {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
@@ -83,9 +64,9 @@ export default function ProfessionalsManagementWithSupabase() {
     queryKey: ["/api/supabase/professionals"],
   });
 
-  // Fetch specialties from Supabase
-  const { data: specialties = [], refetch: refetchSpecialties } = useQuery<string[]>({
-    queryKey: ["/api/supabase/specialties"],
+  // Fetch specialties from CAD_Especialidade table
+  const { data: supabaseSpecialties = [], refetch: refetchSpecialties } = useQuery<{id: number, name: string}[]>({
+    queryKey: ["/api/supabase/especialidades"],
   });
 
   // Test connection mutation
@@ -312,14 +293,17 @@ export default function ProfessionalsManagementWithSupabase() {
                   </div>
                   <div>
                     <Label htmlFor="specialty">Especialidade *</Label>
-                    <Select onValueChange={(value) => form.setValue("specialty", value)}>
+                    <Select 
+                      onValueChange={(value) => form.setValue("specialty", value)}
+                      defaultValue={editingProfessional?.specialty || ""}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a especialidade" />
                       </SelectTrigger>
                       <SelectContent>
-                        {specialtiesList.map((specialty) => (
-                          <SelectItem key={specialty} value={specialty}>
-                            {specialty}
+                        {supabaseSpecialties.map((specialty) => (
+                          <SelectItem key={specialty.id} value={specialty.name}>
+                            {specialty.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
