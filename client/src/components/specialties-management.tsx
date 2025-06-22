@@ -481,7 +481,6 @@ export default function ProfessionalsManagementWithSupabase() {
 
                 </div>
                 <div>
-                  <Label htmlFor="description">Descrição</Label>
                   <Textarea
                     id="description"
                     {...form.register("description")}
