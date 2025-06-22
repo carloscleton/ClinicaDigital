@@ -640,7 +640,6 @@ export default function ProfessionalsManagementWithSupabase() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Especialidade</TableHead>
                     <TableHead>CRM</TableHead>
-                    <TableHead>Horários</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -654,24 +653,6 @@ export default function ProfessionalsManagementWithSupabase() {
                         <Badge variant="secondary">{professional.specialty}</Badge>
                       </TableCell>
                       <TableCell>{professional.crm || "—"}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm truncate max-w-[120px]">
-                            {professional.atendimentos ? 
-                              professional.atendimentos.split('\n')[0] + '...' : 
-                              "Não configurado"
-                            }
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditSchedule(professional)}
-                            className="h-6 w-6 p-0 hover:bg-green-50 dark:hover:bg-green-900/20"
-                          >
-                            <Clock className="h-3 w-3 text-green-600" />
-                          </Button>
-                        </div>
-                      </TableCell>
                       <TableCell>{professional.email || "—"}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
