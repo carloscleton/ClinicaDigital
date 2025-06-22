@@ -47,6 +47,7 @@ const professionalSchema = z.object({
   experience: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
+  atendimentos: z.string().optional(),
 });
 
 // Schema específico para alterar apenas a experiência
@@ -261,6 +262,7 @@ export default function ProfessionalsManagementWithSupabase() {
       experience: "",
       phone: "",
       email: "",
+      atendimentos: "",
     },
   });
 
@@ -314,6 +316,7 @@ export default function ProfessionalsManagementWithSupabase() {
       experience: professional.experience || "",
       phone: professional.phone || "",
       email: professional.email || "",
+      atendimentos: professional.atendimentos || "",
     });
     setIsAddDialogOpen(true);
   };
@@ -485,6 +488,31 @@ export default function ProfessionalsManagementWithSupabase() {
                     placeholder="Informações adicionais sobre o profissional"
                     rows={3}
                   />
+                </div>
+                <div>
+                  <Label htmlFor="atendimentos" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-green-600" />
+                    Horários de Atendimento
+                  </Label>
+                  <Textarea
+                    id="atendimentos"
+                    {...form.register("atendimentos")}
+                    placeholder="🕒 Horário de Atendimento - para uso interno do sistema de marcação
+Segunda: 8h:00 às 13h00
+Terça: 14h:00 às 18h00
+Quarta: 8h:00 às 18h00
+Quinta: 8h:00 às 18h00
+Sexta: 8h:00 às 18h00
+Sábado: 9h00 às 13h00
+Domingo: ❌ Fechado
+Duração da Consulta: 15 Minutos (Obrigatório)
+Intervalo entre Pacientes para atendimento: 5 minutos"
+                    className="font-mono text-sm mt-2"
+                    rows={10}
+                  />
+                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs text-green-700 dark:text-green-300">
+                    💡 Configure os horários de atendimento do profissional com duração de consultas e intervalos
+                  </div>
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={handleCloseDialog}>
