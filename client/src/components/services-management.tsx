@@ -310,7 +310,13 @@ export default function ServicesManagement() {
                   </div>
                   <div>
                     <Label htmlFor="idProfissional">Profissional Responsável</Label>
-                    <Select onValueChange={(value) => form.setValue("idProfissional", value ? parseInt(value) : undefined)}>
+                    <Select 
+                      onValueChange={(value) => {
+                        const professionalId = value === "" ? undefined : parseInt(value);
+                        form.setValue("idProfissional", professionalId);
+                      }}
+                      defaultValue={editingService?.idProfissional?.toString() || ""}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o profissional" />
                       </SelectTrigger>
