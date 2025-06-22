@@ -9,6 +9,7 @@ export interface CAD_Profissional {
   experiencia?: string;
   telefone?: string;
   email?: string;
+  atendimentos?: string;
   ativo: boolean;
   created_at?: string;
   updated_at?: string;

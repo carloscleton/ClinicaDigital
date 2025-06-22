@@ -1,6 +1,22 @@
 import { Express } from "express";
 import { supabaseProfessionals } from "../client/src/lib/supabase-professionals";
 
+// Server-side interface for CAD_Profissional with atendimentos field
+interface CAD_Profissional {
+  id: number;
+  nome: string;
+  especialidade: string;
+  crm: string;
+  descricao?: string;
+  experiencia?: string;
+  telefone?: string;
+  email?: string;
+  atendimentos?: string;
+  ativo: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export async function registerSupabaseRoutes(app: Express) {
   
   // Endpoint para buscar todos os profissionais do Supabase
@@ -17,7 +33,8 @@ export async function registerSupabaseRoutes(app: Express) {
         description: prof.descricao || "",
         experience: prof.experiencia || "",
         phone: prof.telefone || "",
-        email: prof.email || ""
+        email: prof.email || "",
+        atendimentos: prof.atendimentos || ""
       }));
       
       res.json(formattedProfessionals);
@@ -48,7 +65,8 @@ export async function registerSupabaseRoutes(app: Express) {
         description: professional.descricao || "",
         experience: professional.experiencia || "",
         phone: professional.telefone || "",
-        email: professional.email || ""
+        email: professional.email || "",
+        atendimentos: professional.atendimentos || ""
       };
       
       res.json(formattedProfessional);
@@ -75,7 +93,8 @@ export async function registerSupabaseRoutes(app: Express) {
         description: prof.descricao || "",
         experience: prof.experiencia || "",
         phone: prof.telefone || "",
-        email: prof.email || ""
+        email: prof.email || "",
+        atendimentos: prof.atendimentos || ""
       }));
       
       res.json(formattedProfessionals);
@@ -157,7 +176,7 @@ export async function registerSupabaseRoutes(app: Express) {
   app.put("/api/supabase/professionals/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { name, specialty, crm, description, experience, phone, email } = req.body;
+      const { name, specialty, crm, description, experience, phone, email, atendimentos } = req.body;
       
       const updatedProfessional = await supabaseProfessionals.updateProfessional(id, {
         nome: name,
@@ -166,7 +185,8 @@ export async function registerSupabaseRoutes(app: Express) {
         descricao: description,
         experiencia: experience,
         telefone: phone,
-        email: email
+        email: email,
+        atendimentos: atendimentos
       });
       
       const formattedProfessional = {
@@ -177,7 +197,8 @@ export async function registerSupabaseRoutes(app: Express) {
         description: updatedProfessional.descricao || "",
         experience: updatedProfessional.experiencia || "",
         phone: updatedProfessional.telefone || "",
-        email: updatedProfessional.email || ""
+        email: updatedProfessional.email || "",
+        atendimentos: updatedProfessional.atendimentos || ""
       };
       
       res.json(formattedProfessional);

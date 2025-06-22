@@ -28,7 +28,7 @@ interface SupabaseProfessional {
   experience: string;
   phone: string;
   email: string;
-  atendimentos: string;
+  atendimentos?: string;
 }
 
 // Statistics interface
@@ -310,7 +310,7 @@ export default function ProfessionalsManagementWithSupabase() {
       crm: professional.crm || "",
       phone: professional.phone || "",
       email: professional.email || "",
-      atendimentos: professional.atendimentos || "",
+      atendimentos: professional.atendimentos || professional.experience || "",
     });
     setIsAddDialogOpen(true);
   };
@@ -351,7 +351,7 @@ export default function ProfessionalsManagementWithSupabase() {
 
   const handleEditSchedule = (professional: SupabaseProfessional) => {
     setEditingSchedule(professional);
-    scheduleForm.reset({ atendimentos: professional.atendimentos || "" });
+    scheduleForm.reset({ atendimentos: professional.atendimentos || professional.experience || "" });
     setIsScheduleDialogOpen(true);
   };
 
