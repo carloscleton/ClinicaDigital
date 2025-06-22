@@ -312,16 +312,20 @@ export default function ServicesManagement() {
                     <Label htmlFor="idProfissional">Profissional Responsável</Label>
                     <Select 
                       onValueChange={(value) => {
-                        const professionalId = value === "" ? undefined : parseInt(value);
+                        const professionalId = value === "none" ? undefined : parseInt(value);
                         form.setValue("idProfissional", professionalId);
                       }}
-                      defaultValue={editingService?.idProfissional?.toString() || ""}
+                      value={
+                        editingService?.idProfissional 
+                          ? editingService.idProfissional.toString()
+                          : "none"
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o profissional" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Nenhum profissional específico</SelectItem>
+                        <SelectItem value="none">Nenhum profissional específico</SelectItem>
                         {professionals.map((professional) => (
                           <SelectItem key={professional.id} value={professional.id.toString()}>
                             {professional.name} - {professional.specialty}
