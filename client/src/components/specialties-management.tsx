@@ -662,6 +662,7 @@ Intervalo entre Pacientes para atendimento: 5 minutos"
                     <TableHead>Nome</TableHead>
                     <TableHead>Especialidade</TableHead>
                     <TableHead>CRM</TableHead>
+                    <TableHead>Telefone</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -675,6 +676,7 @@ Intervalo entre Pacientes para atendimento: 5 minutos"
                         <Badge variant="secondary">{professional.specialty}</Badge>
                       </TableCell>
                       <TableCell>{professional.crm || "—"}</TableCell>
+                      <TableCell>{professional.phone || "—"}</TableCell>
                       <TableCell>{professional.email || "—"}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">

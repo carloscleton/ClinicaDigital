@@ -417,6 +417,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add telefone column to CAD_Profissional table
+  app.post("/api/supabase/add-telefone-column", async (req, res) => {
+    try {
+      // Try to execute the ALTER TABLE command using SQL
+      const { data, error } = await supabase.rpc('exec', {
+        sql: `ALTER TABLE "CAD_Profissional" ADD COLUMN IF NOT EXISTS telefone VARCHAR(20);`
+      });
+
+      if (error) {
+        console.error('Erro ao adicionar coluna telefone:', error);
+        
+        // If RPC doesn't work, provide manual instructions
+        res.status(400).json({
+          success: false,
+          message: "Para adicionar a coluna telefone, acesse o Supabase Dashboard:",
+          instructions: [
+            "1. Vá para https://supabase.com/dashboard",
+            "2. Selecione seu projeto",
+            "3. Vá em Table Editor > CAD_Profissional",
+            "4. Clique em 'Add Column'",
+            "5. Nome: telefone",
+            "6. Tipo: varchar",
+            "7. Tamanho: 20",
+            "8. Nullable: true",
+            "9. Clique em 'Save'"
+          ],
+          error: error.message
+        });
+      } else {
+        res.json({
+          success: true,
+          message: "Coluna 'telefone' adicionada com sucesso à tabela CAD_Profissional!",
+          data
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro ao executar SQL:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        message: "Para adicionar manualmente: Supabase Dashboard > CAD_Profissional > Add Column > telefone (varchar, 20)"
+      });
+    }
+  });
+
   // Update professional specialty relationship
   app.put("/api/supabase/professionals/:id/specialty", async (req, res) => {
     try {
@@ -489,6 +534,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (atendimentos !== undefined) {
         updateData.atendimentos = atendimentos;
       }
+      
+      // Add telefone if provided (will only work when column exists in Supabase)
+      if (phone !== undefined && phone !== '') {
+        updateData.telefone = phone;
+      }
 
       // First update the data
       const { error: updateError } = await supabase
@@ -513,6 +563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email,
           CRM,
           atendimentos,
+          telefone,
           id_Especialidade,
           CAD_Especialidade(id, Especialidade)
         `)
@@ -536,7 +587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: data.atendimentos ? `Horários: ${data.atendimentos.split('\n')[0]}` : "",
         experience: data.atendimentos || "",
         atendimentos: data.atendimentos || "",
-        phone: "",
+        phone: data.telefone || "",
         email: data.email || ""
       };
 
