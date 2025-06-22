@@ -48,7 +48,13 @@ const professionalSchema = z.object({
   email: z.string().email("Email inválido").optional().or(z.literal("")),
 });
 
+// Schema específico para alterar apenas a experiência
+const experienceSchema = z.object({
+  experience: z.string().min(1, "Experiência não pode estar vazia"),
+});
+
 type ProfessionalFormData = z.infer<typeof professionalSchema>;
+type ExperienceFormData = z.infer<typeof experienceSchema>;
 
 
 
@@ -56,6 +62,8 @@ export default function ProfessionalsManagementWithSupabase() {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingProfessional, setEditingProfessional] = useState<SupabaseProfessional | null>(null);
+  const [isExperienceDialogOpen, setIsExperienceDialogOpen] = useState(false);
+  const [editingExperience, setEditingExperience] = useState<SupabaseProfessional | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -147,6 +155,36 @@ export default function ProfessionalsManagementWithSupabase() {
     },
   });
 
+  // Update experience only mutation
+  const updateExperience = useMutation({
+    mutationFn: async ({ id, experience }: { id: number; experience: string }) => {
+      const response = await fetch(`/api/supabase/professionals/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ experience }),
+      });
+      if (!response.ok) throw new Error("Erro ao atualizar experiência");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
+      setIsExperienceDialogOpen(false);
+      setEditingExperience(null);
+      experienceForm.reset();
+      toast({
+        title: "Experiência atualizada",
+        description: "Experiência do profissional atualizada com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar experiência",
+        description: error.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete professional mutation
   const deleteProfessional = useMutation({
     mutationFn: async (id: number) => {
@@ -184,6 +222,14 @@ export default function ProfessionalsManagementWithSupabase() {
       experience: "",
       phone: "",
       email: "",
+    },
+  });
+
+  // Form setup for experience only
+  const experienceForm = useForm<ExperienceFormData>({
+    resolver: zodResolver(experienceSchema),
+    defaultValues: {
+      experience: "",
     },
   });
 
@@ -229,6 +275,27 @@ export default function ProfessionalsManagementWithSupabase() {
     setIsAddDialogOpen(false);
     setEditingProfessional(null);
     form.reset();
+  };
+
+  const handleEditExperience = (professional: SupabaseProfessional) => {
+    setEditingExperience(professional);
+    experienceForm.reset({ experience: professional.experience || "" });
+    setIsExperienceDialogOpen(true);
+  };
+
+  const handleCloseExperienceDialog = () => {
+    setIsExperienceDialogOpen(false);
+    setEditingExperience(null);
+    experienceForm.reset();
+  };
+
+  const onExperienceSubmit = (data: ExperienceFormData) => {
+    if (editingExperience) {
+      updateExperience.mutate({ 
+        id: editingExperience.id, 
+        experience: data.experience 
+      });
+    }
   };
 
   if (isLoading) {
@@ -512,6 +579,7 @@ export default function ProfessionalsManagementWithSupabase() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Especialidade</TableHead>
                     <TableHead>CRM</TableHead>
+                    <TableHead>Experiência</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -525,6 +593,19 @@ export default function ProfessionalsManagementWithSupabase() {
                         <Badge variant="secondary">{professional.specialty}</Badge>
                       </TableCell>
                       <TableCell>{professional.crm || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{professional.experience || "Não informado"}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditExperience(professional)}
+                            className="h-6 w-6 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          >
+                            <Edit className="h-3 w-3 text-blue-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell>{professional.email || "—"}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -570,6 +651,62 @@ export default function ProfessionalsManagementWithSupabase() {
           )}
         </CardContent>
       </Card>
+
+      {/* Experience Edit Dialog */}
+      <Dialog open={isExperienceDialogOpen} onOpenChange={setIsExperienceDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Alterar Experiência</DialogTitle>
+          </DialogHeader>
+          {editingExperience && (
+            <form onSubmit={experienceForm.handleSubmit(onExperienceSubmit)} className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Profissional</Label>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  {editingExperience.name} - {editingExperience.specialty}
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="experience-edit">Experiência</Label>
+                <Input
+                  id="experience-edit"
+                  {...experienceForm.register("experience")}
+                  placeholder="Ex: 10 anos em cardiologia"
+                  className="mt-1"
+                />
+                {experienceForm.formState.errors.experience && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {experienceForm.formState.errors.experience.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleCloseExperienceDialog}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateExperience.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {updateExperience.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Atualizando...
+                    </>
+                  ) : (
+                    "Atualizar"
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
