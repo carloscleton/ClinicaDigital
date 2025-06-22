@@ -1,5 +1,11 @@
 import { Express } from "express";
 import { supabaseProfessionals } from "../client/src/lib/supabase-professionals";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = "https://zdqcyemiwglybvpfczya.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkcWN5ZW1pd2dseWJ2cGZjenlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIxMjcxMjMsImV4cCI6MjA0NzcwMzEyM30.e7_Ywf7hjUQI7TmKrGJayEWlQCNMwksE_N1W9ZwjSQE";
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Server-side interface for CAD_Profissional with atendimentos field
 interface CAD_Profissional {
@@ -228,6 +234,27 @@ export async function registerSupabaseRoutes(app: Express) {
         error: "Erro interno do servidor",
         details: error instanceof Error ? error.message : "Erro desconhecido"
       });
+    }
+  });
+
+  // Patients endpoints for reports
+  app.get("/api/supabase/patients", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("CAD_Clientes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching patients:", error);
+        res.status(500).json({ error: error.message });
+        return;
+      }
+
+      res.json(data || []);
+    } catch (error) {
+      console.error("Error in /api/supabase/patients:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 

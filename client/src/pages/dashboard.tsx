@@ -39,6 +39,7 @@ import ProfessionalsManagementWithSupabase from "@/components/specialties-manage
 import SpecialtiesCRUD from "@/components/specialties-crud";
 import ServicesManagement from "@/components/services-management";
 import PatientsManagement from "@/components/patients-management";
+import ReportsDashboard from "@/components/reports-dashboard";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -48,7 +49,7 @@ export default function Dashboard() {
   // Sidebar navigation items
   const sidebarItems = [
     { id: "agenda", label: "Agenda Semanal", icon: CalendarDays, highlight: true },
-
+    { id: "relatorios", label: "Relatórios", icon: TrendingUp },
     { id: "clinicas", label: "Clínicas", icon: Building2 },
     { id: "profissionais", label: "Profissionais", icon: UserCheck },
     { id: "especialidades", label: "Especialidades", icon: Heart },
@@ -77,52 +78,35 @@ export default function Dashboard() {
   const stats = {
     totalDoctors: doctors?.length || 0,
     totalAppointments: appointments?.length || 0,
-    pendingAppointments: appointments?.filter(apt => apt.status === "pending").length || 0,
-    confirmedAppointments: appointments?.filter(apt => apt.status === "confirmed").length || 0,
     totalTestimonials: testimonials?.length || 0,
-    averageRating: testimonials && testimonials.length > 0 
-      ? testimonials.reduce((acc, t) => acc + t.rating, 0) / testimonials.length 
-      : 0,
     totalContacts: contacts?.length || 0,
-    recentContacts: contacts?.filter(c => 
-      c.createdAt && new Date(c.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
-    ).length || 0
+    pendingAppointments: appointments?.filter(apt => apt.status === "pending")?.length || 0,
+    confirmedAppointments: appointments?.filter(apt => apt.status === "confirmed")?.length || 0,
+    recentContacts: contacts?.filter(contact => {
+      if (!contact.createdAt) return false;
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return new Date(contact.createdAt) > weekAgo;
+    })?.length || 0,
+    averageRating: testimonials?.length 
+      ? (testimonials.reduce((sum, t) => sum + (t.rating || 0), 0) / testimonials.length).toFixed(1)
+      : "0"
   };
 
-  // Group doctors by specialty
-  const doctorsBySpecialty = doctors?.reduce((acc, doctor) => {
-    acc[doctor.specialty] = (acc[doctor.specialty] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>) || {};
-
-  if (doctorsLoading || appointmentsLoading || testimonialsLoading || contactsLoading) {
-    return (
-      <div className="py-20">
-        <div className="container mx-auto px-4 text-center">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-gray-200 h-32 rounded-xl"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Sidebar component for reuse
   const SidebarContent = ({ onItemSelect }: { onItemSelect?: () => void }) => (
-    <div className="p-4 sm:p-6">
-      <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-6">Navegação</h2>
+    <div className="p-6 space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+          Dashboard San Mathews
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Sistema de gerenciamento clínico
+        </p>
+      </div>
       
       <nav className="space-y-2">
         {sidebarItems.map((item) => {
           const Icon = item.icon;
-          const isActive = selectedSidebarItem === item.id;
-          const isHighlighted = item.highlight;
-          
           return (
             <button
               key={item.id}
@@ -130,17 +114,15 @@ export default function Dashboard() {
                 setSelectedSidebarItem(item.id);
                 onItemSelect?.();
               }}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                isActive
-                  ? isHighlighted
-                    ? "bg-blue-600 text-white"
-                    : "bg-blue-50 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
-                  : isHighlighted
-                    ? "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800"
-                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
+                selectedSidebarItem === item.id
+                  ? item.highlight
+                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive && isHighlighted ? "text-white" : ""}`} />
+              <Icon className={`w-5 h-5 ${selectedSidebarItem === item.id && item.highlight ? 'text-blue-600 dark:text-blue-400' : ''}`} />
               <span className="font-medium">{item.label}</span>
             </button>
           );
@@ -198,13 +180,16 @@ export default function Dashboard() {
               </div>
               <AppointmentCalendar />
             </>
-
+          ) : selectedSidebarItem === "relatorios" ? (
+            <ReportsDashboard />
           ) : selectedSidebarItem === "profissionais" ? (
             <ProfessionalsManagementWithSupabase />
           ) : selectedSidebarItem === "pacientes" ? (
             <PatientsManagement />
           ) : selectedSidebarItem === "servicos" ? (
             <ServicesManagement />
+          ) : selectedSidebarItem === "especialidades" ? (
+            <SpecialtiesCRUD />
           ) : selectedSidebarItem === "configuracoes" ? (
             <SystemConfiguration />
           ) : selectedSidebarItem === "clinicas" ? (
@@ -214,141 +199,127 @@ export default function Dashboard() {
                   Clínicas
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Gerenciamento de unidades e filiais
+                  Gerenciamento das unidades e informações das clínicas
                 </p>
               </div>
               <Card>
-                <CardContent className="p-6">
-                  <div className="text-center py-12">
-                    <Building2 className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      Gerenciamento de Clínicas
-                    </h3>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                      Sistema para cadastro e gerenciamento de unidades, filiais e endereços das clínicas.
-                    </p>
+                <CardHeader>
+                  <CardTitle>San Mathews Clínica e Laboratório Ltda</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm">R Vereador Francisco Francilino, 1431 - Centro</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Building2 className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm">Baturité, CE - CEP: 62.760-000</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Phone className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm">55(85)99408-6263</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Mail className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm">georgelucasamaro@hotmail.com</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Badge variant="outline">Ativa</Badge>
                   </div>
                 </CardContent>
               </Card>
             </>
-          ) : selectedSidebarItem === "especialidades" ? (
-            <SpecialtiesCRUD />
           ) : (
             <>
-              {/* Overview Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-4 lg:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate">Total de Médicos</p>
-                    <p className="text-2xl lg:text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.totalDoctors}</p>
-                  </div>
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
-                    <Stethoscope className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        {/* Default Dashboard Overview */}
+        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="doctors">Médicos</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          </TabsList>
 
-
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-4 lg:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate">Avaliação Média</p>
-                    <p className="text-2xl lg:text-3xl font-bold text-yellow-600 dark:text-yellow-400">{stats.averageRating.toFixed(1)}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{stats.totalTestimonials} depoimentos</p>
-                  </div>
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
-                    <Star className="w-5 h-5 lg:w-6 lg:h-6 text-yellow-600 dark:text-yellow-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-4 lg:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate">Mensagens</p>
-                    <p className="text-2xl lg:text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.totalContacts}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{stats.recentContacts} esta semana</p>
-                  </div>
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
-                    <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600 dark:text-purple-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Dashboard Tabs */}
-          <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3 mb-6">
-              <TabsTrigger value="overview" className="text-xs sm:text-sm">Visão Geral</TabsTrigger>
-              <TabsTrigger value="doctors" className="text-xs sm:text-sm">Médicos</TabsTrigger>
-
-              <TabsTrigger value="feedback" className="text-xs sm:text-sm">Feedback</TabsTrigger>
-            </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid lg:grid-cols-2 gap-6">
-              {/* Doctors by Specialty */}
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {/* Statistics Cards */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Activity className="w-5 h-5 mr-2" />
-                    Médicos por Especialidade
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {Object.entries(doctorsBySpecialty)
-                      .sort(([,a], [,b]) => b - a)
-                      .map(([specialty, count]) => (
-                      <div key={specialty} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">{specialty}</span>
-                        <Badge variant="secondary">{count}</Badge>
-                      </div>
-                    ))}
+                <CardContent className="flex flex-row items-center justify-between space-y-0 p-6">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      Total de Médicos
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {stats.totalDoctors}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {stats.totalDoctors} profissionais ativos
+                    </p>
                   </div>
+                  <Users className="h-4 w-4 text-muted-foreground" />
                 </CardContent>
               </Card>
 
-              {/* Recent Activity */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Atividade Recente
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="flex flex-row items-center justify-between space-y-0 p-6">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      Agendamentos
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {stats.totalAppointments}
+                    </p>
+                    <div className="flex space-x-2">
+                      <Badge variant="outline" className="text-xs">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        {stats.confirmedAppointments} confirmados
+                      </Badge>
+                      {stats.pendingAppointments > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {stats.pendingAppointments} pendentes
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardContent>
+              </Card>
 
-                    
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Star className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Novos depoimentos</p>
-                        <p className="text-xs text-gray-500">Avaliação média: {stats.averageRating.toFixed(1)}</p>
-                      </div>
+              <Card>
+                <CardContent className="flex flex-row items-center justify-between space-y-0 p-6">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      Depoimentos
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {stats.totalTestimonials}
+                    </p>
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                      <p className="text-xs text-gray-500">{stats.averageRating} média</p>
                     </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <MessageSquare className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Mensagens de contato</p>
-                        <p className="text-xs text-gray-500">{stats.recentContacts} mensagens esta semana</p>
-                      </div>
-                    </div>
+                  </div>
+                  <Star className="h-4 w-4 text-muted-foreground" />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="flex flex-row items-center justify-between space-y-0 p-6">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      Contatos
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {stats.totalContacts}
+                    </p>
+                    <p className="text-xs text-gray-500">{stats.recentContacts} mensagens esta semana</p>
                   </div>
                 </CardContent>
               </Card>
@@ -383,8 +354,6 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
-
-
           {/* Feedback Tab */}
           <TabsContent value="feedback" className="space-y-6">
             <div className="grid lg:grid-cols-2 gap-6">
@@ -399,19 +368,22 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="space-y-4 max-h-80 overflow-y-auto">
                     {testimonials?.slice(0, 5).map((testimonial) => (
-                      <div key={testimonial.id} className="border-l-4 border-blue-200 pl-4 pr-2">
-                        <div className="flex items-center mb-2">
-                          <div className="flex text-yellow-400">
-                            {[...Array(testimonial.rating)].map((_, i) => (
-                              <Star key={i} className="w-4 h-4 fill-current" />
+                      <div key={testimonial.id} className="border-l-4 border-yellow-200 pl-4 pr-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 space-y-1 sm:space-y-0">
+                          <h4 className="font-semibold text-gray-800 truncate">{testimonial.authorName}</h4>
+                          <div className="flex items-center space-x-1 flex-shrink-0">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < (testimonial.rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                }`}
+                              />
                             ))}
                           </div>
-                          <span className="ml-2 text-sm text-gray-600">{testimonial.rating}.0</span>
                         </div>
-                        <p className="text-sm text-gray-700 mb-2 leading-relaxed">"{testimonial.content}"</p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {testimonial.authorName} - {testimonial.location}
-                        </p>
+                        <p className="text-sm text-gray-700 mb-2 leading-relaxed line-clamp-3">{testimonial.content}</p>
+                        <p className="text-xs text-gray-500 truncate">{testimonial.location}</p>
                       </div>
                     ))}
                   </div>
