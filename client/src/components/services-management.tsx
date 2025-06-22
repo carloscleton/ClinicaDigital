@@ -478,9 +478,9 @@ export default function ServicesManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Profissional</TableHead>
                     <TableHead>Serviço</TableHead>
                     <TableHead>Valor</TableHead>
-                    <TableHead>Profissional</TableHead>
                     <TableHead>Data de Criação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -490,12 +490,6 @@ export default function ServicesManagement() {
                     const professional = professionals.find(p => p.id === service.idProfissional);
                     return (
                       <TableRow key={service.id}>
-                        <TableCell className="font-medium">{service.servicos}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                            R$ {(service.valorServicos || 0).toFixed(2)}
-                          </Badge>
-                        </TableCell>
                         <TableCell>
                           {professional ? (
                             <div>
@@ -505,6 +499,12 @@ export default function ServicesManagement() {
                           ) : (
                             <span className="text-gray-500">Não especificado</span>
                           )}
+                        </TableCell>
+                        <TableCell className="font-medium">{service.servicos}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            R$ {(service.valorServicos || 0).toFixed(2)}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           {new Date(service.created_at).toLocaleDateString('pt-BR')}
