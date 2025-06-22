@@ -480,14 +480,7 @@ export default function ProfessionalsManagementWithSupabase() {
                   </div>
 
                 </div>
-                <div>
-                  <Textarea
-                    id="description"
-                    {...form.register("description")}
-                    placeholder="Informações adicionais sobre o profissional"
-                    rows={3}
-                  />
-                </div>
+
                 <div>
                   <Label htmlFor="atendimentos" className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-green-600" />
