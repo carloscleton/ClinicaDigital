@@ -148,6 +148,7 @@ export default function ProfessionalsManagementWithSupabase() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
       queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
+      setIsAddDialogOpen(false);
       setEditingProfessional(null);
       toast({
         title: "Profissional atualizado",
