@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Stethoscope, Plus, Edit, Trash2, DollarSign, RefreshCw, Loader2, CheckCircle, XCircle, Users, TrendingUp } from "lucide-react";
+import { Stethoscope, Plus, Edit, Trash2, DollarSign, RefreshCw, Loader2, CheckCircle, XCircle, Users, TrendingUp, Eye, List } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Service interface for Supabase CAD_Servicos data
@@ -49,6 +49,10 @@ export default function ServicesManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<SupabaseService | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<string>("all");
+  const [isServicesPopupOpen, setIsServicesPopupOpen] = useState(false);
+  const [selectedProfessionalServices, setSelectedProfessionalServices] = useState<SupabaseService[]>([]);
+  const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"grouped" | "detailed">("grouped");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -60,22 +64,33 @@ export default function ServicesManagement() {
   // Fetch professionals for dropdown
   const { data: professionals = [] } = useQuery<Professional[]>({
     queryKey: ["/api/supabase/professionals"],
+    select: (data: any[]) => data.map(p => ({
+      id: p.id,
+      name: p.name,
+      specialty: p.specialty
+    }))
   });
 
   // Test connection mutation
   const testConnection = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/supabase/test');
+      const response = await fetch("/api/supabase/test");
+      if (!response.ok) throw new Error("Falha na conexão");
       return response.json();
     },
-    onSuccess: (data) => {
-      if (data.connected) {
-        toast({
-          title: "Conexão bem-sucedida",
-          description: "Sistema conectado ao cadastro de serviços",
-        });
-        refetch();
-      }
+    onSuccess: () => {
+      toast({
+        title: "Conexão bem-sucedida",
+        description: "Sistema conectado ao banco de dados",
+      });
+      refetch();
+    },
+    onError: () => {
+      toast({
+        title: "Erro de conexão",
+        description: "Falha ao conectar com o banco de dados",
+        variant: "destructive",
+      });
     },
   });
 
@@ -87,24 +102,21 @@ export default function ServicesManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Erro ao criar serviço");
-      }
+      if (!response.ok) throw new Error("Erro ao criar serviço");
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supabase/services"] });
       setIsAddDialogOpen(false);
       toast({
-        title: "Serviço criado",
+        title: "Serviço adicionado",
         description: "Novo serviço cadastrado com sucesso",
       });
       form.reset();
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao criar serviço",
+        title: "Erro ao adicionar serviço",
         description: error.message || "Tente novamente",
         variant: "destructive",
       });
@@ -119,16 +131,13 @@ export default function ServicesManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Erro ao atualizar serviço");
-      }
+      if (!response.ok) throw new Error("Erro ao atualizar serviço");
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supabase/services"] });
-      setEditingService(null);
       setIsAddDialogOpen(false);
+      setEditingService(null);
       toast({
         title: "Serviço atualizado",
         description: "Dados do serviço atualizados com sucesso",
@@ -150,10 +159,7 @@ export default function ServicesManagement() {
       const response = await fetch(`/api/supabase/services/${id}`, {
         method: "DELETE",
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Erro ao deletar serviço");
-      }
+      if (!response.ok) throw new Error("Erro ao remover serviço");
       return response.json();
     },
     onSuccess: () => {
@@ -189,10 +195,35 @@ export default function ServicesManagement() {
     professionalCount: new Set(services.filter(s => s.idProfissional).map(s => s.idProfissional)).size,
   };
 
+  // Group services by professional
+  const groupedServices = services.reduce((acc, service) => {
+    const professionalId = service.idProfissional;
+    if (!professionalId) return acc;
+    
+    if (!acc[professionalId]) {
+      acc[professionalId] = {
+        professional: professionals.find(p => p.id === professionalId),
+        services: [],
+        totalValue: 0,
+      };
+    }
+    
+    acc[professionalId].services.push(service);
+    acc[professionalId].totalValue += service.valorServicos || 0;
+    return acc;
+  }, {} as Record<number, { professional?: Professional; services: SupabaseService[]; totalValue: number }>);
+
   // Filter services by professional
   const filteredServices = selectedProfessional === "all" 
     ? services 
     : services.filter(s => s.idProfissional?.toString() === selectedProfessional);
+
+  const handleViewServices = (professionalId: number, professionalName: string) => {
+    const professionalServices = services.filter(s => s.idProfissional === professionalId);
+    setSelectedProfessionalServices(professionalServices);
+    setSelectedProfessionalName(professionalName);
+    setIsServicesPopupOpen(true);
+  };
 
   const onSubmit = (data: ServiceFormData) => {
     if (editingService) {
@@ -216,13 +247,18 @@ export default function ServicesManagement() {
   const handleCloseDialog = () => {
     setIsAddDialogOpen(false);
     setEditingService(null);
-    form.reset();
+    form.reset({
+      servicos: "",
+      valorServicos: 0,
+      idProfissional: undefined,
+      id_Empresa: 1,
+    });
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
         <span className="ml-2">Carregando serviços...</span>
       </div>
     );
@@ -233,7 +269,7 @@ export default function ServicesManagement() {
       <Alert variant="destructive">
         <XCircle className="h-4 w-4" />
         <AlertDescription>
-          Erro ao conectar com o sistema de serviços. Tente novamente.
+          Erro ao carregar serviços. Tente novamente.
         </AlertDescription>
       </Alert>
     );
@@ -252,6 +288,26 @@ export default function ServicesManagement() {
           </p>
         </div>
         <div className="flex gap-2">
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
+            <Button
+              variant={viewMode === "grouped" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grouped")}
+              className="rounded-r-none"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Agrupado
+            </Button>
+            <Button
+              variant={viewMode === "detailed" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("detailed")}
+              className="rounded-l-none"
+            >
+              <List className="h-4 w-4 mr-2" />
+              Detalhado
+            </Button>
+          </div>
           <Button 
             onClick={() => testConnection.mutate()} 
             variant="outline"
@@ -287,7 +343,7 @@ export default function ServicesManagement() {
                     <Input
                       id="servicos"
                       {...form.register("servicos")}
-                      placeholder="Ex: Consulta Médica, Ultrassonografia"
+                      placeholder="Ex: Consulta Dermatológica"
                     />
                     {form.formState.errors.servicos && (
                       <p className="text-sm text-red-600">{form.formState.errors.servicos.message}</p>
@@ -307,16 +363,11 @@ export default function ServicesManagement() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="idProfissional">Profissional Responsável</Label>
-                    <Select 
-                      onValueChange={(value) => {
-                        const professionalId = value === "none" ? undefined : parseInt(value);
-                        form.setValue("idProfissional", professionalId);
-                      }}
-                      value={
-                        editingService?.idProfissional 
-                          ? editingService.idProfissional.toString()
-                          : "none"
+                    <Label htmlFor="idProfissional">Profissional</Label>
+                    <Select
+                      value={form.watch("idProfissional")?.toString() || "none"}
+                      onValueChange={(value) => 
+                        form.setValue("idProfissional", value === "none" ? undefined : parseInt(value))
                       }
                     >
                       <SelectTrigger>
@@ -382,8 +433,6 @@ export default function ServicesManagement() {
           </CardContent>
         </Card>
 
-
-
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -395,8 +444,6 @@ export default function ServicesManagement() {
             </div>
           </CardContent>
         </Card>
-
-
       </div>
 
       {/* Professional Filter */}
@@ -442,7 +489,7 @@ export default function ServicesManagement() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredServices.length === 0 ? (
+          {(viewMode === "detailed" ? filteredServices : Object.values(groupedServices)).length === 0 ? (
             <div className="text-center py-8">
               <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">Nenhum serviço encontrado</p>
@@ -453,27 +500,160 @@ export default function ServicesManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Profissional</TableHead>
-                    <TableHead>Serviço</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Data de Criação</TableHead>
-                    <TableHead>Ações</TableHead>
+                    {viewMode === "detailed" ? (
+                      <>
+                        <TableHead>Serviço</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Data de Criação</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </>
+                    ) : (
+                      <>
+                        <TableHead>Quantidade de Serviços</TableHead>
+                        <TableHead>Valor Total</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredServices.map((service) => {
-                    const professional = professionals.find(p => p.id === service.idProfissional);
-                    return (
-                      <TableRow key={service.id}>
+                  {viewMode === "detailed" ? (
+                    // Detailed view - show all services
+                    filteredServices.map((service) => {
+                      const professional = professionals.find(p => p.id === service.idProfissional);
+                      return (
+                        <TableRow key={service.id}>
+                          <TableCell>
+                            {professional ? (
+                              <div>
+                                <div className="font-medium">{professional.name}</div>
+                                <div className="text-sm text-gray-500">{professional.specialty}</div>
+                              </div>
+                            ) : (
+                              <span className="text-gray-500">Não especificado</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">{service.servicos}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              R$ {(service.valorServicos || 0).toFixed(2)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(service.created_at).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(service)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Tem certeza que deseja remover o serviço <strong>{service.servicos}</strong> 
+                                      do sistema? Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteService.mutate(service.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Confirmar Exclusão
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    // Grouped view - show one row per professional
+                    Object.entries(groupedServices).map(([professionalId, group]) => (
+                      <TableRow key={professionalId}>
                         <TableCell>
-                          {professional ? (
+                          {group.professional ? (
                             <div>
-                              <div className="font-medium">{professional.name}</div>
-                              <div className="text-sm text-gray-500">{professional.specialty}</div>
+                              <div className="font-medium">{group.professional.name}</div>
+                              <div className="text-sm text-gray-500">{group.professional.specialty}</div>
                             </div>
                           ) : (
-                            <span className="text-gray-500">Não especificado</span>
+                            <span className="text-gray-500">Profissional não encontrado</span>
                           )}
                         </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {group.services.length} serviço{group.services.length !== 1 ? 's' : ''}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            R$ {group.totalValue.toFixed(2)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewServices(parseInt(professionalId), group.professional?.name || "Profissional")}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver Serviços
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Services Popup Dialog */}
+      <Dialog open={isServicesPopupOpen} onOpenChange={setIsServicesPopupOpen}>
+        <DialogContent className="sm:max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>Serviços de {selectedProfessionalName}</DialogTitle>
+            <DialogDescription>
+              Lista completa dos serviços oferecidos por este profissional
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedProfessionalServices.length === 0 ? (
+              <div className="text-center py-8">
+                <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Nenhum serviço encontrado</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Serviço</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Data de Criação</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedProfessionalServices.map((service) => (
+                      <TableRow key={service.id}>
                         <TableCell className="font-medium">{service.servicos}</TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
@@ -488,7 +668,10 @@ export default function ServicesManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleEdit(service)}
+                              onClick={() => {
+                                handleEdit(service);
+                                setIsServicesPopupOpen(false);
+                              }}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -509,7 +692,10 @@ export default function ServicesManagement() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => deleteService.mutate(service.id)}
+                                    onClick={() => {
+                                      deleteService.mutate(service.id);
+                                      setIsServicesPopupOpen(false);
+                                    }}
                                     className="bg-red-600 hover:bg-red-700"
                                   >
                                     Confirmar Exclusão
@@ -520,14 +706,14 @@ export default function ServicesManagement() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
