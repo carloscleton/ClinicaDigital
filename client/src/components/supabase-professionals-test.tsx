@@ -59,13 +59,13 @@ export default function SupabaseProfessionalsTest() {
   // Fetch professionals from Supabase
   const { data: professionals = [], isLoading, error, refetch } = useQuery<SupabaseProfessional[]>({
     queryKey: ["/api/supabase/professionals"],
-    enabled: false // Don't auto-fetch on mount
+    enabled: true // Auto-fetch on mount to show real data immediately
   });
 
   // Fetch specialties from Supabase
   const { data: specialties = [], isLoading: isLoadingSpecialties, refetch: refetchSpecialties } = useQuery<string[]>({
     queryKey: ["/api/supabase/specialties"],
-    enabled: false
+    enabled: true
   });
 
   useEffect(() => {
@@ -84,10 +84,10 @@ export default function SupabaseProfessionalsTest() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            Conexão Supabase CAD_Profissional
+            Profissionais da Clínica San Mathews
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Teste e visualização dos dados reais dos profissionais da clínica
+            Dados em tempo real dos profissionais cadastrados no sistema
           </p>
         </div>
         <div className="flex gap-2">
@@ -105,14 +105,14 @@ export default function SupabaseProfessionalsTest() {
           </Button>
           <Button 
             onClick={loadProfessionals}
-            disabled={isLoading || !connectionStatus?.connected}
+            disabled={isLoading}
           >
-            {isLoading ? (
+            {isLoading || isLoadingSpecialties ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Database className="h-4 w-4 mr-2" />
             )}
-            Carregar Dados
+            Atualizar Dados
           </Button>
         </div>
       </div>
