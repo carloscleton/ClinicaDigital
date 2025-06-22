@@ -468,10 +468,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/supabase/professionals/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { experience, atendimentos, ...otherData } = req.body;
+      const { name, specialty, crm, email, phone, experience, atendimentos, ...otherData } = req.body;
 
       // Build update object based on what fields are provided
       const updateData: any = {};
+      
+      // Map form fields to Supabase columns
+      if (name !== undefined) {
+        updateData.Profissional = name;
+      }
+      
+      if (crm !== undefined) {
+        updateData.CRM = crm;
+      }
+      
+      if (email !== undefined) {
+        updateData.email = email;
+      }
       
       if (experience !== undefined) {
         updateData.atendimentos = experience; // Using atendimentos for experience

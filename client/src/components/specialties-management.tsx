@@ -138,7 +138,7 @@ export default function ProfessionalsManagementWithSupabase() {
   // Update professional mutation
   const updateProfessional = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: ProfessionalFormData }) => {
-      const response = await fetch(`/api/doctors/${id}`, {
+      const response = await fetch(`/api/supabase/professionals/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
