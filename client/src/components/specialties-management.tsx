@@ -665,6 +665,7 @@ intervalo para o almoço: 12 às 13h00"
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
+                    <TableHead>Foto</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Especialidade</TableHead>
                     <TableHead>CRM</TableHead>
@@ -674,54 +675,82 @@ intervalo para o almoço: 12 às 13h00"
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProfessionals.map((professional) => (
-                    <TableRow key={professional.id}>
-                      <TableCell className="font-medium">{professional.id}</TableCell>
-                      <TableCell>{professional.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{professional.specialty}</Badge>
-                      </TableCell>
-                      <TableCell>{professional.crm || "—"}</TableCell>
-                      <TableCell>{professional.phone || "—"}</TableCell>
-                      <TableCell>{professional.email || "—"}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(professional)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja remover <strong>{professional.name}</strong> 
-                                  ({professional.specialty}) do sistema? Esta ação não pode ser desfeita.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteProfessional.mutate(professional.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Confirmar Exclusão
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredProfessionals.map((professional) => {
+                    // Fotos fictícias para usar na tabela
+                    const doctorPhotos = [
+                      "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=40&h=40&fit=crop&crop=face",
+                      "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=40&h=40&fit=crop&crop=face",
+                      "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=40&h=40&fit=crop&crop=face",
+                      "https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=40&h=40&fit=crop&crop=face",
+                      "https://images.unsplash.com/photo-1594824475720-aabd8effc566?w=40&h=40&fit=crop&crop=face"
+                    ];
+                    const photoIndex = professional.id % doctorPhotos.length;
+                    
+                    return (
+                      <TableRow key={professional.id}>
+                        <TableCell className="font-medium">{professional.id}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center">
+                            <div className="relative">
+                              <img
+                                src={(professional as any).photo || doctorPhotos[photoIndex]}
+                                alt={`Foto de ${professional.name}`}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                              />
+                              {!(professional as any).photo && (
+                                <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-[8px] font-medium">F</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{professional.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{professional.specialty}</Badge>
+                        </TableCell>
+                        <TableCell>{professional.crm || "—"}</TableCell>
+                        <TableCell>{professional.phone || "—"}</TableCell>
+                        <TableCell>{professional.email || "—"}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(professional)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja remover <strong>{professional.name}</strong> 
+                                    ({professional.specialty}) do sistema? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteProfessional.mutate(professional.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Confirmar Exclusão
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
