@@ -64,16 +64,21 @@ export default function SpecialtiesCRUD() {
   // Create specialty mutation
   const createSpecialty = useMutation({
     mutationFn: async (data: SpecialtyFormData) => {
+      console.log("Mutation started with data:", data);
       const response = await fetch("/api/supabase/especialidades", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      console.log("Response status:", response.status);
       if (!response.ok) {
         const errorData = await response.json();
+        console.log("Error response:", errorData);
         throw new Error(errorData.message || "Erro ao criar especialidade");
       }
-      return response.json();
+      const result = await response.json();
+      console.log("Success response:", result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/supabase/especialidades"] });
@@ -163,9 +168,14 @@ export default function SpecialtiesCRUD() {
   });
 
   const onSubmit = (data: SpecialtyFormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("Editing specialty:", editingSpecialty);
+    
     if (editingSpecialty) {
+      console.log("Updating specialty with ID:", editingSpecialty.id);
       updateSpecialty.mutate({ id: editingSpecialty.id, data });
     } else {
+      console.log("Creating new specialty");
       createSpecialty.mutate(data);
     }
   };
@@ -180,9 +190,13 @@ export default function SpecialtiesCRUD() {
   };
 
   const handleCloseDialog = () => {
+    console.log("Closing dialog");
     setIsAddDialogOpen(false);
     setEditingSpecialty(null);
-    form.reset();
+    form.reset({
+      name: "",
+      idEmpresa: 1,
+    });
   };
 
   if (isLoading) {
@@ -221,7 +235,10 @@ export default function SpecialtiesCRUD() {
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={handleCloseDialog}>
             <DialogTrigger asChild>
-              <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Button onClick={() => {
+                console.log("Button clicked - opening dialog");
+                setIsAddDialogOpen(true);
+              }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Especialidade
               </Button>
