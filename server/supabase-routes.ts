@@ -167,18 +167,22 @@ export async function registerSupabaseRoutes(app: Express) {
       
       console.log("Dados recebidos para atualização:", { name, specialty, sexo, crm, phone, email, atendimentos });
       
+      const updateData = {
+        nome: name,
+        especialidade: specialty,
+        sexo: sexo,
+        crm: crm || "",
+        Telefone: phone || "",
+        email: email || "",
+        atendimentos: atendimentos || ""
+      };
+      
+      console.log("Dados para Supabase UPDATE:", updateData);
+      
       // Atualizar profissional na tabela CAD_Profissional
       const { data, error } = await supabase
         .from("CAD_Profissional")
-        .update({
-          nome: name,
-          especialidade: specialty,
-          sexo: sexo,
-          crm: crm || "",
-          Telefone: phone || "",
-          email: email || "",
-          atendimentos: atendimentos || ""
-        })
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
@@ -195,6 +199,9 @@ export async function registerSupabaseRoutes(app: Express) {
         return res.status(404).json({ error: "Profissional não encontrado" });
       }
 
+      console.log("Dados recebidos do Supabase após UPDATE:", data);
+      console.log("Campo sexo do Supabase:", data.sexo);
+      
       // Retornar profissional atualizado no formato esperado
       const formattedProfessional = {
         id: data.id,
@@ -207,6 +214,7 @@ export async function registerSupabaseRoutes(app: Express) {
         atendimentos: data.atendimentos
       };
 
+      console.log("Profissional formatado para envio:", formattedProfessional);
       res.json(formattedProfessional);
     } catch (error) {
       console.error("Erro ao atualizar profissional:", error);
