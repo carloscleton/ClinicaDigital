@@ -323,7 +323,6 @@ export default function SpecialtiesCRUD() {
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Nome da Especialidade</TableHead>
-                    <TableHead>Data de Criação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -333,9 +332,6 @@ export default function SpecialtiesCRUD() {
                       <TableCell className="font-medium">{specialty.id}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">{specialty.name}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(specialty.createdAt).toLocaleDateString('pt-BR')}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
