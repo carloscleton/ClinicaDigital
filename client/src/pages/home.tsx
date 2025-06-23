@@ -288,44 +288,59 @@ export default function Home() {
           {professionalsLoading ? (
             <div className="text-center">Carregando médicos...</div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {supabaseProfessionals?.slice(0, 3).map((professional, index) => {
-                // Array de fotos fictícias para médicos
-                const doctorPhotos = [
-                  "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-                  "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-                  "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-                  "https://images.unsplash.com/photo-1594824949799-9d95d2a82c20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-                  "https://images.unsplash.com/photo-1527613426441-4da17471b66d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-                ];
-                
-                return (
-                  <Card key={professional.id} className="overflow-hidden hover:shadow-xl transition-shadow">
-                    <div className="h-64 overflow-hidden">
-                      <img
-                        src={doctorPhotos[index % doctorPhotos.length]}
-                        alt={`Dr(a). ${professional.name}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">Dr(a). {professional.name}</h3>
-                      <p className="text-blue-600 dark:text-blue-400 font-medium mb-3">{professional.specialty}</p>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                        {professional.experience || "Profissional experiente e qualificado em sua especialidade"}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-500 dark:text-gray-500">
-                          <span>CRM: {professional.crm}</span>
+            <div className="relative">
+              {/* Scroll horizontal container */}
+              <div className="overflow-x-auto pb-4">
+                <div className="flex space-x-6 w-max">
+                  {supabaseProfessionals?.map((professional, index) => {
+                    // Array de fotos fictícias para médicos
+                    const doctorPhotos = [
+                      "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                      "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                      "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                      "https://images.unsplash.com/photo-1594824949799-9d95d2a82c20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                      "https://images.unsplash.com/photo-1527613426441-4da17471b66d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                      "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                      "https://images.unsplash.com/photo-1584467735871-8dd4827d4864?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                    ];
+                    
+                    return (
+                      <Card key={professional.id} className="flex-shrink-0 w-80 overflow-hidden hover:shadow-xl transition-shadow">
+                        <div className="h-64 overflow-hidden">
+                          <img
+                            src={doctorPhotos[index % doctorPhotos.length]}
+                            alt={`Dr(a). ${professional.name}`}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-                        <Button variant="outline" size="sm">
-                          Ver perfil
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                        <CardContent className="p-6">
+                          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">Dr(a). {professional.name}</h3>
+                          <p className="text-blue-600 dark:text-blue-400 font-medium mb-3">{professional.specialty}</p>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                            {professional.experience || "Profissional experiente e qualificado em sua especialidade"}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-gray-500 dark:text-gray-500">
+                              <span>CRM: {professional.crm}</span>
+                            </div>
+                            <Button variant="outline" size="sm">
+                              Ver perfil
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Indicador de scroll */}
+              <div className="text-center mt-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  ← Deslize para ver todos os profissionais →
+                </p>
+              </div>
             </div>
           )}
           
