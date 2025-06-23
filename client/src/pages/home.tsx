@@ -28,6 +28,10 @@ export default function Home() {
     queryKey: ["/api/testimonials"],
   });
 
+  const { data: specialtiesData, isLoading: specialtiesLoading } = useQuery<any[]>({
+    queryKey: ["/api/supabase/especialidades"],
+  });
+
   const services = [
     {
       icon: Stethoscope,
@@ -61,13 +65,73 @@ export default function Home() {
     }
   ];
 
-  const specialties = [
-    { icon: Activity, name: "Ultrassonografia", description: "Exames de imagem para diagnóstico preciso", color: "bg-blue-100 text-blue-600" },
-    { icon: Stethoscope, name: "Clínica Médica", description: "Atendimento clínico geral e especializado", color: "bg-green-100 text-green-600" },
-    { icon: Heart, name: "Medicina Preventiva", description: "Prevenção e promoção da saúde", color: "bg-red-100 text-red-600" },
-    { icon: UserCheck, name: "Pequenas Cirurgias", description: "Procedimentos cirúrgicos ambulatoriais", color: "bg-purple-100 text-purple-600" },
-    { icon: Brain, name: "Neurologia", description: "Diagnóstico e tratamento neurológico", color: "bg-indigo-100 text-indigo-600" },
-  ];
+  // Function to get icon and color for each specialty
+  const getSpecialtyProps = (specialtyName: string) => {
+    const specialtyMap: Record<string, { icon: any; color: string; description: string }> = {
+      "Ultrassonografia": {
+        icon: Activity,
+        color: "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400",
+        description: "Exames de imagem para diagnóstico preciso e não invasivo"
+      },
+      "Clinico Geral": {
+        icon: Stethoscope,
+        color: "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400",
+        description: "Atendimento clínico geral abrangente e humanizado"
+      },
+      "Clínica Médica": {
+        icon: Stethoscope,
+        color: "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400",
+        description: "Atendimento clínico geral abrangente e humanizado"
+      },
+      "Cardiologista": {
+        icon: Heart,
+        color: "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400",
+        description: "Diagnóstico e tratamento de doenças cardiovasculares"
+      },
+      "Dermatologista": {
+        icon: Eye,
+        color: "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400",
+        description: "Cuidados especializados da pele e anexos"
+      },
+      "Ginecologista": {
+        icon: Baby,
+        color: "bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-400",
+        description: "Saúde integral da mulher em todas as fases"
+      },
+      "Neurologista": {
+        icon: Brain,
+        color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400",
+        description: "Diagnóstico e tratamento neurológico especializado"
+      },
+      "Ortopedista": {
+        icon: Bone,
+        color: "bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-400",
+        description: "Tratamento de lesões e doenças do sistema músculo-esquelético"
+      },
+      "Pediatra": {
+        icon: Baby,
+        color: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400",
+        description: "Cuidados médicos especializados para crianças"
+      }
+    };
+    
+    return specialtyMap[specialtyName] || {
+      icon: UserCheck,
+      color: "bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-400",
+      description: "Atendimento médico especializado"
+    };
+  };
+
+  // Transform database specialties data
+  const specialties = (specialtiesData || []).map((specialty: any) => {
+    const props = getSpecialtyProps(specialty.name);
+    return {
+      icon: props.icon,
+      name: specialty.name,
+      description: props.description,
+      color: props.color
+    };
+  });
 
   return (
     <div>
@@ -118,19 +182,30 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-            {specialties.map((specialty, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6 text-center">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 mx-auto ${specialty.color}`}>
-                    <specialty.icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">{specialty.name}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{specialty.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {specialtiesLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando especialidades...</p>
+            </div>
+          ) : specialties.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 dark:text-gray-400">Nenhuma especialidade encontrada</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+              {specialties.map((specialty, index) => (
+                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardContent className="p-6 text-center">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 mx-auto ${specialty.color}`}>
+                      <specialty.icon className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">{specialty.name}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{specialty.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
           
           <div className="text-center">
             <Link href="/specialties">
