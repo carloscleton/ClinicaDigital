@@ -980,13 +980,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formattedSpecialties = (data || []).map((specialty: any) => ({
         id: specialty.id,
         name: specialty.Especialidade || "Especialidade não informada",
-        descricao: specialty.descricao,
-        codigo: specialty.codigo,
-        area_medica: specialty.area_medica,
-        requisitos: specialty.requisitos,
-        duracao_media_consulta: specialty.duracao_media_consulta,
-        valor_consulta: specialty.valor_consulta,
-        ativo: specialty.ativo,
         idEmpresa: specialty.id_Empresa,
         createdAt: specialty.created_at
       }));
@@ -1020,13 +1013,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formattedSpecialty = {
         id: data.id,
         name: data.Especialidade || "Especialidade não informada",
-        descricao: data.descricao,
-        codigo: data.codigo,
-        area_medica: data.area_medica,
-        requisitos: data.requisitos,
-        duracao_media_consulta: data.duracao_media_consulta,
-        valor_consulta: data.valor_consulta,
-        ativo: data.ativo,
         idEmpresa: data.id_Empresa,
         createdAt: data.created_at
       };
@@ -1044,37 +1030,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new specialty in CAD_Especialidade
   app.post("/api/supabase/especialidades", async (req, res) => {
     try {
-      const { 
-        name, 
-        descricao, 
-        codigo, 
-        area_medica, 
-        requisitos, 
-        duracao_media_consulta, 
-        valor_consulta, 
-        ativo, 
-        idEmpresa 
-      } = req.body;
+      const { name, idEmpresa } = req.body;
 
       if (!name || name.trim() === '') {
         return res.status(400).json({ message: "Nome da especialidade é obrigatório" });
-      }
-
-      if (!area_medica || area_medica.trim() === '') {
-        return res.status(400).json({ message: "Área médica é obrigatória" });
       }
 
       const { data, error } = await supabase
         .from('CAD_Especialidade')
         .insert([{
           Especialidade: name.trim(),
-          descricao: descricao || null,
-          codigo: codigo || null,
-          area_medica: area_medica.trim(),
-          requisitos: requisitos || null,
-          duracao_media_consulta: duracao_media_consulta || 30,
-          valor_consulta: valor_consulta || null,
-          ativo: ativo !== undefined ? ativo : true,
           id_Empresa: idEmpresa || 1
         }])
         .select()
@@ -1091,13 +1056,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formattedSpecialty = {
         id: data.id,
         name: data.Especialidade,
-        descricao: data.descricao,
-        codigo: data.codigo,
-        area_medica: data.area_medica,
-        requisitos: data.requisitos,
-        duracao_media_consulta: data.duracao_media_consulta,
-        valor_consulta: data.valor_consulta,
-        ativo: data.ativo,
         idEmpresa: data.id_Empresa,
         createdAt: data.created_at
       };
@@ -1116,37 +1074,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/supabase/especialidades/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { 
-        name, 
-        descricao, 
-        codigo, 
-        area_medica, 
-        requisitos, 
-        duracao_media_consulta, 
-        valor_consulta, 
-        ativo, 
-        idEmpresa 
-      } = req.body;
+      const { name, idEmpresa } = req.body;
 
       if (!name || name.trim() === '') {
         return res.status(400).json({ message: "Nome da especialidade é obrigatório" });
-      }
-
-      if (!area_medica || area_medica.trim() === '') {
-        return res.status(400).json({ message: "Área médica é obrigatória" });
       }
 
       const { data, error } = await supabase
         .from('CAD_Especialidade')
         .update({
           Especialidade: name.trim(),
-          descricao: descricao || null,
-          codigo: codigo || null,
-          area_medica: area_medica.trim(),
-          requisitos: requisitos || null,
-          duracao_media_consulta: duracao_media_consulta || 30,
-          valor_consulta: valor_consulta || null,
-          ativo: ativo !== undefined ? ativo : true,
           id_Empresa: idEmpresa
         })
         .eq('id', id)
@@ -1164,13 +1101,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formattedSpecialty = {
         id: data.id,
         name: data.Especialidade,
-        descricao: data.descricao,
-        codigo: data.codigo,
-        area_medica: data.area_medica,
-        requisitos: data.requisitos,
-        duracao_media_consulta: data.duracao_media_consulta,
-        valor_consulta: data.valor_consulta,
-        ativo: data.ativo,
         idEmpresa: data.id_Empresa,
         createdAt: data.created_at
       };
