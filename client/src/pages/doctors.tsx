@@ -34,8 +34,8 @@ export default function Doctors() {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl lg:text-5xl font-bold text-gray-800 mb-6">Nossa Equipe Médica</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <h1 className="text-4xl lg:text-5xl font-bold text-gray-800 dark:text-gray-100 mb-6">Nossos Profissionais</h1>
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
             Profissionais experientes e dedicados, comprometidos com a excelência no atendimento. 
             Conheça nossa equipe de especialistas altamente qualificados.
           </p>

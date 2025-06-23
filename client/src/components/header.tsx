@@ -16,7 +16,7 @@ export default function Header() {
     { href: "/", label: "Início" },
     { href: "/services", label: "Serviços" },
     { href: "/specialties", label: "Especialidades" },
-    { href: "/doctors", label: "Médicos" },
+    { href: "/doctors", label: "Profissionais" },
     { href: "/testimonials", label: "Depoimentos" },
     { href: "/contact", label: "Contato" },
     { href: "/booking", label: "Agendamento", cta: true },
