@@ -45,6 +45,7 @@ interface SpecialtyStats {
 const professionalSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   specialty: z.string().min(1, "Especialidade é obrigatória"),
+  sexo: z.string().min(1, "Sexo é obrigatório"),
   crm: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
@@ -310,6 +311,7 @@ export default function ProfessionalsManagementWithSupabase() {
     form.reset({
       name: professional.name,
       specialty: professional.specialty,
+      sexo: (professional as any).sexo || "",
       crm: professional.crm || "",
       phone: professional.phone || "",
       email: professional.email || "",
@@ -325,6 +327,7 @@ export default function ProfessionalsManagementWithSupabase() {
     form.reset({
       name: "",
       specialty: "",
+      sexo: "",
       crm: "",
       phone: "",
       email: "",
@@ -471,6 +474,25 @@ export default function ProfessionalsManagementWithSupabase() {
                     </Select>
                     {form.formState.errors.specialty && (
                       <p className="text-sm text-red-600">{form.formState.errors.specialty.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="sexo">Sexo *</Label>
+                    <Select 
+                      onValueChange={(value) => form.setValue("sexo", value)}
+                      defaultValue={editingProfessional ? (editingProfessional as any).sexo || "" : ""}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o sexo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Masculino">Masculino</SelectItem>
+                        <SelectItem value="Feminino">Feminino</SelectItem>
+                        <SelectItem value="Outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {form.formState.errors.sexo && (
+                      <p className="text-sm text-red-600">{form.formState.errors.sexo.message}</p>
                     )}
                   </div>
                   <div>
@@ -667,6 +689,7 @@ intervalo para o almoço: 12 às 13h00"
                     <TableHead>ID</TableHead>
                     <TableHead>Foto</TableHead>
                     <TableHead>Nome</TableHead>
+                    <TableHead>Sexo</TableHead>
                     <TableHead>Especialidade</TableHead>
                     <TableHead>CRM</TableHead>
                     <TableHead>Telefone</TableHead>
@@ -706,6 +729,11 @@ intervalo para o almoço: 12 às 13h00"
                           </div>
                         </TableCell>
                         <TableCell>{professional.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {(professional as any).sexo || "—"}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="secondary">{professional.specialty}</Badge>
                         </TableCell>
