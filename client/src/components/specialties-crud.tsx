@@ -199,6 +199,17 @@ export default function SpecialtiesCRUD() {
     });
   };
 
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsAddDialogOpen(open);
+    if (!open) {
+      setEditingSpecialty(null);
+      form.reset({
+        name: "",
+        idEmpresa: 1,
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -233,12 +244,9 @@ export default function SpecialtiesCRUD() {
             )}
             Sincronizar
           </Button>
-          <Dialog open={isAddDialogOpen} onOpenChange={handleCloseDialog}>
+          <Dialog open={isAddDialogOpen} onOpenChange={handleDialogOpenChange}>
             <DialogTrigger asChild>
-              <Button onClick={() => {
-                console.log("Button clicked - opening dialog");
-                setIsAddDialogOpen(true);
-              }}>
+              <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Especialidade
               </Button>
