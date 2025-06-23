@@ -338,7 +338,7 @@ export default function Home() {
               {/* Indicador de scroll */}
               <div className="text-center mt-4">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  ← Deslize para ver todos os profissionais →
+                  ← Deslize para ver todos os {supabaseProfessionals?.length || 0} profissionais →
                 </p>
               </div>
             </div>
