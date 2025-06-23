@@ -58,48 +58,64 @@ export default function ImageUpload({ value, onChange, label, placeholder }: Ima
     }
   };
 
+  // Fotos fictícias para usar como placeholder
+  const doctorPhotos = [
+    "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=150&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=150&h=150&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1594824475720-aabd8effc566?w=150&h=150&fit=crop&crop=face"
+  ];
+
+  const randomPhoto = doctorPhotos[Math.floor(Math.random() * doctorPhotos.length)];
+
   return (
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
       
-      <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
-        {previewUrl ? (
-          <div className="relative">
+      <div className="flex flex-col items-center">
+        <div className="relative group">
+          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700">
             <img
-              src={previewUrl}
-              alt="Preview"
-              className="w-24 h-24 object-cover rounded-lg mx-auto"
+              src={previewUrl || randomPhoto}
+              alt="Foto do profissional"
+              className="w-full h-full object-cover"
             />
+          </div>
+          
+          {!previewUrl && (
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+              Foto fictícia
+            </div>
+          )}
+          
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            className="absolute -bottom-1 -right-1 rounded-full w-8 h-8 p-0"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            <Camera className="h-4 w-4" />
+          </Button>
+          
+          {previewUrl && (
             <Button
               type="button"
               variant="destructive"
               size="sm"
-              className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+              className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0"
               onClick={handleRemoveImage}
             >
               <X className="h-3 w-3" />
             </Button>
-          </div>
-        ) : (
-          <div className="text-center">
-            <Camera className="mx-auto h-12 w-12 text-gray-400" />
-            <div className="mt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="relative"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                {isUploading ? "Processando..." : "Selecionar Foto"}
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {placeholder || "PNG, JPG até 5MB"}
-            </p>
-          </div>
-        )}
+          )}
+        </div>
+        
+        <p className="text-xs text-gray-500 mt-2 text-center">
+          {isUploading ? "Processando..." : (placeholder || "Clique na câmera para alterar")}
+        </p>
       </div>
 
       <input

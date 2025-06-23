@@ -428,6 +428,18 @@ export default function ProfessionalsManagementWithSupabase() {
                 </div>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div>
+                  <ImageUpload
+                    label="Foto do Profissional"
+                    value={form.watch("photo") || ""}
+                    onChange={(value) => form.setValue("photo", value)}
+                    placeholder="Adicione uma foto profissional (PNG, JPG até 5MB)"
+                  />
+                  {form.formState.errors.photo && (
+                    <p className="text-sm text-red-600">{form.formState.errors.photo.message}</p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="name">Nome Completo *</Label>
@@ -501,18 +513,6 @@ export default function ProfessionalsManagementWithSupabase() {
                     />
                   </div>
 
-                </div>
-
-                <div>
-                  <ImageUpload
-                    label="Foto do Profissional"
-                    value={form.watch("photo") || ""}
-                    onChange={(value) => form.setValue("photo", value)}
-                    placeholder="Adicione uma foto profissional (PNG, JPG até 5MB)"
-                  />
-                  {form.formState.errors.photo && (
-                    <p className="text-sm text-red-600">{form.formState.errors.photo.message}</p>
-                  )}
                 </div>
 
                 <div>
