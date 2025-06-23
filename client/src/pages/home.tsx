@@ -24,6 +24,10 @@ export default function Home() {
     queryKey: ["/api/doctors"],
   });
 
+  const { data: supabaseProfessionals, isLoading: professionalsLoading } = useQuery<any[]>({
+    queryKey: ["/api/supabase/professionals"],
+  });
+
   const { data: testimonials, isLoading: testimonialsLoading } = useQuery<Testimonial[]>({
     queryKey: ["/api/testimonials"],
   });
@@ -281,30 +285,47 @@ export default function Home() {
             </p>
           </div>
           
-          {doctorsLoading ? (
+          {professionalsLoading ? (
             <div className="text-center">Carregando médicos...</div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {doctors?.slice(0, 3).map((doctor) => (
-                <Card key={doctor.id} className="overflow-hidden hover:shadow-xl transition-shadow">
-                  <div className="h-64 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-900 flex items-center justify-center">
-                    <UserCheck className="w-20 h-20 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">{doctor.name}</h3>
-                    <p className="text-blue-600 dark:text-blue-400 font-medium mb-3">{doctor.specialty}</p>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{doctor.description}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-500 dark:text-gray-500">
-                        <span>{doctor.crm}</span>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        Ver perfil completo
-                      </Button>
+              {supabaseProfessionals?.slice(0, 3).map((professional, index) => {
+                // Array de fotos fictícias para médicos
+                const doctorPhotos = [
+                  "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                  "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                  "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                  "https://images.unsplash.com/photo-1594824949799-9d95d2a82c20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                  "https://images.unsplash.com/photo-1527613426441-4da17471b66d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                ];
+                
+                return (
+                  <Card key={professional.id} className="overflow-hidden hover:shadow-xl transition-shadow">
+                    <div className="h-64 overflow-hidden">
+                      <img
+                        src={doctorPhotos[index % doctorPhotos.length]}
+                        alt={`Dr(a). ${professional.name}`}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">Dr(a). {professional.name}</h3>
+                      <p className="text-blue-600 dark:text-blue-400 font-medium mb-3">{professional.specialty}</p>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        {professional.experience || "Profissional experiente e qualificado em sua especialidade"}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-500 dark:text-gray-500">
+                          <span>CRM: {professional.crm}</span>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Ver perfil
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
           
