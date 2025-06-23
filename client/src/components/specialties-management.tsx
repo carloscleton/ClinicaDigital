@@ -299,9 +299,12 @@ export default function ProfessionalsManagementWithSupabase() {
     : professionals.filter(p => p.specialty === selectedSpecialty);
 
   const onSubmit = (data: ProfessionalFormData) => {
+    console.log("Dados do formulário sendo enviados:", data);
     if (editingProfessional) {
+      console.log("Atualizando profissional ID:", editingProfessional.id);
       updateProfessional.mutate({ id: editingProfessional.id, data });
     } else {
+      console.log("Criando novo profissional");
       createProfessional.mutate(data);
     }
   };
@@ -479,8 +482,11 @@ export default function ProfessionalsManagementWithSupabase() {
                   <div>
                     <Label htmlFor="sexo">Sexo *</Label>
                     <Select 
-                      onValueChange={(value) => form.setValue("sexo", value)}
-                      defaultValue={editingProfessional ? (editingProfessional as any).sexo || "" : ""}
+                      onValueChange={(value) => {
+                        console.log("Sexo selecionado:", value);
+                        form.setValue("sexo", value);
+                      }}
+                      value={form.watch("sexo") || ""}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o sexo" />
