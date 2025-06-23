@@ -207,62 +207,45 @@ export default function Specialties() {
             <p className="text-gray-600 dark:text-gray-400">Nenhuma especialidade encontrada</p>
           </div>
         ) : (
-          <>
-            {/* Compact Specialties Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-12">
-              {specialties.map((specialty: any, index: number) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer h-32">
-                  <CardContent className="p-4 text-center h-full flex flex-col justify-center">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 mx-auto ${specialty.color}`}>
-                      <specialty.icon className="w-4 h-4" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-tight">{specialty.name}</h3>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Detailed Specialties Grid */}
-            <div className="grid lg:grid-cols-2 gap-8 mb-20">
-              {specialties.map((specialty, index) => (
-                <Card key={index} className={`hover:shadow-xl transition-shadow border-2 ${specialty.color}`}>
-                  <CardContent className="p-8">
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex items-start space-x-4 flex-1">
-                        <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${specialty.color}`}>
-                          <specialty.icon className="w-8 h-8" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">{specialty.name}</h3>
-                          <p className="text-gray-600 dark:text-gray-400 font-medium">{specialty.description}</p>
-                        </div>
+          <div className="grid lg:grid-cols-2 gap-8 mb-20">
+            {specialties.map((specialty, index) => (
+              <Card key={index} className={`hover:shadow-xl transition-shadow border-2 ${specialty.color}`}>
+                <CardContent className="p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex items-start space-x-4 flex-1">
+                      <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${specialty.color}`}>
+                        <specialty.icon className="w-8 h-8" />
                       </div>
-                      <Link href="/contact">
-                        <Button className="bg-blue-600 hover:bg-blue-700 flex-shrink-0">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          Agendar
-                        </Button>
-                      </Link>
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">{specialty.name}</h3>
+                        <p className="text-gray-600 dark:text-gray-400 font-medium">{specialty.description}</p>
+                      </div>
                     </div>
-                    
-                    <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{specialty.details}</p>
-                    
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Exames e Tratamentos:</h4>
-                      <ul className="grid grid-cols-1 gap-2">
-                        {specialty.treatments.map((treatment, idx) => (
-                          <li key={idx} className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
-                            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div>
-                            {treatment}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </>
+                    <Link href="/contact">
+                      <Button className="bg-blue-600 hover:bg-blue-700 flex-shrink-0">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Agendar
+                      </Button>
+                    </Link>
+                  </div>
+                  
+                  <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{specialty.details}</p>
+                  
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Exames e Tratamentos:</h4>
+                    <ul className="grid grid-cols-1 gap-2">
+                      {specialty.treatments.map((treatment, idx) => (
+                        <li key={idx} className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-3"></div>
+                          {treatment}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
         {/* Why Choose Us */}
