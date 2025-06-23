@@ -118,19 +118,7 @@ export function CRMValidator({ value, onChange, onValidationResult }: CRMValidat
             className="font-mono"
           />
         </div>
-        <Button
-          type="button"
-          onClick={handleValidation}
-          disabled={isValidating || !value.trim()}
-          size="sm"
-          variant="outline"
-        >
-          {isValidating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Search className="h-4 w-4" />
-          )}
-        </Button>
+
       </div>
 
       {error && (
