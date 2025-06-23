@@ -49,6 +49,7 @@ export async function registerSupabaseRoutes(app: Express) {
         id: prof.id,
         name: prof.nome,
         specialty: prof.especialidade,
+        sexo: prof.sexo || "",
         crm: prof.crm,
         description: prof.descricao || "",
         experience: prof.experiencia || "",
@@ -70,12 +71,12 @@ export async function registerSupabaseRoutes(app: Express) {
   // Endpoint para criar novo profissional no Supabase
   app.post("/api/supabase/professionals", async (req, res) => {
     try {
-      const { name, specialty, crm, phone, email, atendimentos } = req.body;
+      const { name, specialty, sexo, crm, phone, email, atendimentos } = req.body;
       
       // Validar campos obrigatórios
-      if (!name || !specialty) {
+      if (!name || !specialty || !sexo) {
         return res.status(400).json({ 
-          error: "Nome e especialidade são obrigatórios" 
+          error: "Nome, especialidade e sexo são obrigatórios" 
         });
       }
 
@@ -85,6 +86,7 @@ export async function registerSupabaseRoutes(app: Express) {
         .insert([{
           nome: name,
           especialidade: specialty,
+          sexo: sexo,
           crm: crm || "",
           Telefone: phone || "",
           email: email || "",
@@ -107,6 +109,7 @@ export async function registerSupabaseRoutes(app: Express) {
         id: data.id,
         name: data.nome,
         specialty: data.especialidade,
+        sexo: data.sexo,
         crm: data.crm,
         phone: data.Telefone,
         email: data.email,
@@ -159,7 +162,7 @@ export async function registerSupabaseRoutes(app: Express) {
   app.put("/api/supabase/professionals/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { name, specialty, crm, phone, email, atendimentos } = req.body;
+      const { name, specialty, sexo, crm, phone, email, atendimentos } = req.body;
       
       // Atualizar profissional na tabela CAD_Profissional
       const { data, error } = await supabase
@@ -167,6 +170,7 @@ export async function registerSupabaseRoutes(app: Express) {
         .update({
           nome: name,
           especialidade: specialty,
+          sexo: sexo,
           crm: crm || "",
           Telefone: phone || "",
           email: email || "",
@@ -193,6 +197,7 @@ export async function registerSupabaseRoutes(app: Express) {
         id: data.id,
         name: data.nome,
         specialty: data.especialidade,
+        sexo: data.sexo,
         crm: data.crm,
         phone: data.Telefone,
         email: data.email,
