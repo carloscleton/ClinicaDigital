@@ -45,9 +45,8 @@ const patientSchema = z.object({
   emailCliente: z.string().email("Email inválido").optional().or(z.literal("")),
   nascimentoCliente: z.string().optional(),
   CPF: z.string().min(11, "CPF deve ter 11 dígitos").optional(),
-  statusAgendamento: z.boolean().optional(),
-  statusPagamento: z.boolean().optional(),
-  valor: z.number().min(0, "Valor deve ser maior ou igual a zero").optional(),
+
+
   desejo: z.string().optional(),
   id_Empresa: z.number().optional(),
 });
@@ -186,9 +185,6 @@ export default function PatientsManagement() {
       emailCliente: "",
       nascimentoCliente: "",
       CPF: "",
-      statusAgendamento: false,
-      statusPagamento: false,
-      valor: 0,
       desejo: "",
       id_Empresa: 1,
     },
@@ -243,9 +239,7 @@ export default function PatientsManagement() {
       emailCliente: patient.emailCliente || "",
       nascimentoCliente: patient.nascimentoCliente ? patient.nascimentoCliente.split('T')[0] : "",
       CPF: patient.CPF || "",
-      statusAgendamento: patient.statusAgendamento || false,
-      statusPagamento: patient.statusPagamento || false,
-      valor: patient.valor || 0,
+
       desejo: patient.desejo || "",
       id_Empresa: patient.id_Empresa || 1,
     });
@@ -261,9 +255,6 @@ export default function PatientsManagement() {
       emailCliente: "",
       nascimentoCliente: "",
       CPF: "",
-      statusAgendamento: false,
-      statusPagamento: false,
-      valor: 0,
       desejo: "",
       id_Empresa: 1,
     });
@@ -279,9 +270,6 @@ export default function PatientsManagement() {
         emailCliente: "",
         nascimentoCliente: "",
         CPF: "",
-        statusAgendamento: false,
-        statusPagamento: false,
-        valor: 0,
         desejo: "",
         id_Empresa: 1,
       });
@@ -404,43 +392,9 @@ export default function PatientsManagement() {
                       <p className="text-sm text-red-600">{form.formState.errors.CPF.message}</p>
                     )}
                   </div>
-                  <div>
-                    <Label htmlFor="valor">Valor (R$)</Label>
-                    <Input
-                      id="valor"
-                      type="number"
-                      step="0.01"
-                      {...form.register("valor", { valueAsNumber: true })}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Label htmlFor="desejo">Observações</Label>
-                    <Textarea
-                      id="desejo"
-                      {...form.register("desejo")}
-                      placeholder="Observações ou desejos específicos do paciente"
-                      className="min-h-[80px]"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="statusAgendamento"
-                      {...form.register("statusAgendamento")}
-                      className="rounded"
-                    />
-                    <Label htmlFor="statusAgendamento">Tem agendamento</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="statusPagamento"
-                      {...form.register("statusPagamento")}
-                      className="rounded"
-                    />
-                    <Label htmlFor="statusPagamento">Pagamento realizado</Label>
-                  </div>
+
+
+
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={handleCloseDialog}>
