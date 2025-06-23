@@ -473,20 +473,6 @@ export default function PatientsManagement() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Receita Total</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  R$ {stats.totalRevenue.toFixed(2)}
-                </p>
-              </div>
-              <DollarSign className="h-8 w-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Novos (7 dias)</p>
                 <p className="text-2xl font-bold text-red-600">{stats.recentPatients}</p>
               </div>
