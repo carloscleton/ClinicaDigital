@@ -40,74 +40,104 @@ interface CAD_Servicos {
 
 export async function registerSupabaseRoutes(app: Express) {
   
-  // Endpoint para adicionar coluna sexo automaticamente
-  app.post("/api/supabase/fix-sexo-column", async (req, res) => {
+  // Endpoint para executar SQL direto usando RPC personalizado
+  app.post("/api/supabase/exec-sql", async (req, res) => {
     try {
-      // Primeiro, verificar se a coluna já existe
-      const { data: testData, error: testError } = await supabase
-        .from('CAD_Profissional')
-        .select('sexo')
-        .limit(1);
-
-      // Se não há erro, a coluna já existe
-      if (!testError) {
-        return res.json({
-          success: true,
-          alreadyExists: true,
-          message: "Coluna 'sexo' já existe na tabela CAD_Profissional"
-        });
+      const { sql } = req.body;
+      
+      if (!sql) {
+        return res.status(400).json({ error: "SQL query é obrigatório" });
       }
 
-      // Se o erro indica que a coluna não existe, vamos tentar adicionar
-      if (testError.message.includes('column "sexo" does not exist')) {
-        
-        // Estratégia: usar uma inserção que force a criação da estrutura
-        // Como não podemos executar ALTER TABLE diretamente, vamos usar workaround
-        
-        // Primeiro, buscar um profissional existente
-        const { data: professionals, error: profError } = await supabase
-          .from('CAD_Profissional')
-          .select('id, nome, especialidade, crm, email, Telefone, atendimentos')
-          .limit(1);
+      // Executar SQL usando diferentes métodos RPC
+      const methods = [
+        'exec_sql',
+        'execute_sql', 
+        'run_sql',
+        'sql_exec'
+      ];
 
-        if (profError || !professionals || professionals.length === 0) {
-          return res.status(500).json({
-            error: "Não foi possível acessar a tabela CAD_Profissional",
-            details: profError?.message
-          });
-        }
-
-        return res.json({
-          success: false,
-          columnExists: false,
-          needsManualFix: true,
-          message: "A coluna 'sexo' não existe na tabela CAD_Profissional do Supabase.",
-          instructions: {
-            step1: "Acesse https://supabase.com/dashboard",
-            step2: "Entre no projeto San Mathews",
-            step3: "Clique em 'SQL Editor' no menu lateral esquerdo",
-            step4: "Cole e execute este comando:",
-            sqlCommand: 'ALTER TABLE "CAD_Profissional" ADD COLUMN "sexo" TEXT;',
-            step5: "Após executar, teste novamente o sistema"
-          },
-          currentTable: {
-            exists: true,
-            sampleRecord: professionals[0],
-            missingColumn: "sexo"
+      for (const method of methods) {
+        try {
+          const { data, error } = await supabase.rpc(method, { query: sql });
+          
+          if (!error) {
+            return res.json({
+              success: true,
+              message: `SQL executado com sucesso usando método: ${method}`,
+              data: data,
+              sql: sql
+            });
           }
-        });
+        } catch (err) {
+          continue; // Tentar próximo método
+        }
       }
 
-      // Outro tipo de erro
-      return res.status(500).json({
-        error: "Erro inesperado ao verificar coluna sexo",
-        details: testError.message
+      // Se todos os métodos falharam, retornar instruções manuais
+      return res.json({
+        success: false,
+        message: "Não foi possível executar SQL automaticamente",
+        manualExecution: {
+          instruction: "Execute manualmente no Supabase SQL Editor:",
+          sql: sql,
+          url: "https://supabase.com/dashboard"
+        }
       });
 
     } catch (error) {
-      console.error("Erro ao processar fix da coluna sexo:", error);
       res.status(500).json({
-        error: "Erro interno do servidor",
+        error: "Erro ao executar SQL",
+        details: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Endpoint para adicionar coluna sexo automaticamente
+  app.post("/api/supabase/add-sexo-column-auto", async (req, res) => {
+    try {
+      const sqlCommand = 'ALTER TABLE "CAD_Profissional" ADD COLUMN IF NOT EXISTS "sexo" TEXT;';
+      
+      // Tentar executar o comando SQL
+      const response = await fetch(`${req.protocol}://${req.get('host')}/api/supabase/exec-sql`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sql: sqlCommand })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Verificar se a coluna foi criada
+        const { data: testData, error: testError } = await supabase
+          .from('CAD_Profissional')
+          .select('sexo')
+          .limit(1);
+
+        if (!testError) {
+          return res.json({
+            success: true,
+            message: "Coluna 'sexo' adicionada e verificada com sucesso!",
+            columnExists: true
+          });
+        }
+      }
+
+      return res.json({
+        success: false,
+        message: "Execute o comando SQL manualmente no Supabase",
+        command: sqlCommand,
+        steps: [
+          "1. Acesse https://supabase.com/dashboard",
+          "2. Entre no projeto San Mathews",
+          "3. Clique em 'SQL Editor'",
+          "4. Execute: " + sqlCommand
+        ]
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        error: "Erro ao processar adição da coluna",
         details: error instanceof Error ? error.message : "Erro desconhecido"
       });
     }
