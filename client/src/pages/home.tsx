@@ -28,9 +28,7 @@ export default function Home() {
     queryKey: ["/api/supabase/professionals"],
   });
 
-  // Debug log para verificar os dados
-  console.log("Supabase Professionals:", supabaseProfessionals);
-  console.log("Professionals Loading:", professionalsLoading);
+
 
   const { data: testimonials, isLoading: testimonialsLoading } = useQuery<Testimonial[]>({
     queryKey: ["/api/testimonials"],
@@ -290,13 +288,27 @@ export default function Home() {
           </div>
           
           {professionalsLoading ? (
-            <div className="text-center">Carregando médicos...</div>
-          ) : (
+            <div className="text-center py-12">
+              <div className="animate-pulse">
+                <div className="flex space-x-6 overflow-x-auto pb-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex-shrink-0 w-80 h-96 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : supabaseProfessionals && supabaseProfessionals.length > 0 ? (
             <div className="relative">
-              {/* Scroll horizontal container */}
-              <div className="overflow-x-auto pb-4">
-                <div className="flex space-x-6 w-max">
-                  {supabaseProfessionals?.map((professional, index) => {
+              {/* Scroll horizontal container com styling melhorado */}
+              <div 
+                className="overflow-x-auto overflow-y-hidden pb-6"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#cbd5e1 #f1f5f9'
+                }}
+              >
+                <div className="flex space-x-6 px-4" style={{ width: 'max-content' }}>
+                  {supabaseProfessionals.map((professional, index) => {
                     // Array de fotos fictícias para médicos
                     const doctorPhotos = [
                       "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
@@ -310,25 +322,29 @@ export default function Home() {
                     ];
                     
                     return (
-                      <Card key={professional.id} className="flex-shrink-0 w-80 overflow-hidden hover:shadow-xl transition-shadow">
+                      <Card key={professional.id} className="flex-shrink-0 w-80 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
                         <div className="h-64 overflow-hidden">
                           <img
                             src={doctorPhotos[index % doctorPhotos.length]}
                             alt={`Dr(a). ${professional.name}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                         <CardContent className="p-6">
-                          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">Dr(a). {professional.name}</h3>
-                          <p className="text-blue-600 dark:text-blue-400 font-medium mb-3">{professional.specialty}</p>
+                          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                            Dr(a). {professional.name}
+                          </h3>
+                          <p className="text-blue-600 dark:text-blue-400 font-medium mb-3">
+                            {professional.specialty}
+                          </p>
                           <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                            {professional.experience || "Profissional experiente e qualificado em sua especialidade"}
+                            Profissional experiente e qualificado em sua especialidade, comprometido com a excelência no atendimento.
                           </p>
                           <div className="flex items-center justify-between">
-                            <div className="text-sm text-gray-500 dark:text-gray-500">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
                               <span>CRM: {professional.crm}</span>
                             </div>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" className="hover:bg-blue-50 dark:hover:bg-blue-900/20">
                               Ver perfil
                             </Button>
                           </div>
@@ -339,12 +355,20 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Indicador de scroll */}
-              <div className="text-center mt-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  ← Deslize para ver todos os {supabaseProfessionals?.length || 0} profissionais →
-                </p>
+              {/* Indicador de scroll melhorado */}
+              <div className="text-center mt-6">
+                <div className="inline-flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-full">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                    Deslize para ver todos os {supabaseProfessionals.length} profissionais
+                  </p>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                </div>
               </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400">Nenhum profissional encontrado</p>
             </div>
           )}
           
