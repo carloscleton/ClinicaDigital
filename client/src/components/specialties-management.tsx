@@ -107,7 +107,7 @@ export default function ProfessionalsManagementWithSupabase() {
   // Create professional mutation
   const createProfessional = useMutation({
     mutationFn: async (data: ProfessionalFormData) => {
-      const response = await fetch("/api/doctors", {
+      const response = await fetch("/api/supabase/professionals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -116,7 +116,6 @@ export default function ProfessionalsManagementWithSupabase() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
       queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
       setIsAddDialogOpen(false);
       toast({
@@ -146,7 +145,6 @@ export default function ProfessionalsManagementWithSupabase() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
       queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
       setIsAddDialogOpen(false);
       setEditingProfessional(null);
@@ -228,14 +226,13 @@ export default function ProfessionalsManagementWithSupabase() {
   // Delete professional mutation
   const deleteProfessional = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/doctors/${id}`, {
+      const response = await fetch(`/api/supabase/professionals/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Erro ao deletar profissional");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
       queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
       toast({
         title: "Profissional removido",
