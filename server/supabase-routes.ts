@@ -12,6 +12,7 @@ interface CAD_Profissional {
   id: number;
   nome: string;
   especialidade: string;
+  sexo?: string;
   crm: string;
   descricao?: string;
   experiencia?: string;
@@ -163,6 +164,8 @@ export async function registerSupabaseRoutes(app: Express) {
     try {
       const id = parseInt(req.params.id);
       const { name, specialty, sexo, crm, phone, email, atendimentos } = req.body;
+      
+      console.log("Dados recebidos para atualização:", { name, specialty, sexo, crm, phone, email, atendimentos });
       
       // Atualizar profissional na tabela CAD_Profissional
       const { data, error } = await supabase
