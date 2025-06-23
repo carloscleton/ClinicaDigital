@@ -255,7 +255,37 @@ export default function PatientsManagement() {
   const handleCloseDialog = () => {
     setIsAddDialogOpen(false);
     setEditingPatient(null);
-    form.reset();
+    form.reset({
+      nomeCliente: "",
+      telefoneCliente: "",
+      emailCliente: "",
+      nascimentoCliente: "",
+      CPF: "",
+      statusAgendamento: false,
+      statusPagamento: false,
+      valor: 0,
+      desejo: "",
+      id_Empresa: 1,
+    });
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsAddDialogOpen(open);
+    if (!open) {
+      setEditingPatient(null);
+      form.reset({
+        nomeCliente: "",
+        telefoneCliente: "",
+        emailCliente: "",
+        nascimentoCliente: "",
+        CPF: "",
+        statusAgendamento: false,
+        statusPagamento: false,
+        valor: 0,
+        desejo: "",
+        id_Empresa: 1,
+      });
+    }
   };
 
   if (isLoading) {
@@ -303,7 +333,7 @@ export default function PatientsManagement() {
             )}
             Sincronizar
           </Button>
-          <Dialog open={isAddDialogOpen} onOpenChange={handleCloseDialog}>
+          <Dialog open={isAddDialogOpen} onOpenChange={handleDialogOpenChange}>
             <DialogTrigger asChild>
               <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
