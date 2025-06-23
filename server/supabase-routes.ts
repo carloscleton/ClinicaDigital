@@ -23,6 +23,20 @@ interface CAD_Profissional {
   updated_at?: string;
 }
 
+interface CAD_Servicos {
+  id: number;
+  nome: string;
+  descricao?: string;
+  valor: number;
+  duracao?: number;
+  categoria: string;
+  ativo: boolean;
+  requisitos?: string;
+  id_Profissional?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export async function registerSupabaseRoutes(app: Express) {
   
   // Endpoint para buscar todos os profissionais do Supabase
@@ -411,6 +425,212 @@ export async function registerSupabaseRoutes(app: Express) {
         connected: false,
         error: "Erro interno do servidor",
         details: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // SERVICES ENDPOINTS - CAD_Servicos Management
+  
+  // Get all services with professional relationship
+  app.get("/api/supabase/services", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('CAD_Servicos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Erro ao buscar serviços:", error);
+        return res.status(500).json({ 
+          message: "Erro ao buscar serviços",
+          error: error.message 
+        });
+      }
+
+      // Get professionals data to match with services
+      const { data: professionals } = await supabase
+        .from('CAD_Profissional')
+        .select('id, Profissional, Profissao');
+
+      // Transform data to match frontend interface using actual column names
+      const transformedData = data?.map(service => {
+        const professional = professionals?.find(p => p.id === service.idProfissional);
+        return {
+          id: service.id,
+          nome: service.servicos, // Map servicos column to nome
+          descricao: service.descricao || null,
+          valor: service.valorServicos, // Map valorServicos to valor
+          duracao: service.duracao || 30,
+          categoria: service.categoria || "Consulta",
+          ativo: service.ativo !== false,
+          requisitos: service.requisitos || null,
+          id_Profissional: service.idProfissional, // Map idProfissional
+          created_at: service.created_at,
+          updated_at: service.updated_at,
+          professional: professional ? {
+            id: professional.id,
+            nome: professional.Profissional,
+            especialidade: professional.Profissao
+          } : null
+        };
+      });
+
+      res.json(transformedData || []);
+    } catch (error) {
+      console.error("Erro interno:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Create new service
+  app.post("/api/supabase/services", async (req, res) => {
+    try {
+      const { nome, descricao, valor, duracao, categoria, requisitos, id_Profissional, ativo } = req.body;
+
+      if (!nome || valor === undefined) {
+        return res.status(400).json({ 
+          message: "Nome e valor são obrigatórios" 
+        });
+      }
+
+      // Map frontend fields to actual table columns
+      const serviceData = {
+        servicos: nome, // Map nome to servicos column
+        descricao: descricao || null,
+        valorServicos: parseFloat(valor), // Map valor to valorServicos
+        duracao: duracao ? parseInt(duracao) : null,
+        categoria: categoria || "Consulta",
+        requisitos: requisitos || null,
+        idProfissional: id_Profissional || null, // Map to idProfissional
+        ativo: ativo !== undefined ? ativo : true,
+        id_Empresa: 1, // Default empresa ID
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('CAD_Servicos')
+        .insert([serviceData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Erro ao criar serviço:", error);
+        return res.status(500).json({ 
+          message: "Erro ao criar serviço",
+          error: error.message 
+        });
+      }
+
+      // Transform response to match frontend expectations
+      const transformedResponse = {
+        id: data.id,
+        nome: data.servicos,
+        valor: data.valorServicos,
+        created_at: data.created_at
+      };
+
+      res.status(201).json(transformedResponse);
+    } catch (error) {
+      console.error("Erro interno:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Update service
+  app.put("/api/supabase/services/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { nome, descricao, valor, duracao, categoria, requisitos, id_Profissional, ativo } = req.body;
+
+      if (!nome || valor === undefined) {
+        return res.status(400).json({ 
+          message: "Nome e valor são obrigatórios" 
+        });
+      }
+
+      // Map frontend fields to actual table columns
+      const updateData = {
+        servicos: nome, // Map nome to servicos column
+        descricao: descricao || null,
+        valorServicos: parseFloat(valor), // Map valor to valorServicos
+        duracao: duracao ? parseInt(duracao) : null,
+        categoria: categoria || "Consulta",
+        requisitos: requisitos || null,
+        idProfissional: id_Profissional || null, // Map to idProfissional
+        ativo: ativo !== undefined ? ativo : true,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('CAD_Servicos')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Erro ao atualizar serviço:", error);
+        return res.status(500).json({ 
+          message: "Erro ao atualizar serviço",
+          error: error.message 
+        });
+      }
+
+      if (!data) {
+        return res.status(404).json({ 
+          message: "Serviço não encontrado" 
+        });
+      }
+
+      // Transform response to match frontend expectations
+      const transformedResponse = {
+        id: data.id,
+        nome: data.servicos,
+        valor: data.valorServicos,
+        updated_at: data.updated_at
+      };
+
+      res.json(transformedResponse);
+    } catch (error) {
+      console.error("Erro interno:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Delete service
+  app.delete("/api/supabase/services/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const { error } = await supabase
+        .from('CAD_Servicos')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error("Erro ao excluir serviço:", error);
+        return res.status(500).json({ 
+          message: "Erro ao excluir serviço",
+          error: error.message 
+        });
+      }
+
+      res.json({ message: "Serviço excluído com sucesso" });
+    } catch (error) {
+      console.error("Erro interno:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
       });
     }
   });

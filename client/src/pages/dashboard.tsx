@@ -40,6 +40,7 @@ import SpecialtiesCRUD from "@/components/specialties-crud";
 import ServicesManagement from "@/components/services-management";
 import PatientsManagement from "@/components/patients-management";
 import ReportsDashboard from "@/components/reports-dashboard";
+import ServicesRegistration from "@/components/services-registration";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -54,6 +55,7 @@ export default function Dashboard() {
     { id: "profissionais", label: "Profissionais", icon: UserCheck },
     { id: "especialidades", label: "Especialidades", icon: Heart },
     { id: "servicos", label: "Serviços", icon: Activity },
+    { id: "cadastro-servicos", label: "Cadastro de Serviços", icon: Stethoscope },
     { id: "pacientes", label: "Pacientes", icon: Users },
     { id: "configuracoes", label: "Configurações", icon: Settings },
   ];
@@ -188,6 +190,8 @@ export default function Dashboard() {
             <PatientsManagement />
           ) : selectedSidebarItem === "servicos" ? (
             <ServicesManagement />
+          ) : selectedSidebarItem === "cadastro-servicos" ? (
+            <ServicesRegistration />
           ) : selectedSidebarItem === "especialidades" ? (
             <SpecialtiesCRUD />
           ) : selectedSidebarItem === "configuracoes" ? (
