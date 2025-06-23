@@ -403,18 +403,23 @@ export default function ProfessionalsManagementWithSupabase() {
             )}
             Sincronizar
           </Button>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Profissional
+          </Button>
+          
           <Dialog open={isAddDialogOpen} onOpenChange={handleCloseDialog}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Profissional
-              </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>
                   {editingProfessional ? "Editar Profissional" : "Novo Profissional"}
                 </DialogTitle>
+                <div className="sr-only">
+                  {editingProfessional 
+                    ? "Formulário para editar dados do profissional selecionado" 
+                    : "Formulário para cadastrar novo profissional na clínica"
+                  }
+                </div>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

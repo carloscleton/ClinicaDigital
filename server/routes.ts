@@ -1160,6 +1160,186 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supabase CAD_Profissional endpoints
+  
+  // Get all professionals from CAD_Profissional
+  app.get("/api/supabase/professionals", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('CAD_Profissional')
+        .select(`
+          id,
+          Profissional,
+          Profissão,
+          CRM,
+          Telefone,
+          email,
+          atendimentos,
+          id_Especialidade
+        `)
+        .order('id', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao buscar profissionais:', error);
+        return res.status(500).json({ 
+          message: "Erro ao buscar profissionais",
+          error: error.message 
+        });
+      }
+
+      const formattedProfessionals = (data || []).map((prof: any) => ({
+        id: prof.id,
+        name: prof.Profissional,
+        specialty: prof.Profissão,
+        crm: prof.CRM || "",
+        phone: prof.Telefone || "",
+        email: prof.email || "",
+        atendimentos: prof.atendimentos || ""
+      }));
+
+      res.json(formattedProfessionals);
+    } catch (error) {
+      console.error("Erro ao buscar profissionais:", error);
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Create new professional in CAD_Profissional
+  app.post("/api/supabase/professionals", async (req, res) => {
+    try {
+      const { name, specialty, crm, phone, email, atendimentos } = req.body;
+      
+      if (!name || !specialty) {
+        return res.status(400).json({ 
+          error: "Nome e especialidade são obrigatórios" 
+        });
+      }
+
+      const { data, error } = await supabase
+        .from("CAD_Profissional")
+        .insert([{
+          Profissional: name,
+          Profissão: specialty,
+          CRM: crm || "",
+          Telefone: phone || "",
+          email: email || "",
+          atendimentos: atendimentos || "",
+          id_Empresa: 1
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Erro ao inserir profissional:", error);
+        return res.status(500).json({ 
+          error: "Erro ao cadastrar profissional",
+          details: error.message 
+        });
+      }
+
+      const formattedProfessional = {
+        id: data.id,
+        name: data.Profissional,
+        specialty: data.Profissão,
+        crm: data.CRM,
+        phone: data.Telefone,
+        email: data.email,
+        atendimentos: data.atendimentos
+      };
+
+      res.status(201).json(formattedProfessional);
+    } catch (error) {
+      console.error("Erro ao criar profissional:", error);
+      res.status(500).json({ 
+        error: "Erro interno do servidor",
+        details: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Update professional in CAD_Profissional
+  app.put("/api/supabase/professionals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { name, specialty, crm, phone, email, atendimentos } = req.body;
+      
+      const { data, error } = await supabase
+        .from("CAD_Profissional")
+        .update({
+          Profissional: name,
+          Profissão: specialty,
+          CRM: crm || "",
+          Telefone: phone || "",
+          email: email || "",
+          atendimentos: atendimentos || ""
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Erro ao atualizar profissional:", error);
+        return res.status(500).json({ 
+          error: "Erro ao atualizar profissional",
+          details: error.message 
+        });
+      }
+
+      if (!data) {
+        return res.status(404).json({ error: "Profissional não encontrado" });
+      }
+
+      const formattedProfessional = {
+        id: data.id,
+        name: data.Profissional,
+        specialty: data.Profissão,
+        crm: data.CRM,
+        phone: data.Telefone,
+        email: data.email,
+        atendimentos: data.atendimentos
+      };
+
+      res.json(formattedProfessional);
+    } catch (error) {
+      console.error("Erro ao atualizar profissional:", error);
+      res.status(500).json({ 
+        error: "Erro interno do servidor",
+        details: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
+  // Delete professional from CAD_Profissional
+  app.delete("/api/supabase/professionals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const { error } = await supabase
+        .from("CAD_Profissional")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error("Erro ao excluir profissional:", error);
+        return res.status(500).json({ 
+          error: "Erro ao excluir profissional",
+          details: error.message 
+        });
+      }
+
+      res.json({ message: "Profissional excluído com sucesso" });
+    } catch (error) {
+      console.error("Erro ao excluir profissional:", error);
+      res.status(500).json({ 
+        error: "Erro interno do servidor",
+        details: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
