@@ -449,30 +449,6 @@ export default function PatientsManagement() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Com Agendamento</p>
-                <p className="text-2xl font-bold text-green-600">{stats.withAppointments}</p>
-              </div>
-              <Calendar className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Pagamentos</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.withPayments}</p>
-              </div>
-              <CreditCard className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Novos (7 dias)</p>
                 <p className="text-2xl font-bold text-red-600">{stats.recentPatients}</p>
               </div>
