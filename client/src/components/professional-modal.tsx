@@ -40,12 +40,17 @@ export default function ProfessionalModal({ professional, isOpen, onClose, photo
           {/* Photo and Basic Info */}
           <div className="lg:col-span-1">
             <Card>
-              <div className="h-64 overflow-hidden rounded-t-lg">
+              <div className="h-64 overflow-hidden rounded-t-lg relative group">
                 <img
-                  src={doctorPhotos[photoIndex % doctorPhotos.length]}
+                  src={professional.photo || doctorPhotos[photoIndex % doctorPhotos.length]}
                   alt={`Dr(a). ${professional.name}`}
                   className="w-full h-full object-cover"
                 />
+                {!professional.photo && (
+                  <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                    Foto fictícia
+                  </div>
+                )}
               </div>
               <CardContent className="p-4">
                 <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
