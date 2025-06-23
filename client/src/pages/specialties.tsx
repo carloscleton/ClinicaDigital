@@ -227,14 +227,22 @@ export default function Specialties() {
               {specialties.map((specialty, index) => (
                 <Card key={index} className={`hover:shadow-xl transition-shadow border-2 ${specialty.color}`}>
                   <CardContent className="p-8">
-                    <div className="flex items-start space-x-4 mb-6">
-                      <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${specialty.color}`}>
-                        <specialty.icon className="w-8 h-8" />
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start space-x-4 flex-1">
+                        <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${specialty.color}`}>
+                          <specialty.icon className="w-8 h-8" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">{specialty.name}</h3>
+                          <p className="text-gray-600 dark:text-gray-400 font-medium">{specialty.description}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">{specialty.name}</h3>
-                        <p className="text-gray-600 dark:text-gray-400 font-medium">{specialty.description}</p>
-                      </div>
+                      <Link href="/contact">
+                        <Button className="bg-blue-600 hover:bg-blue-700 flex-shrink-0">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          Agendar
+                        </Button>
+                      </Link>
                     </div>
                     
                     <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">{specialty.details}</p>
@@ -250,13 +258,6 @@ export default function Specialties() {
                         ))}
                       </ul>
                     </div>
-                    
-                    <Link href="/contact">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Agendar Consulta
-                      </Button>
-                    </Link>
                   </CardContent>
                 </Card>
               ))}
