@@ -123,9 +123,11 @@ export default function Doctors() {
                         Agendar
                       </Button>
                     </Link>
-                    <Button variant="outline" size="sm">
-                      Ver Perfil
-                    </Button>
+                    <Link href={`/professional/${professional.id}`}>
+                      <Button variant="outline" size="sm">
+                        Ver Perfil
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>

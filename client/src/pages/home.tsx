@@ -344,9 +344,11 @@ export default function Home() {
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               <span>CRM: {professional.crm}</span>
                             </div>
-                            <Button variant="outline" size="sm" className="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                              Ver perfil
-                            </Button>
+                            <Link href={`/professional/${professional.id}`}>
+                              <Button variant="outline" size="sm" className="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                                Ver perfil
+                              </Button>
+                            </Link>
                           </div>
                         </CardContent>
                       </Card>

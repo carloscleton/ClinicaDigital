@@ -10,6 +10,7 @@ import Home from "@/pages/home";
 import Services from "@/pages/services";
 import Specialties from "@/pages/specialties";
 import Doctors from "@/pages/doctors";
+import ProfessionalProfile from "@/pages/professional-profile";
 import Testimonials from "@/pages/testimonials";
 import Contact from "@/pages/contact";
 import Booking from "@/pages/booking";
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/services" component={Services} />
       <Route path="/specialties" component={Specialties} />
       <Route path="/doctors" component={Doctors} />
+      <Route path="/professional/:id" component={ProfessionalProfile} />
       <Route path="/testimonials" component={Testimonials} />
       <Route path="/contact" component={Contact} />
       <Route path="/booking" component={Booking} />
