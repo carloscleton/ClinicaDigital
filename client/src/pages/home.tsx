@@ -28,6 +28,10 @@ export default function Home() {
     queryKey: ["/api/supabase/professionals"],
   });
 
+  // Debug log para verificar os dados
+  console.log("Supabase Professionals:", supabaseProfessionals);
+  console.log("Professionals Loading:", professionalsLoading);
+
   const { data: testimonials, isLoading: testimonialsLoading } = useQuery<Testimonial[]>({
     queryKey: ["/api/testimonials"],
   });
