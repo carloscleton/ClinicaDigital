@@ -112,6 +112,61 @@ export default function Home() {
         icon: Baby,
         color: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400",
         description: "Cuidados médicos especializados para crianças"
+      },
+      "Pediatria": {
+        icon: Baby,
+        color: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400",
+        description: "Cuidados médicos especializados para crianças"
+      },
+      "Cirurgião": {
+        icon: UserCheck,
+        color: "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400",
+        description: "Procedimentos cirúrgicos especializados"
+      },
+      "Dermato": {
+        icon: Eye,
+        color: "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400",
+        description: "Tratamento especializado da pele"
+      },
+      "Nutrólogo": {
+        icon: Heart,
+        color: "bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400",
+        description: "Nutrição clínica e metabólica"
+      },
+      "Psicoanalista": {
+        icon: Brain,
+        color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400",
+        description: "Saúde mental e análise psicológica"
+      },
+      "Preventivo": {
+        icon: Activity,
+        color: "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400",
+        description: "Medicina preventiva e check-ups"
+      },
+      "Usg": {
+        icon: Activity,
+        color: "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400",
+        description: "Ultrassonografia diagnóstica"
+      },
+      "Ortopedia": {
+        icon: Bone,
+        color: "bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-400",
+        description: "Tratamento do sistema músculo-esquelético"
+      },
+      "Teste Cardiologia": {
+        icon: Heart,
+        color: "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400",
+        description: "Cardiologia especializada"
+      },
+      "Teste Funcionamento": {
+        icon: UserCheck,
+        color: "bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-400",
+        description: "Testes funcionais especializados"
+      },
+      "Eda": {
+        icon: UserCheck,
+        color: "bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-400",
+        description: "Especialidade médica específica"
       }
     };
     
@@ -192,15 +247,14 @@ export default function Home() {
               <p className="text-gray-600 dark:text-gray-400">Nenhuma especialidade encontrada</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-              {specialties.map((specialty, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 mx-auto ${specialty.color}`}>
-                      <specialty.icon className="w-6 h-6" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-12">
+              {specialties.map((specialty: any, index: number) => (
+                <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer h-32">
+                  <CardContent className="p-4 text-center h-full flex flex-col justify-center">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 mx-auto ${specialty.color}`}>
+                      <specialty.icon className="w-4 h-4" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">{specialty.name}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{specialty.description}</p>
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-tight">{specialty.name}</h3>
                   </CardContent>
                 </Card>
               ))}
