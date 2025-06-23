@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Calendar, Phone, Mail, Award, Clock, MapPin, X } from "lucide-react";
+import { Calendar, Phone, Mail, Award, Clock, MapPin, X, Camera } from "lucide-react";
 
 interface ProfessionalModalProps {
   professional: any;
@@ -36,31 +36,47 @@ export default function ProfessionalModal({ professional, isOpen, onClose, photo
           </DialogTitle>
         </DialogHeader>
         
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Photo and Basic Info */}
+        {/* Foto do Profissional no topo */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative group">
+            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-700">
+              <img
+                src={professional.photo || doctorPhotos[photoIndex % doctorPhotos.length]}
+                alt={`Dr(a). ${professional.name}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {!professional.photo && (
+              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                Foto fictícia
+              </div>
+            )}
+            <Button
+              size="sm"
+              variant="secondary"
+              className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
+              onClick={() => {
+                // TODO: Implementar edição de foto
+                console.log("Editar foto do profissional");
+              }}
+            >
+              <Camera className="h-4 w-4" />
+            </Button>
+          </div>
+          <h3 className="text-xl font-semibold mt-3">{professional.name}</h3>
+          <p className="text-gray-600 dark:text-gray-400">{professional.specialty}</p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Informações Básicas */}
           <div className="lg:col-span-1">
             <Card>
-              <div className="h-64 overflow-hidden rounded-t-lg relative group">
-                <img
-                  src={professional.photo || doctorPhotos[photoIndex % doctorPhotos.length]}
-                  alt={`Dr(a). ${professional.name}`}
-                  className="w-full h-full object-cover"
-                />
-                {!professional.photo && (
-                  <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                    Foto fictícia
-                  </div>
-                )}
-              </div>
               <CardContent className="p-4">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                  Dr(a). {professional.name}
-                </h2>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 mb-4">
-                  {professional.specialty}
-                </Badge>
+                <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                  Informações de Contato
+                </h4>
                 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                     <Award className="w-4 h-4 mr-2" />
                     <span>CRM: {professional.crm}</span>
@@ -103,65 +119,23 @@ export default function ProfessionalModal({ professional, isOpen, onClose, photo
             </Card>
           </div>
 
-          {/* Detailed Information */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* About */}
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
-                  Sobre o Profissional
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                  {professional.description || 
-                    `Dr(a). ${professional.name} é um(a) profissional altamente qualificado(a) em ${professional.specialty}, comprometido(a) com a excelência no atendimento médico. Com experiência na área, oferece cuidados especializados e personalizados para cada paciente.`
-                  }
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Schedule */}
-            {professional.experience && (
+          {/* Horários de Atendimento */}
+          <div className="lg:col-span-1">
+            {(professional.atendimentos || professional.experience) && (
               <Card>
                 <CardContent className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center">
-                    <Clock className="w-4 h-4 mr-2" />
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center">
+                    <Clock className="w-4 w-4 mr-2 text-green-600" />
                     Horários de Atendimento
-                  </h3>
+                  </h4>
                   <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                    <pre className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono">
-                      {professional.experience}
+                    <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">
+                      {professional.atendimentos || professional.experience}
                     </pre>
                   </div>
                 </CardContent>
               </Card>
             )}
-
-            {/* Specialization */}
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
-                  Informações da Especialidade
-                </h3>
-                <div className="grid md:grid-cols-2 gap-3">
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                    <h4 className="font-medium text-blue-800 dark:text-blue-300 text-sm mb-1">
-                      Área de Atuação
-                    </h4>
-                    <p className="text-blue-700 dark:text-blue-400 text-xs">
-                      {professional.specialty}
-                    </p>
-                  </div>
-                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                    <h4 className="font-medium text-green-800 dark:text-green-300 text-sm mb-1">
-                      Local de Atendimento
-                    </h4>
-                    <p className="text-green-700 dark:text-green-400 text-xs">
-                      San Mathews Clínica e Laboratório
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Contact Actions */}
             <Card>
