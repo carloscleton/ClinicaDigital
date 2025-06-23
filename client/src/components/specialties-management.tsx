@@ -18,6 +18,7 @@ import { Heart, Plus, Edit, Trash2, Users, RefreshCw, Loader2, CheckCircle, XCir
 import { useToast } from "@/hooks/use-toast";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { CRMValidator } from "@/components/ui/crm-validator";
+import ImageUpload from "@/components/image-upload";
 
 
 // Professional interface for Supabase data
@@ -48,6 +49,7 @@ const professionalSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   atendimentos: z.string().optional(),
+  photo: z.string().optional(),
 });
 
 // Schema específico para alterar apenas a experiência
@@ -259,6 +261,7 @@ export default function ProfessionalsManagementWithSupabase() {
       phone: "",
       email: "",
       atendimentos: "",
+      photo: "",
     },
   });
 
@@ -311,6 +314,7 @@ export default function ProfessionalsManagementWithSupabase() {
       phone: professional.phone || "",
       email: professional.email || "",
       atendimentos: professional.atendimentos || professional.experience || "",
+      photo: (professional as any).photo || "",
     });
     setIsAddDialogOpen(true);
   };
@@ -325,6 +329,7 @@ export default function ProfessionalsManagementWithSupabase() {
       phone: "",
       email: "",
       atendimentos: "",
+      photo: "",
     });
   };
 
@@ -496,6 +501,18 @@ export default function ProfessionalsManagementWithSupabase() {
                     />
                   </div>
 
+                </div>
+
+                <div>
+                  <ImageUpload
+                    label="Foto do Profissional"
+                    value={form.watch("photo") || ""}
+                    onChange={(value) => form.setValue("photo", value)}
+                    placeholder="Adicione uma foto profissional (PNG, JPG até 5MB)"
+                  />
+                  {form.formState.errors.photo && (
+                    <p className="text-sm text-red-600">{form.formState.errors.photo.message}</p>
+                  )}
                 </div>
 
                 <div>
