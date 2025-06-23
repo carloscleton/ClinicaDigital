@@ -1,15 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { UserCheck, Calendar, Award, GraduationCap, Clock, Mail, Phone } from "lucide-react";
+import ProfessionalModal from "@/components/professional-modal";
 import type { Doctor } from "@shared/schema";
 
 export default function Doctors() {
+  const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { data: supabaseProfessionals, isLoading } = useQuery<any[]>({
     queryKey: ["/api/supabase/professionals"],
   });
+
+  const openProfessionalModal = (professional: any, index: number) => {
+    setSelectedProfessional({ ...professional, photoIndex: index });
+    setIsModalOpen(true);
+  };
+
+  const closeProfessionalModal = () => {
+    setIsModalOpen(false);
+    setSelectedProfessional(null);
+  };
 
   if (isLoading) {
     return (
@@ -123,11 +138,13 @@ export default function Doctors() {
                         Agendar
                       </Button>
                     </Link>
-                    <Link href={`/professional/${professional.id}`}>
-                      <Button variant="outline" size="sm">
-                        Ver Perfil
-                      </Button>
-                    </Link>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => openProfessionalModal(professional, index)}
+                    >
+                      Ver Perfil
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -213,6 +230,14 @@ export default function Doctors() {
           </div>
         </div>
       </div>
+
+      {/* Professional Modal */}
+      <ProfessionalModal
+        professional={selectedProfessional}
+        isOpen={isModalOpen}
+        onClose={closeProfessionalModal}
+        photoIndex={selectedProfessional?.photoIndex || 0}
+      />
     </div>
   );
 }

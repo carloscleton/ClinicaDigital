@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import HeroSection from "@/components/hero-section";
 import StatsSection from "@/components/stats-section";
+import ProfessionalModal from "@/components/professional-modal";
 import { 
   Stethoscope, 
   Activity, 
@@ -20,6 +22,9 @@ import {
 import type { Doctor, Testimonial } from "@shared/schema";
 
 export default function Home() {
+  const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { data: doctors, isLoading: doctorsLoading } = useQuery<Doctor[]>({
     queryKey: ["/api/doctors"],
   });
@@ -27,6 +32,16 @@ export default function Home() {
   const { data: supabaseProfessionals, isLoading: professionalsLoading } = useQuery<any[]>({
     queryKey: ["/api/supabase/professionals"],
   });
+
+  const openProfessionalModal = (professional: any, index: number) => {
+    setSelectedProfessional({ ...professional, photoIndex: index });
+    setIsModalOpen(true);
+  };
+
+  const closeProfessionalModal = () => {
+    setIsModalOpen(false);
+    setSelectedProfessional(null);
+  };
 
 
 
@@ -344,11 +359,14 @@ export default function Home() {
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               <span>CRM: {professional.crm}</span>
                             </div>
-                            <Link href={`/professional/${professional.id}`}>
-                              <Button variant="outline" size="sm" className="hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                                Ver perfil
-                              </Button>
-                            </Link>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                              onClick={() => openProfessionalModal(professional, index)}
+                            >
+                              Ver perfil
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -454,6 +472,14 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      {/* Professional Modal */}
+      <ProfessionalModal
+        professional={selectedProfessional}
+        isOpen={isModalOpen}
+        onClose={closeProfessionalModal}
+        photoIndex={selectedProfessional?.photoIndex || 0}
+      />
     </div>
   );
 }
