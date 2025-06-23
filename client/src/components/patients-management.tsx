@@ -543,7 +543,6 @@ export default function PatientsManagement() {
                         <TableHead>Nome</TableHead>
                         <TableHead>Contato</TableHead>
                         <TableHead>CPF</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Data Cadastro</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
@@ -583,23 +582,6 @@ export default function PatientsManagement() {
                             ) : (
                               <span className="text-gray-500">Não informado</span>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {patient.statusAgendamento && (
-                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                  Agendado
-                                </Badge>
-                              )}
-                              {patient.statusPagamento && (
-                                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                  Pago
-                                </Badge>
-                              )}
-                              {patient.cancelado && (
-                                <Badge variant="destructive">Cancelado</Badge>
-                              )}
-                            </div>
                           </TableCell>
                           <TableCell>
                             {new Date(patient.created_at).toLocaleDateString('pt-BR')}
