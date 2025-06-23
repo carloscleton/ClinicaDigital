@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,6 +21,13 @@ import { useToast } from "@/hooks/use-toast";
 interface SupabaseSpecialty {
   id: number;
   name: string;
+  descricao?: string;
+  codigo?: string;
+  area_medica?: string;
+  requisitos?: string;
+  duracao_media_consulta?: number;
+  valor_consulta?: number;
+  ativo?: boolean;
   idEmpresa: number | null;
   createdAt: string;
 }
@@ -26,6 +35,13 @@ interface SupabaseSpecialty {
 // Form validation schema for specialties
 const specialtySchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  descricao: z.string().optional(),
+  codigo: z.string().optional(),
+  area_medica: z.string().min(1, "Área médica é obrigatória"),
+  requisitos: z.string().optional(),
+  duracao_media_consulta: z.number().min(15, "Duração mínima de 15 minutos").max(300, "Duração máxima de 300 minutos").optional(),
+  valor_consulta: z.number().min(0, "Valor deve ser positivo").optional(),
+  ativo: z.boolean().default(true),
   idEmpresa: z.number().optional(),
 });
 
@@ -156,6 +172,13 @@ export default function SpecialtiesCRUD() {
     resolver: zodResolver(specialtySchema),
     defaultValues: {
       name: "",
+      descricao: "",
+      codigo: "",
+      area_medica: "",
+      requisitos: "",
+      duracao_media_consulta: 30,
+      valor_consulta: 150,
+      ativo: true,
       idEmpresa: 1,
     },
   });
@@ -172,6 +195,13 @@ export default function SpecialtiesCRUD() {
     setEditingSpecialty(specialty);
     form.reset({
       name: specialty.name,
+      descricao: specialty.descricao || "",
+      codigo: specialty.codigo || "",
+      area_medica: specialty.area_medica || "",
+      requisitos: specialty.requisitos || "",
+      duracao_media_consulta: specialty.duracao_media_consulta || 30,
+      valor_consulta: specialty.valor_consulta || 150,
+      ativo: specialty.ativo !== false,
       idEmpresa: specialty.idEmpresa || 1,
     });
     setIsAddDialogOpen(true);
@@ -231,16 +261,111 @@ export default function SpecialtiesCRUD() {
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nome da Especialidade *</Label>
-                  <Input
-                    id="name"
-                    {...form.register("name")}
-                    placeholder="Ex: Cardiologia, Dermatologia, etc."
-                  />
-                  {form.formState.errors.name && (
-                    <p className="text-sm text-red-600">{form.formState.errors.name.message}</p>
-                  )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <Label htmlFor="name">Nome da Especialidade *</Label>
+                    <Input
+                      id="name"
+                      {...form.register("name")}
+                      placeholder="Ex: Cardiologia, Dermatologia, etc."
+                    />
+                    {form.formState.errors.name && (
+                      <p className="text-sm text-red-600">{form.formState.errors.name.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="codigo">Código da Especialidade</Label>
+                    <Input
+                      id="codigo"
+                      {...form.register("codigo")}
+                      placeholder="Ex: CARD, DERMA, GINE"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="area_medica">Área Médica *</Label>
+                    <Input
+                      id="area_medica"
+                      {...form.register("area_medica")}
+                      placeholder="Ex: Clínica Médica, Área Cirúrgica"
+                      list="areas-medicas"
+                    />
+                    <datalist id="areas-medicas">
+                      <option value="Clínica Médica" />
+                      <option value="Área Cirúrgica" />
+                      <option value="Medicina Diagnóstica" />
+                      <option value="Medicina Terapêutica" />
+                      <option value="Medicina Preventiva" />
+                      <option value="Medicina Especializada" />
+                      <option value="Medicina de Emergência" />
+                    </datalist>
+                    {form.formState.errors.area_medica && (
+                      <p className="text-sm text-red-600">{form.formState.errors.area_medica.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="duracao_media_consulta">Duração Média (minutos)</Label>
+                    <Input
+                      id="duracao_media_consulta"
+                      type="number"
+                      {...form.register("duracao_media_consulta", { valueAsNumber: true })}
+                      placeholder="30"
+                      min="15"
+                      max="300"
+                    />
+                    {form.formState.errors.duracao_media_consulta && (
+                      <p className="text-sm text-red-600">{form.formState.errors.duracao_media_consulta.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="valor_consulta">Valor Padrão (R$)</Label>
+                    <Input
+                      id="valor_consulta"
+                      type="number"
+                      step="0.01"
+                      {...form.register("valor_consulta", { valueAsNumber: true })}
+                      placeholder="150.00"
+                      min="0"
+                    />
+                    {form.formState.errors.valor_consulta && (
+                      <p className="text-sm text-red-600">{form.formState.errors.valor_consulta.message}</p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label htmlFor="descricao">Descrição</Label>
+                    <Textarea
+                      id="descricao"
+                      {...form.register("descricao")}
+                      placeholder="Descrição detalhada da especialidade médica..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label htmlFor="requisitos">Requisitos e Preparos</Label>
+                    <Textarea
+                      id="requisitos"
+                      {...form.register("requisitos")}
+                      placeholder="Requisitos específicos para consultas desta especialidade..."
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="ativo"
+                        {...form.register("ativo")}
+                        className="rounded border-gray-300"
+                      />
+                      <Label htmlFor="ativo">Especialidade ativa</Label>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={handleCloseDialog}>
@@ -318,8 +443,12 @@ export default function SpecialtiesCRUD() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
-                    <TableHead>Nome da Especialidade</TableHead>
-                    <TableHead>Data de Criação</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Área Médica</TableHead>
+                    <TableHead>Duração</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -328,10 +457,49 @@ export default function SpecialtiesCRUD() {
                     <TableRow key={specialty.id}>
                       <TableCell className="font-medium">{specialty.id}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{specialty.name}</Badge>
+                        <div>
+                          <Badge variant="secondary">{specialty.name}</Badge>
+                          {specialty.descricao && (
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                              {specialty.descricao}
+                            </p>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
-                        {new Date(specialty.createdAt).toLocaleDateString('pt-BR')}
+                        {specialty.codigo ? (
+                          <Badge variant="outline">{specialty.codigo}</Badge>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {specialty.area_medica ? (
+                          <span className="text-sm">{specialty.area_medica}</span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {specialty.duracao_media_consulta ? (
+                          <span className="text-sm">{specialty.duracao_media_consulta} min</span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {specialty.valor_consulta ? (
+                          <span className="text-sm font-medium text-green-600">
+                            R$ {specialty.valor_consulta.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={specialty.ativo !== false ? "default" : "secondary"}>
+                          {specialty.ativo !== false ? "Ativa" : "Inativa"}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
