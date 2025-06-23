@@ -544,7 +544,6 @@ export default function PatientsManagement() {
                         <TableHead>Contato</TableHead>
                         <TableHead>CPF</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Valor</TableHead>
                         <TableHead>Data Cadastro</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
@@ -601,15 +600,6 @@ export default function PatientsManagement() {
                                 <Badge variant="destructive">Cancelado</Badge>
                               )}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            {patient.valor ? (
-                              <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                R$ {patient.valor.toFixed(2)}
-                              </Badge>
-                            ) : (
-                              <span className="text-gray-500">-</span>
-                            )}
                           </TableCell>
                           <TableCell>
                             {new Date(patient.created_at).toLocaleDateString('pt-BR')}
