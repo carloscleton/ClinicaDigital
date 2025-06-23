@@ -585,34 +585,6 @@ intervalo para o almoço: 12 às 13h00"
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Dermatologistas</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {stats.professionalsBySpecialty["Dermatologista"]?.length || 0}
-                </p>
-              </div>
-              <UserCheck className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Cardiologistas</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {stats.professionalsBySpecialty["Cardiologista"]?.length || 0}
-                </p>
-              </div>
-              <Activity className="h-8 w-8 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Specialty Filter */}
