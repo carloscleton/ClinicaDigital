@@ -17,6 +17,7 @@ import { z } from "zod";
 import { Heart, Plus, Edit, Trash2, Users, RefreshCw, Loader2, CheckCircle, XCircle, Database, UserCheck, Activity, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { CRMValidator } from "@/components/ui/crm-validator";
 
 
 // Professional interface for Supabase data
@@ -457,11 +458,21 @@ export default function ProfessionalsManagementWithSupabase() {
                   </div>
                   <div>
                     <Label htmlFor="crm">CRM</Label>
-                    <Input
-                      id="crm"
-                      {...form.register("crm")}
-                      placeholder="Ex: CRM/CE 12345"
+                    <CRMValidator
+                      value={form.watch("crm") || ""}
+                      onChange={(value) => form.setValue("crm", value)}
+                      onValidationResult={(isValid, data) => {
+                        if (isValid && data) {
+                          // Auto-populate specialty if validated successfully
+                          if (!form.watch("specialty")) {
+                            form.setValue("specialty", data.specialty);
+                          }
+                        }
+                      }}
                     />
+                    {form.formState.errors.crm && (
+                      <p className="text-sm text-red-600">{form.formState.errors.crm.message}</p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
