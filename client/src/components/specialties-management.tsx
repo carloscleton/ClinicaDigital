@@ -495,20 +495,17 @@ export default function ProfessionalsManagementWithSupabase() {
                   <Textarea
                     id="atendimentos"
                     {...form.register("atendimentos")}
-                    placeholder="HORÁRIOS DE ATENDIMENTO
-
-Segunda-feira: 08:00 às 12:00 | 14:00 às 18:00
-Terça-feira: 08:00 às 12:00 | 14:00 às 18:00
-Quarta-feira: 08:00 às 12:00 | 14:00 às 18:00
-Quinta-feira: 08:00 às 12:00 | 14:00 às 18:00
-Sexta-feira: 08:00 às 12:00 | 14:00 às 18:00
-Sábado: 08:00 às 12:00
-Domingo: FECHADO
-
-CONFIGURAÇÕES:
-• Duração da consulta: 30 minutos
-• Intervalo entre pacientes: 10 minutos
-• Intervalo para almoço: 12:00 às 14:00"
+                    placeholder="🕒 Dias e Horários de Atendimento - para uso interno do sistema de marcação
+Segunda: 8h:00 às 13h00
+Terça: 14h:00 às 18h00
+Quarta: 7h:00 às 18h00
+Quinta: ❌ Agenda Fechada
+Sexta: ❌ Agenda Fechada
+Sábado: 9h00 às 13h00
+Domingo: ❌ Fechado
+Duração da Consulta: 60 Minutos (Obrigatório)
+Intervalo entre Pacientes para atendimento: 5 minutos
+intervalo para o almoço: 12 às 13h00"
                     className="font-mono text-sm mt-2 resize-none"
                     rows={10}
                     disabled={false}
@@ -810,20 +807,17 @@ CONFIGURAÇÕES:
                 <Textarea
                   id="schedule-edit"
                   {...scheduleForm.register("atendimentos")}
-                  placeholder="HORÁRIOS DE ATENDIMENTO
-
-Segunda-feira: 08:00 às 12:00 | 14:00 às 18:00
-Terça-feira: 08:00 às 12:00 | 14:00 às 18:00
-Quarta-feira: 08:00 às 12:00 | 14:00 às 18:00
-Quinta-feira: 08:00 às 12:00 | 14:00 às 18:00
-Sexta-feira: 08:00 às 12:00 | 14:00 às 18:00
-Sábado: 08:00 às 12:00
-Domingo: FECHADO
-
-CONFIGURAÇÕES:
-• Duração da consulta: 30 minutos
-• Intervalo entre pacientes: 10 minutos
-• Intervalo para almoço: 12:00 às 14:00"
+                  placeholder="🕒 Dias e Horários de Atendimento - para uso interno do sistema de marcação
+Segunda: 8h:00 às 13h00
+Terça: 14h:00 às 18h00
+Quarta: 7h:00 às 18h00
+Quinta: ❌ Agenda Fechada
+Sexta: ❌ Agenda Fechada
+Sábado: 9h00 às 13h00
+Domingo: ❌ Fechado
+Duração da Consulta: 60 Minutos (Obrigatório)
+Intervalo entre Pacientes para atendimento: 5 minutos
+intervalo para o almoço: 12 às 13h00"
                   className="mt-1 min-h-[300px] font-mono text-sm"
                   rows={15}
                 />
