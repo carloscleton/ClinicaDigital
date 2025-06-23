@@ -3,12 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { UserCheck, Calendar, Award, GraduationCap, Clock } from "lucide-react";
+import { UserCheck, Calendar, Award, GraduationCap, Clock, Mail, Phone } from "lucide-react";
 import type { Doctor } from "@shared/schema";
 
 export default function Doctors() {
-  const { data: doctors, isLoading } = useQuery<Doctor[]>({
-    queryKey: ["/api/doctors"],
+  const { data: supabaseProfessionals, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/supabase/professionals"],
   });
 
   if (isLoading) {
@@ -44,7 +44,7 @@ export default function Doctors() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           <div className="text-center">
-            <div className="text-3xl font-bold text-blue-600 mb-2">{doctors?.length || 0}+</div>
+            <div className="text-3xl font-bold text-blue-600 mb-2">{supabaseProfessionals?.length || 0}</div>
             <div className="text-gray-600">Médicos Especialistas</div>
           </div>
           <div className="text-center">
@@ -63,50 +63,74 @@ export default function Doctors() {
 
         {/* Doctors Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
-          {doctors?.map((doctor) => (
-            <Card key={doctor.id} className="overflow-hidden hover:shadow-xl transition-shadow">
-              <div className="h-64 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                <UserCheck className="w-20 h-20 text-blue-600" />
-              </div>
-              <CardContent className="p-6">
-                <div className="mb-3">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-1">{doctor.name}</h3>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                    {doctor.specialty}
-                  </Badge>
+          {supabaseProfessionals?.map((professional, index) => {
+            // Array de fotos fictícias para médicos
+            const doctorPhotos = [
+              "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+              "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+              "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+              "https://images.unsplash.com/photo-1594824949799-9d95d2a82c20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+              "https://images.unsplash.com/photo-1527613426441-4da17471b66d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+              "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+              "https://images.unsplash.com/photo-1622253692010-333f2da6031d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+              "https://images.unsplash.com/photo-1584467735871-8dd4827d4864?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+            ];
+            
+            return (
+              <Card key={professional.id} className="overflow-hidden hover:shadow-xl transition-shadow">
+                <div className="h-64 overflow-hidden">
+                  <img
+                    src={doctorPhotos[index % doctorPhotos.length]}
+                    alt={`Dr(a). ${professional.name}`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                
-                <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                  {doctor.description}
-                </p>
-                
-                <div className="space-y-2 mb-6">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Award className="w-4 h-4 mr-2" />
-                    <span>{doctor.crm}</span>
+                <CardContent className="p-6">
+                  <div className="mb-3">
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-1">Dr(a). {professional.name}</h3>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                      {professional.specialty}
+                    </Badge>
                   </div>
-                  {doctor.experience && (
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>{doctor.experience} de experiência</span>
+                  
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed line-clamp-3">
+                    {professional.description || "Profissional experiente e qualificado em sua especialidade"}
+                  </p>
+                  
+                  <div className="space-y-2 mb-6">
+                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <Award className="w-4 h-4 mr-2" />
+                      <span>CRM: {professional.crm}</span>
                     </div>
-                  )}
-                </div>
-                
-                <div className="flex gap-2">
-                  <Link href="/contact" className="flex-1">
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Agendar
+                    {professional.phone && (
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                        <Phone className="w-4 h-4 mr-2" />
+                        <span>{professional.phone}</span>
+                      </div>
+                    )}
+                    {professional.email && (
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                        <Mail className="w-4 h-4 mr-2" />
+                        <span>{professional.email}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Link href="/contact" className="flex-1">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Agendar
+                      </Button>
+                    </Link>
+                    <Button variant="outline" size="sm">
+                      Ver Perfil
                     </Button>
-                  </Link>
-                  <Button variant="outline" size="sm">
-                    Ver Perfil
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Specialties Available */}
