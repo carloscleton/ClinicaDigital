@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, Clock, User, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar, Clock, User, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Grid, LayoutList } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { format, addDays, startOfWeek, isSameDay, parseISO, isValid } from "date-fns";
+import { format, addDays, startOfWeek, isSameDay, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface Professional {
@@ -65,6 +66,8 @@ export default function SmartScheduling() {
   const [weekSchedule, setWeekSchedule] = useState<DaySchedule[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<{day: DaySchedule, slot: TimeSlot} | null>(null);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"week" | "month">("month");
+  const [monthDays, setMonthDays] = useState<{date: Date, isCurrentMonth: boolean, schedule?: DaySchedule}[]>([]);
 
   // Fetch professionals data
   const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery<Professional[]>({
@@ -256,6 +259,39 @@ export default function SmartScheduling() {
     return weekSchedule;
   };
 
+  // Generate the month view
+  const generateMonthView = (date: Date, professionalId: number, scheduleConfig: ScheduleConfig) => {
+    const monthStart = startOfMonth(date);
+    const monthEnd = endOfMonth(date);
+    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const endDate = addDays(startOfWeek(addDays(monthEnd, 1), { weekStartsOn: 1 }), 6);
+    
+    const daysInMonthView = eachDayOfInterval({ start: startDate, end: endDate });
+    
+    // Generate day schedules for each day in the month view
+    return daysInMonthView.map(day => {
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      const dayName = dayNames[day.getDay()];
+      const dayConfig = scheduleConfig.weekDays[dayName];
+      const isAvailable = dayConfig?.isOpen || false;
+      
+      const slots = isAvailable ? generateTimeSlots(day, scheduleConfig, professionalId) : [];
+      
+      const daySchedule: DaySchedule = {
+        dayName,
+        date: day,
+        slots,
+        isAvailable
+      };
+      
+      return {
+        date: day,
+        isCurrentMonth: isSameMonth(day, date),
+        schedule: daySchedule
+      };
+    });
+  };
+
   // Update the week schedule when the selected professional or date changes
   useEffect(() => {
     if (!selectedProfessional) return;
@@ -266,28 +302,37 @@ export default function SmartScheduling() {
     if (!professional) return;
     
     const scheduleConfig = parseScheduleConfig(professional.atendimentos);
-    // Start week on Monday (weekStartsOn: 1)
+    
+    // Week view
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
     const schedule = generateWeekSchedule(weekStart, professionalId, scheduleConfig);
-    
     setWeekSchedule(schedule);
+    
+    // Month view
+    const monthView = generateMonthView(currentDate, professionalId, scheduleConfig);
+    setMonthDays(monthView);
+    
   }, [selectedProfessional, currentDate, professionals, appointments]);
 
-  // Navigate to previous week
-  const goToPreviousWeek = () => {
+  // Navigate to previous period
+  const goToPrevious = () => {
     setCurrentDate(prevDate => {
-      const newDate = new Date(prevDate);
-      newDate.setDate(newDate.getDate() - 7);
-      return newDate;
+      if (viewMode === "week") {
+        return addDays(prevDate, -7);
+      } else {
+        return subMonths(prevDate, 1);
+      }
     });
   };
 
-  // Navigate to next week
-  const goToNextWeek = () => {
+  // Navigate to next period
+  const goToNext = () => {
     setCurrentDate(prevDate => {
-      const newDate = new Date(prevDate);
-      newDate.setDate(newDate.getDate() + 7);
-      return newDate;
+      if (viewMode === "week") {
+        return addDays(prevDate, 7);
+      } else {
+        return addMonths(prevDate, 1);
+      }
     });
   };
 
@@ -315,6 +360,50 @@ export default function SmartScheduling() {
     }
   };
 
+  // Get day availability status for month view
+  const getDayAvailabilityStatus = (day: {date: Date, isCurrentMonth: boolean, schedule?: DaySchedule}) => {
+    if (!day.isCurrentMonth) return "outside-month";
+    if (!day.schedule?.isAvailable) return "unavailable";
+    
+    const availableSlots = day.schedule.slots.filter(slot => slot.available).length;
+    const bookedSlots = day.schedule.slots.filter(slot => !slot.available).length;
+    
+    if (availableSlots === 0 && bookedSlots > 0) return "fully-booked";
+    if (bookedSlots > 0) return "partially-booked";
+    if (availableSlots > 0) return "available";
+    
+    return "unavailable";
+  };
+
+  // Get color class based on day availability
+  const getDayColorClass = (status: string) => {
+    switch (status) {
+      case "available":
+        return "bg-green-50 dark:bg-green-900/10 hover:bg-green-100 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800";
+      case "partially-booked":
+        return "bg-yellow-50 dark:bg-yellow-900/10 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800";
+      case "fully-booked":
+        return "bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800";
+      case "unavailable":
+        return "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700";
+      case "outside-month":
+        return "bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-600 border-gray-100 dark:border-gray-800";
+      default:
+        return "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700";
+    }
+  };
+
+  // Get appointments for a specific day
+  const getAppointmentsForDay = (date: Date, professionalId: number) => {
+    if (!professionalId) return [];
+    
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return appointments.filter(apt => 
+      apt.doctorId === professionalId && 
+      apt.preferredDate === dateStr
+    );
+  };
+
   if (isLoadingProfessionals || isLoadingAppointments) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -330,7 +419,7 @@ export default function SmartScheduling() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            Agenda Semanal
+            Agenda de Atendimentos
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Visualização e gerenciamento de horários disponíveis
@@ -341,10 +430,10 @@ export default function SmartScheduling() {
           <Button
             variant="outline"
             size="sm"
-            onClick={goToPreviousWeek}
+            onClick={goToPrevious}
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
-            Semana Anterior
+            {viewMode === "week" ? "Semana Anterior" : "Mês Anterior"}
           </Button>
           <Button
             variant="outline"
@@ -356,15 +445,15 @@ export default function SmartScheduling() {
           <Button
             variant="outline"
             size="sm"
-            onClick={goToNextWeek}
+            onClick={goToNext}
           >
-            Próxima Semana
+            {viewMode === "week" ? "Próxima Semana" : "Próximo Mês"}
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </div>
       </div>
 
-      {/* Professional Selector */}
+      {/* Professional Selector and View Mode */}
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -388,10 +477,40 @@ export default function SmartScheduling() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1">Semana</label>
+              <label className="block text-sm font-medium mb-1">Período</label>
               <div className="bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-md text-sm">
-                {format(startOfWeek(currentDate, { weekStartsOn: 1 }), "dd/MM/yyyy", { locale: ptBR })} - 
-                {format(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), " dd/MM/yyyy", { locale: ptBR })}
+                {viewMode === "week" ? (
+                  <>
+                    {format(startOfWeek(currentDate, { weekStartsOn: 1 }), "dd/MM/yyyy", { locale: ptBR })} - 
+                    {format(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), " dd/MM/yyyy", { locale: ptBR })}
+                  </>
+                ) : (
+                  format(currentDate, "MMMM yyyy", { locale: ptBR })
+                )}
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Visualização</label>
+              <div className="flex rounded-md border border-gray-200 dark:border-gray-700">
+                <Button
+                  variant={viewMode === "month" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("month")}
+                  className="rounded-r-none"
+                >
+                  <Grid className="h-4 w-4 mr-2" />
+                  Mês
+                </Button>
+                <Button
+                  variant={viewMode === "week" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("week")}
+                  className="rounded-l-none"
+                >
+                  <LayoutList className="h-4 w-4 mr-2" />
+                  Semana
+                </Button>
               </div>
             </div>
           </div>
@@ -407,7 +526,7 @@ export default function SmartScheduling() {
               Selecione um Profissional
             </h3>
             <p className="text-gray-500 dark:text-gray-400">
-              Escolha um profissional para visualizar sua agenda semanal
+              Escolha um profissional para visualizar sua agenda
             </p>
           </CardContent>
         </Card>
@@ -416,77 +535,158 @@ export default function SmartScheduling() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Agenda Semanal
+              {viewMode === "week" ? "Agenda Semanal" : "Calendário Mensal"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-7 gap-2">
-              {/* Day Headers */}
-              {weekSchedule.map((day) => (
-                <div key={day.dayName} className="text-center">
-                  <div className="font-medium mb-1">{day.dayName}</div>
-                  <div className="text-sm text-gray-500">
-                    {format(day.date, "dd/MM", { locale: ptBR })}
-                  </div>
-                </div>
-              ))}
-              
-              {/* Day Columns */}
-              {weekSchedule.map((day) => (
-                <div 
-                  key={`col-${day.dayName}`} 
-                  className={cn(
-                    "border rounded-md overflow-hidden",
-                    day.isAvailable ? "bg-white dark:bg-gray-800" : "bg-gray-100 dark:bg-gray-900"
-                  )}
-                >
-                  {!day.isAvailable ? (
-                    <div className="h-full flex items-center justify-center p-4 text-center">
-                      <div className="text-gray-500 dark:text-gray-400">
-                        <div className="text-2xl mb-2">❌</div>
-                        <p className="text-sm">Não há atendimento</p>
-                      </div>
+            {viewMode === "week" ? (
+              // Week View
+              <div className="grid grid-cols-7 gap-2">
+                {/* Day Headers */}
+                {weekSchedule.map((day) => (
+                  <div key={day.dayName} className="text-center">
+                    <div className="font-medium mb-1">{day.dayName}</div>
+                    <div className="text-sm text-gray-500">
+                      {format(day.date, "dd/MM", { locale: ptBR })}
                     </div>
-                  ) : (
-                    <div className="max-h-[500px] overflow-y-auto p-1">
-                      {day.slots.map((slot, index) => (
-                        <div
-                          key={`${day.dayName}-${slot.time}-${index}`}
-                          className={cn(
-                            "p-2 mb-1 rounded-md text-sm cursor-pointer transition-colors",
-                            slot.available 
-                              ? "bg-green-50 hover:bg-green-100 dark:bg-green-900/10 dark:hover:bg-green-900/20 text-green-800 dark:text-green-300" 
-                              : slot.appointment 
-                                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300"
-                                : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                          )}
-                          onClick={() => handleSlotSelect(day, slot)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{slot.time}</span>
+                  </div>
+                ))}
+                
+                {/* Day Columns */}
+                {weekSchedule.map((day) => (
+                  <div 
+                    key={`col-${day.dayName}`} 
+                    className={cn(
+                      "border rounded-md overflow-hidden",
+                      day.isAvailable ? "bg-white dark:bg-gray-800" : "bg-gray-100 dark:bg-gray-900"
+                    )}
+                  >
+                    {!day.isAvailable ? (
+                      <div className="h-full flex items-center justify-center p-4 text-center">
+                        <div className="text-gray-500 dark:text-gray-400">
+                          <div className="text-2xl mb-2">❌</div>
+                          <p className="text-sm">Não há atendimento</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="max-h-[500px] overflow-y-auto p-1">
+                        {day.slots.map((slot, index) => (
+                          <div
+                            key={`${day.dayName}-${slot.time}-${index}`}
+                            className={cn(
+                              "p-2 mb-1 rounded-md text-sm cursor-pointer transition-colors",
+                              slot.available 
+                                ? "bg-green-50 hover:bg-green-100 dark:bg-green-900/10 dark:hover:bg-green-900/20 text-green-800 dark:text-green-300" 
+                                : slot.appointment 
+                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300"
+                                  : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                            )}
+                            onClick={() => handleSlotSelect(day, slot)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{slot.time}</span>
+                              {slot.appointment && (
+                                <Badge className={getStatusColor(slot.appointment.status)}>
+                                  {slot.appointment.status === 'pending' ? 'Pendente' :
+                                   slot.appointment.status === 'confirmed' ? 'Confirmado' :
+                                   slot.appointment.status === 'completed' ? 'Concluído' :
+                                   slot.appointment.status === 'cancelled' ? 'Cancelado' : slot.appointment.status}
+                                </Badge>
+                              )}
+                            </div>
+                            
                             {slot.appointment && (
-                              <Badge className={getStatusColor(slot.appointment.status)}>
-                                {slot.appointment.status === 'pending' ? 'Pendente' :
-                                 slot.appointment.status === 'confirmed' ? 'Confirmado' :
-                                 slot.appointment.status === 'completed' ? 'Concluído' :
-                                 slot.appointment.status === 'cancelled' ? 'Cancelado' : slot.appointment.status}
-                              </Badge>
+                              <div className="mt-1 text-xs">
+                                <div className="font-medium truncate">{slot.appointment.fullName}</div>
+                                <div className="text-gray-500 dark:text-gray-400 truncate">{slot.appointment.specialty}</div>
+                              </div>
                             )}
                           </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // Month View
+              <div className="space-y-4">
+                {/* Days of Week Header */}
+                <div className="grid grid-cols-7 gap-1 text-center">
+                  {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map(day => (
+                    <div key={day} className="p-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {monthDays.map((day, index) => {
+                    const status = getDayAvailabilityStatus(day);
+                    const colorClass = getDayColorClass(status);
+                    const isToday = isSameDay(day.date, new Date());
+                    const dayAppointments = day.schedule ? 
+                      day.schedule.slots.filter(slot => !slot.available && slot.appointment).length : 0;
+                    const availableSlots = day.schedule ? 
+                      day.schedule.slots.filter(slot => slot.available).length : 0;
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={cn(
+                          "min-h-[100px] p-1 border rounded-md transition-colors cursor-pointer",
+                          colorClass,
+                          isToday && "ring-2 ring-blue-500 dark:ring-blue-400"
+                        )}
+                        onClick={() => {
+                          if (day.schedule && day.isCurrentMonth) {
+                            setCurrentDate(day.date);
+                            setViewMode("week");
+                          }
+                        }}
+                      >
+                        <div className="p-1">
+                          <div className={cn(
+                            "text-right text-sm font-medium",
+                            !day.isCurrentMonth && "text-gray-400 dark:text-gray-600",
+                            isToday && "text-blue-600 dark:text-blue-400"
+                          )}>
+                            {format(day.date, "d")}
+                          </div>
                           
-                          {slot.appointment && (
-                            <div className="mt-1 text-xs">
-                              <div className="font-medium truncate">{slot.appointment.fullName}</div>
-                              <div className="text-gray-500 dark:text-gray-400 truncate">{slot.appointment.specialty}</div>
+                          {day.isCurrentMonth && day.schedule?.isAvailable && (
+                            <div className="mt-1 space-y-1">
+                              {dayAppointments > 0 && (
+                                <div className="text-xs p-1 rounded bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                                  {dayAppointments} agendamento{dayAppointments !== 1 ? 's' : ''}
+                                </div>
+                              )}
+                              {availableSlots > 0 && (
+                                <div className="text-xs p-1 rounded bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
+                                  {availableSlots} horário{availableSlots !== 1 ? 's' : ''} livre{availableSlots !== 1 ? 's' : ''}
+                                </div>
+                              )}
+                              {dayAppointments === 0 && availableSlots === 0 && (
+                                <div className="text-xs p-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                  Sem horários
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {day.isCurrentMonth && !day.schedule?.isAvailable && (
+                            <div className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
+                              <span>Fechado</span>
                             </div>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -502,16 +702,12 @@ export default function SmartScheduling() {
           <span className="text-sm">Agendado</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-gray-100 dark:bg-gray-800 rounded-sm mr-2"></div>
-          <span className="text-sm">Indisponível/Almoço</span>
-        </div>
-        <div className="flex items-center">
           <div className="w-4 h-4 bg-yellow-100 dark:bg-yellow-900/20 rounded-sm mr-2"></div>
-          <span className="text-sm">Pendente</span>
+          <span className="text-sm">Parcialmente Ocupado</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-green-100 dark:bg-green-900/20 rounded-sm mr-2"></div>
-          <span className="text-sm">Confirmado</span>
+          <div className="w-4 h-4 bg-gray-100 dark:bg-gray-800 rounded-sm mr-2"></div>
+          <span className="text-sm">Indisponível/Fechado</span>
         </div>
       </div>
 
