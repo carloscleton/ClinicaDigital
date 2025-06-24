@@ -3,12 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertAppointmentSchema, insertContactMessageSchema, insertDoctorSchema, insertTestimonialSchema } from "@shared/schema";
 import { z } from "zod";
-import { createClient } from "@supabase/supabase-js";
-
-// Configure Supabase directly in server
-const supabaseUrl = 'https://zdqcyemiwglybvpfczya.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkcWN5ZW1pd2dseWJ2cGZjenlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1MzIwMjksImV4cCI6MjA2NjEwODAyOX0.eRUuO0H3nuJwHMljwxAhlaZpOFRcc2LN4puAfbZvvrI';
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from "./supabase-client";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all doctors
