@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
@@ -59,7 +58,6 @@ export default function ProfessionalAppointmentsChart() {
             appointmentCount = parseInt(countMatch[1]);
           } else {
             // Se não encontrar explicitamente, estimar baseado no texto
-            // Contar linhas que contêm horários como uma aproximação
             const lines = prof.atendimentos.split('\n');
             
             // Primeiro filtro: linhas com horários válidos
