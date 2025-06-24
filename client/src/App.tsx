@@ -14,6 +14,7 @@ import ProfessionalProfile from "@/pages/professional-profile";
 import Testimonials from "@/pages/testimonials";
 import Contact from "@/pages/contact";
 import Booking from "@/pages/booking";
+import Agendamento from "@/pages/agendamento";
 import Dashboard from "@/pages/dashboard";
 import RulerDemo from "@/pages/ruler-demo";
 import Login from "@/pages/login";
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/testimonials" component={Testimonials} />
       <Route path="/contact" component={Contact} />
       <Route path="/booking" component={Booking} />
+      <Route path="/agendamento" component={Agendamento} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/ruler" component={RulerDemo} />
       <Route component={NotFound} />

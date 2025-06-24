@@ -460,6 +460,26 @@ export default function VerticalTimeRuler({
                 })}
               </div>
             </div>
+            
+            {/* Legend */}
+            <div className="flex flex-wrap gap-3 text-xs pt-2">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-green-100 dark:bg-green-900/30 border border-green-300 rounded-sm"></div>
+                <span>Preferencial</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-green-50 dark:bg-green-900/10 border border-green-200 rounded-sm"></div>
+                <span>Disponível</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-red-50 dark:bg-red-900/10 border border-red-200 rounded-sm"></div>
+                <span>Ocupado</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 rounded-sm"></div>
+                <span>Almoço</span>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>
