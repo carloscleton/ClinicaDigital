@@ -385,14 +385,14 @@ export default function ServicesRegistration() {
                 <div>
                   <Label htmlFor="id_Profissional">Profissional Responsável</Label>
                   <Select
-                    value={form.watch("id_Profissional")?.toString() || ""}
-                    onValueChange={(value) => form.setValue("id_Profissional", value ? parseInt(value) : undefined)}
+                    value={form.watch("id_Profissional")?.toString() || "unassigned"}
+                    onValueChange={(value) => form.setValue("id_Profissional", value === "unassigned" ? undefined : parseInt(value))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um profissional" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum profissional</SelectItem>
+                      <SelectItem value="unassigned">Nenhum profissional</SelectItem>
                       {professionals.map((professional) => (
                         <SelectItem key={professional.id} value={professional.id.toString()}>
                           {professional.nome} - {professional.especialidade}
