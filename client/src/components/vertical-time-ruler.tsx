@@ -21,6 +21,7 @@ interface TimeSlot {
   isLunchBreak?: boolean;
   isBooked?: boolean;
   patientName?: string;
+  isPreferred?: boolean;
 }
 
 interface DaySchedule {
@@ -29,6 +30,7 @@ interface DaySchedule {
   startTime?: string;
   endTime?: string;
   slots: TimeSlot[];
+  preferredTimes?: string[];
 }
 
 export default function VerticalTimeRuler({ 
@@ -141,6 +143,33 @@ export default function VerticalTimeRuler({
       }
     }
     
+    // Look for preferred hours
+    const preferredTimes: Record<string, string[]> = {};
+    const preferredLine = lines.find(line => 
+      line.toLowerCase().includes('horário preferencial') || 
+      line.toLowerCase().includes('horários preferenciais')
+    );
+    
+    if (preferredLine) {
+      // Extract day-specific preferred times
+      Object.keys(result).forEach(day => {
+        const dayPreferredLine = lines.find(line => 
+          line.toLowerCase().includes(day.toLowerCase()) && 
+          line.toLowerCase().includes('preferencial')
+        );
+        
+        if (dayPreferredLine) {
+          const timeMatches = dayPreferredLine.match(/(\d{1,2})h?:?(\d{2})?/g);
+          if (timeMatches) {
+            preferredTimes[day] = timeMatches.map(time => {
+              const [hours, minutes] = time.replace('h', ':').split(':');
+              return `${hours.padStart(2, '0')}:${minutes ? minutes.padStart(2, '0') : '00'}`;
+            });
+          }
+        }
+      });
+    }
+    
     // Parse day schedules
     for (const line of lines) {
       // Skip non-day lines
@@ -174,15 +203,19 @@ export default function VerticalTimeRuler({
         result[day].isOpen = true;
         result[day].startTime = startTime;
         result[day].endTime = endTime;
+        result[day].preferredTimes = preferredTimes[day] || [];
         
         // Generate time slots
-        result[day].slots = generateTimeSlots(
+        const slots = generateTimeSlots(
           startHour, startMinute, 
           endHour, endMinute, 
           consultationDuration, 
           patientInterval,
-          lunchBreak
+          lunchBreak,
+          preferredTimes[day]
         );
+        
+        result[day].slots = slots;
       }
     }
     
@@ -197,7 +230,8 @@ export default function VerticalTimeRuler({
     endMinute: number, 
     duration: number, 
     interval: number,
-    lunchBreak: { start: string; end: string } | null
+    lunchBreak: { start: string; end: string } | null,
+    preferredTimes: string[] = []
   ): TimeSlot[] => {
     const slots: TimeSlot[] = [];
     const totalSlotDuration = duration + interval;
@@ -223,10 +257,18 @@ export default function VerticalTimeRuler({
       const isLunchBreak = lunchBreak && lunchStartMinutes && lunchEndMinutes ? 
         (currentTimeInMinutes >= lunchStartMinutes && currentTimeInMinutes < lunchEndMinutes) : false;
       
+      // Check if this is a preferred time
+      const isPreferred = preferredTimes.includes(timeStr);
+      
+      // Morning slots (before noon) are often preferred if no specific preference
+      const isMorning = currentHour < 12;
+      const defaultPreferred = isMorning && preferredTimes.length === 0;
+      
       slots.push({
         time: timeStr,
         isAvailable: !isLunchBreak,
-        isLunchBreak
+        isLunchBreak,
+        isPreferred: isPreferred || defaultPreferred
       });
       
       // Increment time by slot duration
@@ -379,8 +421,10 @@ export default function VerticalTimeRuler({
                         slot.isLunchBreak 
                           ? "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800" 
                           : slot.isBooked
-                            ? "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
-                            : "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
+                            ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800"
+                            : slot.isPreferred
+                              ? "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-800"
+                              : "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
                       )}
                       style={{ 
                         top: `${topPosition}px`,
@@ -398,14 +442,16 @@ export default function VerticalTimeRuler({
                             <span className="text-xs font-medium truncate">Almoço</span>
                           </div>
                         ) : slot.isBooked ? (
-                          <div className="flex items-center gap-1 text-blue-800 dark:text-blue-300">
+                          <div className="flex items-center gap-1 text-red-800 dark:text-red-300">
                             <User className="h-3 w-3 flex-shrink-0" />
                             <span className="text-xs font-medium truncate">{slot.patientName}</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1 text-green-800 dark:text-green-300">
                             <CheckCircle className="h-3 w-3 flex-shrink-0" />
-                            <span className="text-xs font-medium truncate">Disponível</span>
+                            <span className="text-xs font-medium truncate">
+                              {slot.isPreferred ? "Preferencial" : "Disponível"}
+                            </span>
                           </div>
                         )}
                       </div>

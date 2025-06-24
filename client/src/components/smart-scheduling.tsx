@@ -36,6 +36,8 @@ interface TimeSlot {
   time: string;
   available: boolean;
   appointment?: Appointment;
+  isPreferred?: boolean;
+  isLunchBreak?: boolean;
 }
 
 interface DaySchedule {
@@ -51,6 +53,7 @@ interface ScheduleConfig {
       isOpen: boolean;
       startTime?: string;
       endTime?: string;
+      preferredTimes?: string[];
     }
   };
   consultationDuration: number;
@@ -128,7 +131,9 @@ export default function SmartScheduling() {
             defaultConfig.weekDays[day] = {
               isOpen: true,
               startTime,
-              endTime
+              endTime,
+              // Default preferred times in the morning if not specified
+              preferredTimes: startHour < 12 ? [`${(startHour + 1).toString().padStart(2, '0')}:00`] : []
             };
           }
         }
@@ -163,6 +168,44 @@ export default function SmartScheduling() {
         endTime: `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`
       };
     }
+    
+    // Try to extract preferred times (usually highlighted in the text)
+    const preferredRegex = /Horários\s+preferidos|Horários\s+preferenciais|[Pp]referência|[Pp]rioritário/i;
+    let inPreferredSection = false;
+    let preferredDay = "";
+    
+    lines.forEach(line => {
+      // Check if we're entering a preferred times section
+      if (preferredRegex.test(line)) {
+        inPreferredSection = true;
+        return;
+      }
+      
+      // If in preferred section, look for times
+      if (inPreferredSection) {
+        // Check if line specifies a day
+        const dayCheck = /^(Segunda|Terça|Quarta|Quinta|Sexta|Sábado|Domingo):/i.exec(line);
+        if (dayCheck) {
+          preferredDay = dayCheck[1];
+          return;
+        }
+        
+        // Look for time specifications
+        const timeMatches = line.match(/(\d{1,2})[:h](\d{2})/g);
+        if (timeMatches && preferredDay && defaultConfig.weekDays[preferredDay]) {
+          defaultConfig.weekDays[preferredDay].preferredTimes = timeMatches.map(time => {
+            const [h, m] = time.replace('h', ':').split(':').map(Number);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+          });
+        }
+        
+        // End preferred section if we hit another section marker
+        if (line.includes(':') && !line.match(/\d{1,2}[:h]\d{2}/)) {
+          inPreferredSection = false;
+          preferredDay = "";
+        }
+      }
+    });
     
     return defaultConfig;
   };
@@ -217,10 +260,15 @@ export default function SmartScheduling() {
       // Check if slot is already booked
       const existingAppointment = professionalAppointments.find(apt => apt.preferredTime === timeStr);
       
+      // Check if this is a preferred time
+      const isPreferred = dayConfig.preferredTimes?.includes(timeStr) || false;
+      
       slots.push({
         time: timeStr,
         available: !isLunchTime && !existingAppointment,
-        appointment: existingAppointment
+        appointment: existingAppointment,
+        isPreferred,
+        isLunchBreak: isLunchTime
       });
       
       // Increment time by slot duration
@@ -385,7 +433,7 @@ export default function SmartScheduling() {
       case "partially-booked":
         return "bg-yellow-50 dark:bg-yellow-900/10 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800";
       case "fully-booked":
-        return "bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800";
+        return "bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 border-red-200 dark:border-red-800";
       case "unavailable":
         return "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700";
       case "outside-month":
@@ -619,13 +667,15 @@ export default function SmartScheduling() {
                                 key={`${day.dayName}-${slot.time}-${index}`}
                                 className={cn(
                                   "p-2 mb-1 rounded-md text-sm cursor-pointer transition-colors",
-                                  slot.available 
-                                    ? "bg-green-50 hover:bg-green-100 dark:bg-green-900/10 dark:hover:bg-green-900/20 text-green-800 dark:text-green-300" 
-                                    : slot.appointment 
-                                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300"
-                                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                                  slot.isLunchBreak 
+                                    ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 cursor-not-allowed"
+                                    : slot.available 
+                                      ? slot.isPreferred
+                                        ? "bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/40 text-green-800 dark:text-green-300 border border-green-300" 
+                                        : "bg-green-50 hover:bg-green-100 dark:bg-green-900/10 dark:hover:bg-green-900/20 text-green-800 dark:text-green-300" 
+                                      : "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 cursor-not-allowed"
                                 )}
-                                onClick={() => handleSlotSelect(day, slot)}
+                                onClick={() => slot.available && !slot.isLunchBreak && handleSlotSelect(day, slot)}
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="font-medium">{slot.time}</span>
@@ -635,6 +685,16 @@ export default function SmartScheduling() {
                                       slot.appointment.status === 'confirmed' ? 'Confirmado' :
                                       slot.appointment.status === 'completed' ? 'Concluído' :
                                       slot.appointment.status === 'cancelled' ? 'Cancelado' : slot.appointment.status}
+                                    </Badge>
+                                  )}
+                                  {slot.isPreferred && !slot.appointment && (
+                                    <Badge variant="outline" className="text-xs bg-green-50 border-green-300 text-green-700">
+                                      Preferencial
+                                    </Badge>
+                                  )}
+                                  {slot.isLunchBreak && (
+                                    <Badge variant="outline" className="text-xs bg-yellow-50 border-yellow-300 text-yellow-700">
+                                      Almoço
                                     </Badge>
                                   )}
                                 </div>
@@ -705,7 +765,7 @@ export default function SmartScheduling() {
                               {day.isCurrentMonth && day.schedule?.isAvailable && (
                                 <div className="mt-1 space-y-1">
                                   {dayAppointments > 0 && (
-                                    <div className="text-xs p-1 rounded bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                                    <div className="text-xs p-1 rounded bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300">
                                       {dayAppointments} agendamento{dayAppointments !== 1 ? 's' : ''}
                                     </div>
                                   )}
@@ -752,15 +812,19 @@ export default function SmartScheduling() {
       {/* Legend */}
       <div className="flex flex-wrap gap-4 justify-center">
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-green-100 dark:bg-green-900/20 rounded-sm mr-2"></div>
+          <div className="w-4 h-4 bg-green-50 dark:bg-green-900/10 rounded-sm mr-2"></div>
           <span className="text-sm">Disponível</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/20 rounded-sm mr-2"></div>
-          <span className="text-sm">Agendado</span>
+          <div className="w-4 h-4 bg-green-100 dark:bg-green-900/30 rounded-sm mr-2 border border-green-300"></div>
+          <span className="text-sm">Horário Preferencial</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-yellow-100 dark:bg-yellow-900/20 rounded-sm mr-2"></div>
+          <div className="w-4 h-4 bg-red-50 dark:bg-red-900/20 rounded-sm mr-2"></div>
+          <span className="text-sm">Ocupado</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-sm mr-2"></div>
           <span className="text-sm">Intervalo/Almoço</span>
         </div>
         <div className="flex items-center">
