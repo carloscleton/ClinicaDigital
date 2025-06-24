@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { format, addDays, startOfWeek, isSameDay, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import ScheduleTimeRuler from "./schedule-time-ruler";
 
 interface Professional {
   id: number;
@@ -68,6 +69,7 @@ export default function SmartScheduling() {
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"week" | "month">("month");
   const [monthDays, setMonthDays] = useState<{date: Date, isCurrentMonth: boolean, schedule?: DaySchedule}[]>([]);
+  const [selectedDay, setSelectedDay] = useState<string>("Segunda");
 
   // Fetch professionals data
   const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery<Professional[]>({
@@ -404,6 +406,16 @@ export default function SmartScheduling() {
     );
   };
 
+  // Get the selected professional's atendimentos
+  const getSelectedProfessionalAtendimentos = () => {
+    if (!selectedProfessional) return undefined;
+    
+    const professionalId = parseInt(selectedProfessional);
+    const professional = professionals.find(p => p.id === professionalId);
+    
+    return professional?.atendimentos;
+  };
+
   if (isLoadingProfessionals || isLoadingAppointments) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -517,179 +529,203 @@ export default function SmartScheduling() {
         </CardContent>
       </Card>
 
-      {/* Schedule Display */}
-      {!selectedProfessional ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-              Selecione um Profissional
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              Escolha um profissional para visualizar sua agenda
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              {viewMode === "week" ? "Agenda Semanal" : "Calendário Mensal"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {viewMode === "week" ? (
-              // Week View
-              <div className="grid grid-cols-7 gap-2">
-                {/* Day Headers */}
-                {weekSchedule.map((day) => (
-                  <div key={day.dayName} className="text-center">
-                    <div className="font-medium mb-1">{day.dayName}</div>
-                    <div className="text-sm text-gray-500">
-                      {format(day.date, "dd/MM", { locale: ptBR })}
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Day Columns */}
-                {weekSchedule.map((day) => (
-                  <div 
-                    key={`col-${day.dayName}`} 
-                    className={cn(
-                      "border rounded-md overflow-hidden",
-                      day.isAvailable ? "bg-white dark:bg-gray-800" : "bg-gray-100 dark:bg-gray-900"
-                    )}
-                  >
-                    {!day.isAvailable ? (
-                      <div className="h-full flex items-center justify-center p-4 text-center">
-                        <div className="text-gray-500 dark:text-gray-400">
-                          <div className="text-2xl mb-2">❌</div>
-                          <p className="text-sm">Não há atendimento</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="max-h-[500px] overflow-y-auto p-1">
-                        {day.slots.map((slot, index) => (
-                          <div
-                            key={`${day.dayName}-${slot.time}-${index}`}
-                            className={cn(
-                              "p-2 mb-1 rounded-md text-sm cursor-pointer transition-colors",
-                              slot.available 
-                                ? "bg-green-50 hover:bg-green-100 dark:bg-green-900/10 dark:hover:bg-green-900/20 text-green-800 dark:text-green-300" 
-                                : slot.appointment 
-                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300"
-                                  : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                            )}
-                            onClick={() => handleSlotSelect(day, slot)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{slot.time}</span>
-                              {slot.appointment && (
-                                <Badge className={getStatusColor(slot.appointment.status)}>
-                                  {slot.appointment.status === 'pending' ? 'Pendente' :
-                                   slot.appointment.status === 'confirmed' ? 'Confirmado' :
-                                   slot.appointment.status === 'completed' ? 'Concluído' :
-                                   slot.appointment.status === 'cancelled' ? 'Cancelado' : slot.appointment.status}
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            {slot.appointment && (
-                              <div className="mt-1 text-xs">
-                                <div className="font-medium truncate">{slot.appointment.fullName}</div>
-                                <div className="text-gray-500 dark:text-gray-400 truncate">{slot.appointment.specialty}</div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              // Month View
-              <div className="space-y-4">
-                {/* Days of Week Header */}
-                <div className="grid grid-cols-7 gap-1 text-center">
-                  {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map(day => (
-                    <div key={day} className="p-2 text-sm font-medium text-gray-500 dark:text-gray-400">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-1">
-                  {monthDays.map((day, index) => {
-                    const status = getDayAvailabilityStatus(day);
-                    const colorClass = getDayColorClass(status);
-                    const isToday = isSameDay(day.date, new Date());
-                    const dayAppointments = day.schedule ? 
-                      day.schedule.slots.filter(slot => !slot.available && slot.appointment).length : 0;
-                    const availableSlots = day.schedule ? 
-                      day.schedule.slots.filter(slot => slot.available).length : 0;
-                    
-                    return (
-                      <div
-                        key={index}
-                        className={cn(
-                          "min-h-[100px] p-1 border rounded-md transition-colors cursor-pointer",
-                          colorClass,
-                          isToday && "ring-2 ring-blue-500 dark:ring-blue-400"
-                        )}
-                        onClick={() => {
-                          if (day.schedule && day.isCurrentMonth) {
-                            setCurrentDate(day.date);
-                            setViewMode("week");
-                          }
-                        }}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Schedule Display */}
+        <div className="lg:col-span-2">
+          {!selectedProfessional ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  Selecione um Profissional
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  Escolha um profissional para visualizar sua agenda
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  {viewMode === "week" ? "Agenda Semanal" : "Calendário Mensal"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {viewMode === "week" ? (
+                  // Week View
+                  <div className="grid grid-cols-7 gap-2">
+                    {/* Day Headers */}
+                    {weekSchedule.map((day) => (
+                      <div 
+                        key={day.dayName} 
+                        className="text-center cursor-pointer"
+                        onClick={() => setSelectedDay(day.dayName)}
                       >
-                        <div className="p-1">
-                          <div className={cn(
-                            "text-right text-sm font-medium",
-                            !day.isCurrentMonth && "text-gray-400 dark:text-gray-600",
-                            isToday && "text-blue-600 dark:text-blue-400"
-                          )}>
-                            {format(day.date, "d")}
-                          </div>
-                          
-                          {day.isCurrentMonth && day.schedule?.isAvailable && (
-                            <div className="mt-1 space-y-1">
-                              {dayAppointments > 0 && (
-                                <div className="text-xs p-1 rounded bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                                  {dayAppointments} agendamento{dayAppointments !== 1 ? 's' : ''}
-                                </div>
-                              )}
-                              {availableSlots > 0 && (
-                                <div className="text-xs p-1 rounded bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
-                                  {availableSlots} horário{availableSlots !== 1 ? 's' : ''} livre{availableSlots !== 1 ? 's' : ''}
-                                </div>
-                              )}
-                              {dayAppointments === 0 && availableSlots === 0 && (
-                                <div className="text-xs p-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                  Sem horários
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          
-                          {day.isCurrentMonth && !day.schedule?.isAvailable && (
-                            <div className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
-                              <span>Fechado</span>
-                            </div>
-                          )}
+                        <div className={cn(
+                          "font-medium mb-1 p-1 rounded",
+                          selectedDay === day.dayName && "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
+                        )}>
+                          {day.dayName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {format(day.date, "dd/MM", { locale: ptBR })}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                    ))}
+                    
+                    {/* Day Columns */}
+                    {weekSchedule.map((day) => (
+                      <div 
+                        key={`col-${day.dayName}`} 
+                        className={cn(
+                          "border rounded-md overflow-hidden",
+                          day.isAvailable ? "bg-white dark:bg-gray-800" : "bg-gray-100 dark:bg-gray-900"
+                        )}
+                      >
+                        {!day.isAvailable ? (
+                          <div className="h-full flex items-center justify-center p-4 text-center">
+                            <div className="text-gray-500 dark:text-gray-400">
+                              <div className="text-2xl mb-2">❌</div>
+                              <p className="text-sm">Não há atendimento</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="max-h-[500px] overflow-y-auto p-1">
+                            {day.slots.map((slot, index) => (
+                              <div
+                                key={`${day.dayName}-${slot.time}-${index}`}
+                                className={cn(
+                                  "p-2 mb-1 rounded-md text-sm cursor-pointer transition-colors",
+                                  slot.available 
+                                    ? "bg-green-50 hover:bg-green-100 dark:bg-green-900/10 dark:hover:bg-green-900/20 text-green-800 dark:text-green-300" 
+                                    : slot.appointment 
+                                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300"
+                                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                                )}
+                                onClick={() => handleSlotSelect(day, slot)}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">{slot.time}</span>
+                                  {slot.appointment && (
+                                    <Badge className={getStatusColor(slot.appointment.status)}>
+                                      {slot.appointment.status === 'pending' ? 'Pendente' :
+                                      slot.appointment.status === 'confirmed' ? 'Confirmado' :
+                                      slot.appointment.status === 'completed' ? 'Concluído' :
+                                      slot.appointment.status === 'cancelled' ? 'Cancelado' : slot.appointment.status}
+                                    </Badge>
+                                  )}
+                                </div>
+                                
+                                {slot.appointment && (
+                                  <div className="mt-1 text-xs">
+                                    <div className="font-medium truncate">{slot.appointment.fullName}</div>
+                                    <div className="text-gray-500 dark:text-gray-400 truncate">{slot.appointment.specialty}</div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  // Month View
+                  <div className="space-y-4">
+                    {/* Days of Week Header */}
+                    <div className="grid grid-cols-7 gap-1 text-center">
+                      {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map(day => (
+                        <div key={day} className="p-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          {day}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-1">
+                      {monthDays.map((day, index) => {
+                        const status = getDayAvailabilityStatus(day);
+                        const colorClass = getDayColorClass(status);
+                        const isToday = isSameDay(day.date, new Date());
+                        const dayAppointments = day.schedule ? 
+                          day.schedule.slots.filter(slot => !slot.available && slot.appointment).length : 0;
+                        const availableSlots = day.schedule ? 
+                          day.schedule.slots.filter(slot => slot.available).length : 0;
+                        
+                        return (
+                          <div
+                            key={index}
+                            className={cn(
+                              "min-h-[100px] p-1 border rounded-md transition-colors cursor-pointer",
+                              colorClass,
+                              isToday && "ring-2 ring-blue-500 dark:ring-blue-400"
+                            )}
+                            onClick={() => {
+                              if (day.schedule && day.isCurrentMonth) {
+                                setCurrentDate(day.date);
+                                setViewMode("week");
+                                // Set selected day based on the day of week
+                                const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+                                setSelectedDay(dayNames[day.date.getDay()]);
+                              }
+                            }}
+                          >
+                            <div className="p-1">
+                              <div className={cn(
+                                "text-right text-sm font-medium",
+                                !day.isCurrentMonth && "text-gray-400 dark:text-gray-600",
+                                isToday && "text-blue-600 dark:text-blue-400"
+                              )}>
+                                {format(day.date, "d")}
+                              </div>
+                              
+                              {day.isCurrentMonth && day.schedule?.isAvailable && (
+                                <div className="mt-1 space-y-1">
+                                  {dayAppointments > 0 && (
+                                    <div className="text-xs p-1 rounded bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                                      {dayAppointments} agendamento{dayAppointments !== 1 ? 's' : ''}
+                                    </div>
+                                  )}
+                                  {availableSlots > 0 && (
+                                    <div className="text-xs p-1 rounded bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">
+                                      {availableSlots} horário{availableSlots !== 1 ? 's' : ''} livre{availableSlots !== 1 ? 's' : ''}
+                                    </div>
+                                  )}
+                                  {dayAppointments === 0 && availableSlots === 0 && (
+                                    <div className="text-xs p-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                      Sem horários
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {day.isCurrentMonth && !day.schedule?.isAvailable && (
+                                <div className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
+                                  <span>Fechado</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Time Ruler */}
+        <div className="lg:col-span-1">
+          <ScheduleTimeRuler 
+            atendimentos={getSelectedProfessionalAtendimentos()} 
+            selectedDay={selectedDay}
+          />
+        </div>
+      </div>
 
       {/* Legend */}
       <div className="flex flex-wrap gap-4 justify-center">
