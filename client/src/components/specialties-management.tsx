@@ -468,11 +468,13 @@ export default function ProfessionalsManagementWithSupabase() {
                         <SelectValue placeholder="Selecione a especialidade" />
                       </SelectTrigger>
                       <SelectContent>
-                        {supabaseSpecialties.map((specialty) => (
-                          <SelectItem key={specialty.id} value={specialty.name}>
-                            {specialty.name}
-                          </SelectItem>
-                        ))}
+                        {supabaseSpecialties
+                          .filter(specialty => specialty.name && specialty.name.trim() !== "")
+                          .map((specialty) => (
+                            <SelectItem key={specialty.id} value={specialty.name}>
+                              {specialty.name}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     {form.formState.errors.specialty && (

@@ -352,50 +352,52 @@ export default function SpecialtiesCRUD() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {specialties.map((specialty) => (
-                    <TableRow key={specialty.id}>
-                      <TableCell className="font-medium">{specialty.id}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{specialty.name}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(specialty)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja excluir a especialidade <strong>{specialty.name}</strong>? 
-                                  Esta ação não pode ser desfeita e pode afetar profissionais vinculados a esta especialidade.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteSpecialty.mutate(specialty.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Confirmar Exclusão
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {specialties
+                    .filter(specialty => specialty.name && specialty.name.trim() !== "")
+                    .map((specialty) => (
+                      <TableRow key={specialty.id}>
+                        <TableCell className="font-medium">{specialty.id}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{specialty.name}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(specialty)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir a especialidade <strong>{specialty.name}</strong>? 
+                                    Esta ação não pode ser desfeita e pode afetar profissionais vinculados a esta especialidade.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteSpecialty.mutate(specialty.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Confirmar Exclusão
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>
