@@ -27,7 +27,8 @@ import {
   CalendarDays,
   LayoutDashboard,
   Menu,
-  BarChart
+  BarChart,
+  FileText
 } from "lucide-react";
 import type { Doctor, Appointment, Testimonial, ContactMessage } from "@shared/schema";
 import ProfessionalsManagement from "@/components/professionals-management";
@@ -43,6 +44,7 @@ import ServicesManagement from "@/components/services-management";
 import PatientsManagement from "@/components/patients-management";
 import ReportsDashboard from "@/components/reports-dashboard";
 import ProfessionalAppointmentsChart from "@/components/professional-appointments-chart";
+import MedicalRecordsManagement from "@/components/medical-records-management";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -59,6 +61,7 @@ export default function Dashboard() {
     { id: "servicos", label: "Serviços", icon: Activity },
     { id: "pacientes", label: "Pacientes", icon: Users },
     { id: "grafico", label: "Gráfico de Atendimentos", icon: BarChart },
+    { id: "historico", label: "Histórico Médico", icon: FileText },
     { id: "configuracoes", label: "Configurações", icon: Settings },
   ];
 
@@ -188,6 +191,8 @@ export default function Dashboard() {
             <SystemConfiguration />
           ) : selectedSidebarItem === "grafico" ? (
             <ProfessionalAppointmentsChart />
+          ) : selectedSidebarItem === "historico" ? (
+            <MedicalRecordsManagement />
           ) : selectedSidebarItem === "clinicas" ? (
             <>
               <div className="mb-6">

@@ -17,8 +17,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Users, Plus, Edit, Trash2, Phone, Mail, Calendar, CreditCard, RefreshCw, Loader2, CheckCircle, XCircle, AlertCircle, DollarSign, Clock, User, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PatientDetailsView from "@/components/patient-details-view";
 
-// Patient interface for Supabase CAD_Clientes data
 interface SupabasePatient {
   id: number;
   nomeCliente: string | null;
@@ -38,15 +38,12 @@ interface SupabasePatient {
   id_Empresa: number | null;
 }
 
-// Form validation schema for patients
 const patientSchema = z.object({
   nomeCliente: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   telefoneCliente: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional(),
   emailCliente: z.string().email("Email inválido").optional().or(z.literal("")),
   nascimentoCliente: z.string().optional(),
   CPF: z.string().min(11, "CPF deve ter 11 dígitos").optional(),
-
-
   desejo: z.string().optional(),
   id_Empresa: z.number().optional(),
 });
@@ -58,7 +55,9 @@ export default function PatientsManagement() {
   const [editingPatient, setEditingPatient] = useState<SupabasePatient | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedTab, setSelectedTab] = useState("all");
-  const queryClient = useQueryClient();
+  const [viewingPatient, setViewingPatient] = useState<number | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Fetch patients from CAD_Clientes table
@@ -239,11 +238,22 @@ export default function PatientsManagement() {
       emailCliente: patient.emailCliente || "",
       nascimentoCliente: patient.nascimentoCliente ? patient.nascimentoCliente.split('T')[0] : "",
       CPF: patient.CPF || "",
-
       desejo: patient.desejo || "",
       id_Empresa: patient.id_Empresa || 1,
     });
     setIsAddDialogOpen(true);
+  };
+
+  const handleViewPatient = (patientId: number) => {
+    setViewingPatient(patientId);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleAddMedicalRecord = (patientId: number) => {
+    toast({
+      title: "Funcionalidade em implementação",
+      description: "O registro médico será adicionado em breve",
+    });
   };
 
   const handleCloseDialog = () => {
@@ -392,9 +402,6 @@ export default function PatientsManagement() {
                       <p className="text-sm text-red-600">{form.formState.errors.CPF.message}</p>
                     )}
                   </div>
-
-
-
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={handleCloseDialog}>
@@ -495,7 +502,7 @@ export default function PatientsManagement() {
                     </TableHeader>
                     <TableBody>
                       {filteredPatients.map((patient) => (
-                        <TableRow key={patient.id}>
+                        <TableRow key={patient.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/10" onClick={() => handleViewPatient(patient.id)}>
                           <TableCell className="font-medium">
                             <div>
                               <div className="font-medium">{patient.nomeCliente || "Nome não informado"}</div>
@@ -537,13 +544,31 @@ export default function PatientsManagement() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleEdit(patient)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewPatient(patient.id);
+                                }}
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(patient);
+                                }}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </AlertDialogTrigger>
@@ -578,6 +603,24 @@ export default function PatientsManagement() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Patient Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Paciente</DialogTitle>
+          </DialogHeader>
+          
+          {viewingPatient && (
+            <PatientDetailsView 
+              patientId={viewingPatient}
+              onClose={() => setIsViewDialogOpen(false)}
+              onEdit={handleEdit}
+              onAddMedicalRecord={handleAddMedicalRecord}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
