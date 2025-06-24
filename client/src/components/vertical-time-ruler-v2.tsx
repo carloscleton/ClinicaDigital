@@ -31,7 +31,7 @@ interface DaySchedule {
   slots: TimeSlot[];
 }
 
-export default function VerticalTimeRuler({ 
+export default function VerticalTimeRulerV2({ 
   atendimentos, 
   selectedDay = "Segunda", 
   selectedDate,
@@ -285,55 +285,89 @@ export default function VerticalTimeRuler({
             </div>
             
             {/* Vertical Time Ruler */}
-            <div className="relative flex">
-              {/* Time column */}
-              <div className="w-16 flex-shrink-0 pr-2 border-r border-gray-200 dark:border-gray-700">
-                {selectedDaySchedule.slots.map((slot, index) => (
+            <div className="relative flex h-[500px] overflow-y-auto">
+              {/* Left column with hours */}
+              <div className="w-16 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 relative">
+                {/* Hour markers */}
+                {Array.from({ length: 24 }).map((_, hour) => (
                   <div 
-                    key={`time-${index}`} 
-                    className="h-14 flex items-center justify-end"
+                    key={`hour-${hour}`} 
+                    className="absolute left-0 right-0 flex items-center justify-end pr-2"
+                    style={{ top: `${(hour * 60) / 2}px` }}
                   >
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                      {slot.time}
-                    </span>
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                      {hour.toString().padStart(2, '0')}:00
+                    </div>
+                    <div className="absolute right-0 w-2 h-0.5 bg-gray-200 dark:bg-gray-700"></div>
+                  </div>
+                ))}
+                
+                {/* Half-hour markers */}
+                {Array.from({ length: 24 }).map((_, hour) => (
+                  <div 
+                    key={`half-hour-${hour}`} 
+                    className="absolute left-0 right-0 flex items-center justify-end pr-2"
+                    style={{ top: `${(hour * 60 + 30) / 2}px` }}
+                  >
+                    <div className="absolute right-0 w-1 h-0.5 bg-gray-200 dark:bg-gray-700"></div>
                   </div>
                 ))}
               </div>
               
-              {/* Slots column */}
-              <div className="flex-grow pl-2">
-                {selectedDaySchedule.slots.map((slot, index) => (
+              {/* Right column with slots */}
+              <div className="flex-grow relative">
+                {/* Background grid lines */}
+                {Array.from({ length: 24 }).map((_, hour) => (
                   <div 
-                    key={`slot-${index}`}
-                    className={cn(
-                      "h-14 mb-1 rounded-md border px-3 flex items-center",
-                      slot.isLunchBreak 
-                        ? "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800" 
-                        : slot.isBooked
-                          ? "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
-                          : "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
-                    )}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      {slot.isLunchBreak ? (
-                        <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-300">
-                          <Coffee className="h-4 w-4" />
-                          <span className="text-sm font-medium">Intervalo para Almoço</span>
-                        </div>
-                      ) : slot.isBooked ? (
-                        <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300">
-                          <User className="h-4 w-4" />
-                          <span className="text-sm font-medium">{slot.patientName}</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-green-800 dark:text-green-300">
-                          <CheckCircle className="h-4 w-4" />
-                          <span className="text-sm font-medium">Disponível</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    key={`grid-${hour}`} 
+                    className="absolute left-0 right-0 border-t border-gray-100 dark:border-gray-800"
+                    style={{ top: `${(hour * 60) / 2}px`, height: '30px' }}
+                  ></div>
                 ))}
+                
+                {/* Time slots */}
+                {selectedDaySchedule.slots.map((slot, index) => {
+                  // Convert time to position
+                  const [hours, minutes] = slot.time.split(':').map(Number);
+                  const topPosition = (hours * 60 + minutes) / 2;
+                  
+                  return (
+                    <div 
+                      key={`slot-${index}`}
+                      className={cn(
+                        "absolute left-2 right-2 rounded-md border px-3 py-2",
+                        slot.isLunchBreak 
+                          ? "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800" 
+                          : slot.isBooked
+                            ? "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
+                            : "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
+                      )}
+                      style={{ 
+                        top: `${topPosition}px`,
+                        height: `${consultationDuration / 2}px`
+                      }}
+                    >
+                      <div className="flex items-center h-full">
+                        {slot.isLunchBreak ? (
+                          <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-300">
+                            <Coffee className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-sm font-medium truncate">Almoço</span>
+                          </div>
+                        ) : slot.isBooked ? (
+                          <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300">
+                            <User className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-sm font-medium truncate">{slot.patientName}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-green-800 dark:text-green-300">
+                            <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-sm font-medium truncate">Disponível</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
