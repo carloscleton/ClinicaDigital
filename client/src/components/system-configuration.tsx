@@ -66,6 +66,46 @@ const colorSchemes: ColorScheme[] = [
     accent: "#f97316",
     background: "#fff7ed",
     preview: ["#ea580c", "#c2410c", "#f97316", "#fff7ed"]
+  },
+  {
+    id: "ocean-breeze",
+    name: "Brisa do Oceano",
+    description: "Tons calmos e refrescantes de azul e verde-água",
+    primary: "#0ea5e9",
+    secondary: "#0369a1",
+    accent: "#22d3ee",
+    background: "#f0f9ff",
+    preview: ["#0ea5e9", "#0369a1", "#22d3ee", "#f0f9ff"]
+  },
+  {
+    id: "sunset-glow",
+    name: "Brilho do Pôr-do-sol",
+    description: "Cores quentes e acolhedoras inspiradas no pôr-do-sol",
+    primary: "#f59e0b",
+    secondary: "#d97706",
+    accent: "#f43f5e",
+    background: "#fffbeb",
+    preview: ["#f59e0b", "#d97706", "#f43f5e", "#fffbeb"]
+  },
+  {
+    id: "forest-whisper",
+    name: "Sussurro da Floresta",
+    description: "Tons terrosos e naturais que refletem tranquilidade",
+    primary: "#4ade80",
+    secondary: "#15803d",
+    accent: "#84cc16",
+    background: "#f7fee7",
+    preview: ["#4ade80", "#15803d", "#84cc16", "#f7fee7"]
+  },
+  {
+    id: "urban-chic",
+    name: "Chique Urbano",
+    description: "Estilo moderno e sofisticado com toques de cor",
+    primary: "#64748b",
+    secondary: "#334155",
+    accent: "#ec4899",
+    background: "#f8fafc",
+    preview: ["#64748b", "#334155", "#ec4899", "#f8fafc"]
   }
 ];
 
