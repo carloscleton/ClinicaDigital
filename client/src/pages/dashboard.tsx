@@ -33,6 +33,7 @@ import ProfessionalsManagement from "@/components/professionals-management";
 import AppointmentsManagement from "@/components/appointments-management";
 import SystemConfiguration from "@/components/system-configuration";
 import AppointmentCalendar from "@/components/appointment-calendar";
+import SmartScheduling from "@/components/smart-scheduling";
 import MedicalReports from "@/components/medical-reports";
 import PatientManagement from "@/components/patient-management";
 import ProfessionalsManagementWithSupabase from "@/components/specialties-management";
@@ -169,17 +170,7 @@ export default function Dashboard() {
 
           {/* Content based on sidebar selection */}
           {selectedSidebarItem === "agenda" ? (
-            <>
-              <div className="mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                  Agenda Semanal
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Visualização completa dos agendamentos da semana
-                </p>
-              </div>
-              <AppointmentCalendar />
-            </>
+            <SmartScheduling />
           ) : selectedSidebarItem === "relatorios" ? (
             <ReportsDashboard />
           ) : selectedSidebarItem === "profissionais" ? (
