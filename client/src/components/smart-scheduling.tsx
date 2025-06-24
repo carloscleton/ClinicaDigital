@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { format, addDays, startOfWeek, isSameDay, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import ScheduleTimeRuler from "./schedule-time-ruler";
+import VerticalTimeRuler from "./vertical-time-ruler";
 
 interface Professional {
   id: number;
@@ -416,6 +416,27 @@ export default function SmartScheduling() {
     return professional?.atendimentos;
   };
 
+  // Get booked slots for the selected day
+  const getBookedSlotsForSelectedDay = () => {
+    if (!selectedProfessional || !weekSchedule.length) return [];
+    
+    const professionalId = parseInt(selectedProfessional);
+    const selectedDayObj = weekSchedule.find(day => day.dayName === selectedDay);
+    
+    if (!selectedDayObj) return [];
+    
+    const dateStr = format(selectedDayObj.date, 'yyyy-MM-dd');
+    const dayAppointments = appointments.filter(apt => 
+      apt.doctorId === professionalId && 
+      apt.preferredDate === dateStr
+    );
+    
+    return dayAppointments.map(apt => ({
+      time: apt.preferredTime,
+      patientName: apt.fullName
+    }));
+  };
+
   if (isLoadingProfessionals || isLoadingAppointments) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -720,9 +741,10 @@ export default function SmartScheduling() {
 
         {/* Time Ruler */}
         <div className="lg:col-span-1">
-          <ScheduleTimeRuler 
+          <VerticalTimeRuler 
             atendimentos={getSelectedProfessionalAtendimentos()} 
             selectedDay={selectedDay}
+            bookedSlots={getBookedSlotsForSelectedDay()}
           />
         </div>
       </div>
@@ -739,7 +761,7 @@ export default function SmartScheduling() {
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 bg-yellow-100 dark:bg-yellow-900/20 rounded-sm mr-2"></div>
-          <span className="text-sm">Parcialmente Ocupado</span>
+          <span className="text-sm">Intervalo/Almoço</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 bg-gray-100 dark:bg-gray-800 rounded-sm mr-2"></div>
