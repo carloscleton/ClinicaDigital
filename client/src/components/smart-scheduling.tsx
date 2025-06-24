@@ -232,11 +232,14 @@ export default function SmartScheduling() {
   // Generate the week schedule
   const generateWeekSchedule = (startDate: Date, professionalId: number, scheduleConfig: ScheduleConfig): DaySchedule[] => {
     const weekSchedule: DaySchedule[] = [];
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    // Reordered day names to start with Monday
+    const dayNames = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
     
     for (let i = 0; i < 7; i++) {
       const date = addDays(startDate, i);
-      const dayName = dayNames[date.getDay()];
+      // Adjust day index to match our reordered array (Monday = 0, Sunday = 6)
+      const dayIndex = (date.getDay() + 6) % 7; // Convert Sunday=0 to Sunday=6
+      const dayName = dayNames[dayIndex];
       const dayConfig = scheduleConfig.weekDays[dayName];
       const isAvailable = dayConfig?.isOpen || false;
       
@@ -263,7 +266,8 @@ export default function SmartScheduling() {
     if (!professional) return;
     
     const scheduleConfig = parseScheduleConfig(professional.atendimentos);
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+    // Start week on Monday (weekStartsOn: 1)
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
     const schedule = generateWeekSchedule(weekStart, professionalId, scheduleConfig);
     
     setWeekSchedule(schedule);
@@ -386,8 +390,8 @@ export default function SmartScheduling() {
             <div>
               <label className="block text-sm font-medium mb-1">Semana</label>
               <div className="bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-md text-sm">
-                {format(startOfWeek(currentDate, { weekStartsOn: 0 }), "dd/MM/yyyy", { locale: ptBR })} - 
-                {format(addDays(startOfWeek(currentDate, { weekStartsOn: 0 }), 6), " dd/MM/yyyy", { locale: ptBR })}
+                {format(startOfWeek(currentDate, { weekStartsOn: 1 }), "dd/MM/yyyy", { locale: ptBR })} - 
+                {format(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), " dd/MM/yyyy", { locale: ptBR })}
               </div>
             </div>
           </div>
