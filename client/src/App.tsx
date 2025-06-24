@@ -15,6 +15,7 @@ import Testimonials from "@/pages/testimonials";
 import Contact from "@/pages/contact";
 import Booking from "@/pages/booking";
 import Dashboard from "@/pages/dashboard";
+import RulerDemo from "@/pages/ruler-demo";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/booking" component={Booking} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/ruler" component={RulerDemo} />
       <Route component={NotFound} />
     </Switch>
   );
