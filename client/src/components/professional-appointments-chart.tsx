@@ -61,21 +61,22 @@ export default function ProfessionalAppointmentsChart() {
             // Se não encontrar explicitamente, estimar baseado no texto
             // Contar linhas que contêm horários como uma aproximação
             const lines = prof.atendimentos.split('\n');
-            const scheduledDays = lines.filter(line => 
-              line.includes(':') && 
-              !line.includes('❌') && 
-              !line.includes('Fechado') &&
-              (line.includes('Segunda') || 
-               line.includes('Terça') || 
-               line.includes('Quarta') || 
-               line.includes('Quinta') || 
-               line.includes('Sexta') || 
-               line.includes('Sábado') || 
-               line.includes('Domingo'))
-            ).length;
+            
+            // Primeiro filtro: linhas com horários válidos
+            const linesWithTime = lines.filter(line => {
+              return line.includes(':') && 
+                     !line.includes('❌') && 
+                     !line.includes('Fechado');
+            });
+            
+            // Segundo filtro: linhas que contêm dias da semana
+            const daysOfWeek = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+            const scheduledDays = linesWithTime.filter(line => {
+              return daysOfWeek.some(day => line.includes(day));
+            });
             
             // Estimar baseado nos dias de atendimento (valor fictício para demonstração)
-            appointmentCount = scheduledDays * 5;
+            appointmentCount = scheduledDays.length * 5;
           }
         }
         
