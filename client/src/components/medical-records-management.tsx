@@ -20,7 +20,8 @@ import {
   RefreshCw, Loader2, CheckCircle, XCircle, 
   Calendar, Clock, User, Stethoscope, 
   Heart, Activity, PlusCircle, MinusCircle,
-  Printer, Download, ExternalLink, FilePlus
+  Printer, Download, ExternalLink, FilePlus,
+  Eye, Phone
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
