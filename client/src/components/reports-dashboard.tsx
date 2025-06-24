@@ -148,13 +148,16 @@ export default function ReportsDashboard() {
     };
   });
 
-  // Specialty distribution
+  // Specialty distribution - filter out empty strings and null/undefined values
   const specialtyDistribution = professionals.reduce((acc, prof) => {
-    const existing = acc.find(item => item.specialty === prof.specialty);
-    if (existing) {
-      existing.count++;
-    } else {
-      acc.push({ specialty: prof.specialty, count: 1 });
+    // Only include specialties that are not empty strings, null, or undefined
+    if (prof.specialty && prof.specialty.trim() !== '') {
+      const existing = acc.find(item => item.specialty === prof.specialty);
+      if (existing) {
+        existing.count++;
+      } else {
+        acc.push({ specialty: prof.specialty, count: 1 });
+      }
     }
     return acc;
   }, [] as Array<{ specialty: string; count: number }>);
@@ -412,7 +415,7 @@ export default function ReportsDashboard() {
                   {servicesByProfessional.map((prof) => (
                     <TableRow key={prof.name}>
                       <TableCell className="font-medium">{prof.name}</TableCell>
-                      <TableCell>{prof.specialty}</TableCell>
+                      <TableCell>{prof.specialty || "Não especificado"}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">{prof.quantity} serviços</Badge>
                       </TableCell>
