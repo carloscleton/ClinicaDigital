@@ -8,7 +8,7 @@ export default function SmartScheduling() {
       container.innerHTML = `
         <div class="container">
           <div class="header">
-              <h1>🏥 Sistema de Agendamento</h1>
+              <h1>🏥 Agenda</h1>
               <p>Agende sua consulta de forma rápida e fácil</p>
           </div>
 
