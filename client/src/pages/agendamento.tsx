@@ -45,7 +45,7 @@ export default function Agendamento() {
 
   const isNextButtonDisabled = () => {
     if (step === 1) return !appointmentCreated;
-    if (step === 3) return !name || !email || !phone;
+    if (step === 2) return !name || !email || !phone;
     return false;
   };
 

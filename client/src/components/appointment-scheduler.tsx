@@ -41,6 +41,25 @@ export default function AppointmentScheduler({ onAppointmentCreated }: Appointme
     queryKey: ["/api/supabase/services"],
   });
 
+  // Fetch existing appointments
+  const { data: existingAppointments = [], isLoading: isLoadingAppointments } = useQuery({
+    queryKey: ["/api/appointments"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('CAD_Agenda')
+          .select('*')
+          .order('dt_Agendamento', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+        return [];
+      }
+    }
+  });
+
   // Create appointment mutation
   const createAppointment = useMutation({
     mutationFn: async (appointmentData: any) => {
@@ -250,8 +269,20 @@ export default function AppointmentScheduler({ onAppointmentCreated }: Appointme
         const minutes = currentMinute % 60;
         const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         
-        // In a real implementation, check against existing appointments
-        const isBooked = Math.random() < 0.3; // Simulate some slots being booked
+        // Check if this slot is already booked
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const dateTimeStr = `${dateStr}T${timeString}:00`;
+        
+        const isBooked = existingAppointments.some(apt => {
+          if (!apt.dt_Agendamento) return false;
+          
+          const aptDate = new Date(apt.dt_Agendamento);
+          const slotDate = new Date(dateTimeStr);
+          
+          // Check if this appointment is for the same professional and overlaps with the slot
+          return apt.idProfissional === parseInt(selectedProfessional || '0') && 
+                 Math.abs(aptDate.getTime() - slotDate.getTime()) < (scheduleConfig.consultationDuration * 60 * 1000);
+        });
         
         slots.push({
           time: timeString,
@@ -351,15 +382,6 @@ export default function AppointmentScheduler({ onAppointmentCreated }: Appointme
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-          Agenda Semanal
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Visualização completa dos agendamentos da semana
-        </p>
-      </div>
-
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
