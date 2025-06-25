@@ -9,7 +9,6 @@ import { Calendar, Clock, User, DollarSign, Trash2, Edit, CheckCircle, XCircle, 
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 
 interface Appointment {
   id: number;
@@ -31,35 +30,15 @@ export default function AppointmentList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch appointments
+  // Fetch appointments through backend API
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('CAD_Agenda')
-        .select(`
-          *,
-          CAD_Profissional(id, Profissional, Profissão),
-          CAD_Servicos(id, servicos, valorServicos)
-        `)
-        .order('dt_Agendamento', { ascending: false });
-
-      if (error) throw error;
-
-      // Transform data to match frontend expectations
-      return (data || []).map(appointment => ({
-        id: appointment.id,
-        professionalId: appointment.idProfissional,
-        professionalName: appointment.CAD_Profissional?.Profissional || "Não especificado",
-        specialty: appointment.CAD_Profissional?.Profissão || "Não especificada",
-        serviceId: appointment.idServico,
-        serviceName: appointment.CAD_Servicos?.servicos || "Não especificado",
-        serviceValue: appointment.CAD_Servicos?.valorServicos || 0,
-        appointmentDate: appointment.dt_Agendamento,
-        description: appointment.descricao || "",
-        paymentStatus: appointment.statusPagamento,
-        companyId: appointment.id_Empresa
-      }));
+      const response = await fetch("/api/appointments");
+      if (!response.ok) {
+        throw new Error("Failed to fetch appointments");
+      }
+      return response.json();
     }
   });
 
@@ -71,13 +50,13 @@ export default function AppointmentList() {
   // Delete appointment mutation
   const deleteAppointment = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase
-        .from('CAD_Agenda')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      return { success: true };
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete appointment");
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -98,13 +77,15 @@ export default function AppointmentList() {
   // Update payment status mutation
   const updatePaymentStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: boolean }) => {
-      const { error } = await supabase
-        .from('CAD_Agenda')
-        .update({ statusPagamento: status })
-        .eq('id', id);
-      
-      if (error) throw error;
-      return { success: true };
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statusPagamento: status }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update payment status");
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });

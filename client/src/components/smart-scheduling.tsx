@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { format, addDays, startOfWeek, isSameDay, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -50,36 +49,30 @@ export default function SmartScheduling({
     queryKey: ["/api/supabase/services"],
   });
 
-  // Fetch existing appointments from CAD_Agenda
+  // Fetch existing appointments through backend API
   const { data: existingAppointments = [], isLoading: isLoadingAppointments } = useQuery({
     queryKey: ["/api/appointments"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('CAD_Agenda')
-        .select(`
-          id,
-          idProfissional,
-          dt_Agendamento,
-          descricao,
-          idServico,
-          statusPagamento
-        `);
-      
-      if (error) throw error;
-      return data || [];
+      const response = await fetch("/api/appointments");
+      if (!response.ok) {
+        throw new Error("Failed to fetch appointments");
+      }
+      return response.json();
     }
   });
 
   // Create appointment mutation
   const createAppointment = useMutation({
     mutationFn: async (appointmentData: any) => {
-      const { data, error } = await supabase
-        .from('CAD_Agenda')
-        .insert([appointmentData])
-        .select();
-      
-      if (error) throw error;
-      return data;
+      const response = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(appointmentData),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to create appointment");
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -299,11 +292,11 @@ export default function SmartScheduling({
         const dateTimeStr = `${dateStr}T${timeString}:00`;
         
         const isBooked = existingAppointments.some(apt => {
-          const aptDate = new Date(apt.dt_Agendamento);
+          const aptDate = new Date(apt.appointmentDate);
           const slotDate = new Date(dateTimeStr);
           
           // Check if this appointment is for the same professional and overlaps with the slot
-          return apt.idProfissional === selectedProfessional && 
+          return apt.professionalId === selectedProfessional && 
                  Math.abs(aptDate.getTime() - slotDate.getTime()) < (schedule.consultationDuration * 60 * 1000);
         });
         

@@ -462,7 +462,7 @@ export default function ProfessionalsManagementWithSupabase() {
                     <Label htmlFor="specialty">Especialidade *</Label>
                     <Select 
                       onValueChange={(value) => form.setValue("specialty", value)}
-                      defaultValue={editingProfessional?.specialty || ""}
+                      defaultValue={editingProfessional?.specialty || undefined}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a especialidade" />
@@ -488,7 +488,7 @@ export default function ProfessionalsManagementWithSupabase() {
                         console.log("Sexo selecionado:", value);
                         form.setValue("sexo", value);
                       }}
-                      value={form.watch("sexo") || ""}
+                      value={form.watch("sexo") || undefined}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o sexo" />
