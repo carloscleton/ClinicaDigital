@@ -4,8 +4,12 @@ import { storage } from "./storage";
 import { insertAppointmentSchema, insertContactMessageSchema, insertDoctorSchema, insertTestimonialSchema } from "@shared/schema";
 import { z } from "zod";
 import { supabase } from "./supabase-client";
+import routes from "./routes/index";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register API routes from routes/index.ts
+  app.use("/api", routes);
+
   // Get all doctors
   app.get("/api/doctors", async (req, res) => {
     try {
@@ -189,6 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           atendimentos,
           Telefone,
           Profissão,
+          sexo,
           id_Especialidade,
           CAD_Especialidade(id, Especialidade)
         `)
@@ -212,7 +217,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: prof.atendimentos ? `Horários: ${prof.atendimentos.split('\n')[0]}` : "",
         experience: prof.atendimentos ? prof.atendimentos : "",
         phone: prof.Telefone || "",
-        email: prof.email || ""
+        email: prof.email || "",
+        sexo: prof.sexo || ""
       }));
 
       res.json(formattedProfessionals);
@@ -232,7 +238,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { data, error } = await supabase
         .from('CAD_Profissional')
-        .select('*')
+        .select(`
+          id,
+          Profissional,
+          email,
+          CRM,
+          atendimentos,
+          Telefone,
+          Profissão,
+          sexo,
+          id_Especialidade,
+          CAD_Especialidade(id, Especialidade)
+        `)
         .eq('id', id)
         .single();
 
@@ -268,7 +285,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: data.atendimentos ? `Horários: ${data.atendimentos.split('\n')[0]}` : "",
         experience: data.atendimentos || "",
         phone: data.Telefone || "",
-        email: data.email || ""
+        email: data.email || "",
+        sexo: data.sexo || ""
       };
 
       res.json(formattedProfessional);
@@ -308,7 +326,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: prof.atendimentos ? `Horários: ${prof.atendimentos.split('\n')[0]}` : "",
         experience: prof.atendimentos || "",
         phone: prof.Telefone || "",
-        email: prof.email || ""
+        email: prof.email || "",
+        sexo: prof.sexo || ""
       }));
 
       res.json(formattedProfessionals);
@@ -509,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/supabase/professionals/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { name, specialty, crm, email, phone, atendimentos } = req.body;
+      const { name, specialty, crm, email, phone, atendimentos, sexo, specialtyId } = req.body;
 
       // Build update object with only valid Supabase columns
       const updateData: any = {};
@@ -536,6 +555,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.Telefone = phone;
       }
 
+      // Add sexo if provided
+      if (sexo !== undefined && sexo !== '') {
+        updateData.sexo = sexo;
+      }
+
+      // Add specialty if provided
+      if (specialty !== undefined && specialty !== '') {
+        updateData.Profissão = specialty;
+      }
+
+      // Add specialty ID if provided
+      if (specialtyId !== undefined) {
+        updateData.id_Especialidade = specialtyId;
+      }
+
       // First update the data
       const { error: updateError } = await supabase
         .from('CAD_Profissional')
@@ -560,6 +594,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           CRM,
           atendimentos,
           Telefone,
+          Profissão,
+          sexo,
           id_Especialidade,
           CAD_Especialidade(id, Especialidade)
         `)
@@ -577,14 +613,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formattedProfessional = {
         id: data.id,
         name: data.Profissional || "Nome não informado",
-        specialty: data.CAD_Especialidade?.Especialidade || "Especialidade não informada",
+        specialty: data.CAD_Especialidade?.Especialidade || data.Profissão || "Especialidade não informada",
         specialtyId: data.id_Especialidade,
         crm: data.CRM || "CRM não informado",
         description: data.atendimentos ? `Horários: ${data.atendimentos.split('\n')[0]}` : "",
         experience: data.atendimentos || "",
         atendimentos: data.atendimentos || "",
         phone: data.Telefone || "",
-        email: data.email || ""
+        email: data.email || "",
+        sexo: data.sexo || ""
       };
 
       res.json(formattedProfessional);
@@ -1170,7 +1207,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           Telefone,
           email,
           atendimentos,
-          id_Especialidade
+          sexo,
+          id_Especialidade,
+          CAD_Especialidade(id, Especialidade)
         `)
         .order('id', { ascending: true });
 
@@ -1185,11 +1224,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formattedProfessionals = (data || []).map((prof: any) => ({
         id: prof.id,
         name: prof.Profissional,
-        specialty: prof.Profissão,
+        specialty: prof.CAD_Especialidade?.Especialidade || prof.Profissão,
+        specialtyId: prof.id_Especialidade,
         crm: prof.CRM || "",
         phone: prof.Telefone || "",
         email: prof.email || "",
-        atendimentos: prof.atendimentos || ""
+        atendimentos: prof.atendimentos || "",
+        sexo: prof.sexo || ""
       }));
 
       res.json(formattedProfessionals);
@@ -1205,7 +1246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new professional in CAD_Profissional
   app.post("/api/supabase/professionals", async (req, res) => {
     try {
-      const { name, specialty, crm, phone, email, atendimentos } = req.body;
+      const { name, specialty, sexo, crm, phone, email, atendimentos, specialtyId } = req.body;
       
       if (!name || !specialty) {
         return res.status(400).json({ 
@@ -1213,15 +1254,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Inserir novo profissional na tabela CAD_Profissional
       const { data, error } = await supabase
         .from("CAD_Profissional")
         .insert([{
           Profissional: name,
           Profissão: specialty,
+          sexo: sexo || "",
           CRM: crm || "",
           Telefone: phone || "",
           email: email || "",
           atendimentos: atendimentos || "",
+          id_Especialidade: specialtyId || null,
           id_Empresa: 1
         }])
         .select()
@@ -1235,10 +1279,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Retornar profissional criado no formato esperado
       const formattedProfessional = {
         id: data.id,
         name: data.Profissional,
         specialty: data.Profissão,
+        specialtyId: data.id_Especialidade,
+        sexo: data.sexo,
         crm: data.CRM,
         phone: data.Telefone,
         email: data.email,
@@ -1259,20 +1306,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/supabase/professionals/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { name, specialty, crm, phone, email, atendimentos } = req.body;
+      const { name, specialty, sexo, crm, phone, email, atendimentos, specialtyId } = req.body;
+      
+      const updateData: any = {};
+      
+      if (name !== undefined) updateData.Profissional = name;
+      if (specialty !== undefined) updateData.Profissão = specialty;
+      if (sexo !== undefined) updateData.sexo = sexo;
+      if (crm !== undefined) updateData.CRM = crm;
+      if (phone !== undefined) updateData.Telefone = phone;
+      if (email !== undefined) updateData.email = email;
+      if (atendimentos !== undefined) updateData.atendimentos = atendimentos;
+      if (specialtyId !== undefined) updateData.id_Especialidade = specialtyId;
       
       const { data, error } = await supabase
         .from("CAD_Profissional")
-        .update({
-          Profissional: name,
-          Profissão: specialty,
-          CRM: crm || "",
-          Telefone: phone || "",
-          email: email || "",
-          atendimentos: atendimentos || ""
-        })
+        .update(updateData)
         .eq("id", id)
-        .select()
+        .select(`
+          id,
+          Profissional,
+          Profissão,
+          CRM,
+          Telefone,
+          email,
+          atendimentos,
+          sexo,
+          id_Especialidade,
+          CAD_Especialidade(id, Especialidade)
+        `)
         .single();
 
       if (error) {
@@ -1290,11 +1352,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formattedProfessional = {
         id: data.id,
         name: data.Profissional,
-        specialty: data.Profissão,
+        specialty: data.CAD_Especialidade?.Especialidade || data.Profissão,
+        specialtyId: data.id_Especialidade,
         crm: data.CRM,
         phone: data.Telefone,
         email: data.email,
-        atendimentos: data.atendimentos
+        atendimentos: data.atendimentos,
+        sexo: data.sexo
       };
 
       res.json(formattedProfessional);

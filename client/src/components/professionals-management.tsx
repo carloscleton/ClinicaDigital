@@ -1,419 +1,947 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { apiRequest } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Plus, User } from "lucide-react";
+import { Heart, Plus, Edit, Trash2, Users, RefreshCw, Loader2, CheckCircle, XCircle, Database, UserCheck, Activity, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { CRMValidator } from "@/components/ui/crm-validator";
+import ImageUpload from "@/components/image-upload";
 
-const doctorSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  specialty: z.string().min(1, "Especialidade é obrigatória"),
-  description: z.string().min(1, "Descrição é obrigatória"),
-  crm: z.string().min(1, "CRM é obrigatório"),
-  experience: z.string().optional(),
-});
 
-type DoctorFormData = z.infer<typeof doctorSchema>;
-
-interface Doctor {
+// Professional interface for Supabase data
+interface SupabaseProfessional {
   id: number;
   name: string;
   specialty: string;
-  description: string;
   crm: string;
-  experience: string | null;
+  description: string;
+  experience: string;
+  phone: string;
+  email: string;
+  atendimentos?: string;
 }
 
-const medicalSpecialties = [
-  "Ultrassonografia",
-  "Cardiologia",
-  "Clínica Geral",
-  "Dermatologia",
-  "Endocrinologia",
-  "Gastroenterologia",
-  "Ginecologia",
-  "Neurologia",
-  "Obstetrícia",
-  "Oftalmologia",
-  "Ortopedia",
-  "Otorrinolaringologia",
-  "Pediatria",
-  "Pneumologia",
-  "Psiquiatria",
-  "Radiologia",
-  "Reumatologia",
-  "Urologia"
-];
+// Statistics interface
+interface SpecialtyStats {
+  totalProfessionals: number;
+  specialties: string[];
+  professionalsBySpecialty: Record<string, SupabaseProfessional[]>;
+}
 
-export default function ProfessionalsManagement() {
-  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
+// Form validation schema for adding new professionals
+const professionalSchema = z.object({
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  specialty: z.string().min(1, "Especialidade é obrigatória"),
+  crm: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  atendimentos: z.string().optional(),
+  photo: z.string().optional(),
+  sexo: z.string().min(1, "Sexo é obrigatório"),
+  specialtyId: z.number().optional(),
+});
+
+// Schema específico para alterar apenas a experiência
+const experienceSchema = z.object({
+  experience: z.string().min(1, "Experiência não pode estar vazia"),
+});
+
+// Schema específico para alterar apenas os horários de atendimento
+const scheduleSchema = z.object({
+  atendimentos: z.string().min(1, "Informações de atendimento são obrigatórias"),
+});
+
+type ProfessionalFormData = z.infer<typeof professionalSchema>;
+type ExperienceFormData = z.infer<typeof experienceSchema>;
+type ScheduleFormData = z.infer<typeof scheduleSchema>;
+
+export default function ProfessionalsManagementWithSupabase() {
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingProfessional, setEditingProfessional] = useState<SupabaseProfessional | null>(null);
+  const [isExperienceDialogOpen, setIsExperienceDialogOpen] = useState(false);
+  const [editingExperience, setEditingExperience] = useState<SupabaseProfessional | null>(null);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<SupabaseProfessional | null>(null);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  const form = useForm<DoctorFormData>({
-    resolver: zodResolver(doctorSchema),
-    defaultValues: {
-      name: "",
-      specialty: "",
-      description: "",
-      crm: "",
-      experience: "",
+  // Fetch professionals from Supabase
+  const { data: professionals = [], isLoading, error, refetch } = useQuery<SupabaseProfessional[]>({
+    queryKey: ["/api/supabase/professionals"],
+  });
+
+  // Fetch specialties from CAD_Especialidade table
+  const { data: supabaseSpecialties = [], refetch: refetchSpecialties } = useQuery<{id: number, name: string}[]>({
+    queryKey: ["/api/supabase/especialidades"],
+  });
+
+  // Test connection mutation
+  const testConnection = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/supabase/test');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.connected) {
+        toast({
+          title: "Conexão bem-sucedida",
+          description: "Sistema conectado ao cadastro de profissionais",
+        });
+        refetch();
+        refetchSpecialties();
+      }
     },
   });
 
-  // Query para buscar profissionais
-  const { data: doctors = [], isLoading } = useQuery({
-    queryKey: ["/api/doctors"],
-    queryFn: async () => {
-      const response = await fetch("/api/doctors");
-      if (!response.ok) throw new Error("Erro ao buscar profissionais");
-      return response.json() as Promise<Doctor[]>;
-    },
-  });
-
-  // Mutation para criar profissional
-  const createMutation = useMutation({
-    mutationFn: async (data: DoctorFormData) => {
-      const response = await fetch("/api/doctors", {
+  // Create professional mutation
+  const createProfessional = useMutation({
+    mutationFn: async (data: ProfessionalFormData) => {
+      const response = await fetch("/api/supabase/professionals", {
         method: "POST",
-        body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          specialtyId: data.specialtyId // Adiciona o ID da especialidade
+        }),
       });
       if (!response.ok) throw new Error("Erro ao criar profissional");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({ title: "Profissional criado com sucesso!" });
-      setIsDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
+      setIsAddDialogOpen(false);
+      toast({
+        title: "Profissional adicionado",
+        description: "Novo profissional cadastrado com sucesso",
+      });
       form.reset();
     },
-    onError: () => {
-      toast({ title: "Erro ao criar profissional", variant: "destructive" });
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao adicionar profissional",
+        description: error.message || "Tente novamente",
+        variant: "destructive",
+      });
     },
   });
 
-  // Mutation para atualizar profissional
-  const updateMutation = useMutation({
-    mutationFn: async (data: DoctorFormData & { id: number }) => {
-      const response = await fetch(`/api/doctors/${data.id}`, {
+  // Update professional mutation
+  const updateProfessional = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: ProfessionalFormData }) => {
+      const response = await fetch(`/api/supabase/professionals/${id}`, {
         method: "PUT",
-        body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          specialtyId: data.specialtyId // Adiciona o ID da especialidade
+        }),
       });
       if (!response.ok) throw new Error("Erro ao atualizar profissional");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({ title: "Profissional atualizado com sucesso!" });
-      setIsDialogOpen(false);
-      setEditingDoctor(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
+      setIsAddDialogOpen(false);
+      setEditingProfessional(null);
+      toast({
+        title: "Profissional atualizado",
+        description: "Dados do profissional atualizados com sucesso",
+      });
       form.reset();
     },
-    onError: () => {
-      toast({ title: "Erro ao atualizar profissional", variant: "destructive" });
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar profissional",
+        description: error.message || "Tente novamente",
+        variant: "destructive",
+      });
     },
   });
 
-  // Mutation para deletar profissional
-  const deleteMutation = useMutation({
+  // Update experience only mutation
+  const updateExperience = useMutation({
+    mutationFn: async ({ id, experience }: { id: number; experience: string }) => {
+      const response = await fetch(`/api/supabase/professionals/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ experience }),
+      });
+      if (!response.ok) throw new Error("Erro ao atualizar experiência");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
+      setIsExperienceDialogOpen(false);
+      setEditingExperience(null);
+      experienceForm.reset();
+      toast({
+        title: "Experiência atualizada",
+        description: "Experiência do profissional atualizada com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar experiência",
+        description: error.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update schedule only mutation
+  const updateSchedule = useMutation({
+    mutationFn: async ({ id, atendimentos }: { id: number; atendimentos: string }) => {
+      const response = await fetch(`/api/supabase/professionals/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ atendimentos }),
+      });
+      if (!response.ok) throw new Error("Erro ao atualizar horários");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
+      setIsScheduleDialogOpen(false);
+      setEditingSchedule(null);
+      scheduleForm.reset();
+      toast({
+        title: "Horários atualizados",
+        description: "Horários de atendimento atualizados com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar horários",
+        description: error.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete professional mutation
+  const deleteProfessional = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/doctors/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/supabase/professionals/${id}`, {
+        method: "DELETE",
+      });
       if (!response.ok) throw new Error("Erro ao deletar profissional");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
-      toast({ title: "Profissional removido com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ["/api/supabase/professionals"] });
+      toast({
+        title: "Profissional removido",
+        description: "Profissional removido do sistema",
+      });
     },
-    onError: () => {
-      toast({ title: "Erro ao remover profissional", variant: "destructive" });
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao remover profissional",
+        description: error.message || "Tente novamente",
+        variant: "destructive",
+      });
     },
   });
 
-  const onSubmit = (data: DoctorFormData) => {
-    if (editingDoctor) {
-      updateMutation.mutate({ ...data, id: editingDoctor.id });
+  // Form setup
+  const form = useForm<ProfessionalFormData>({
+    resolver: zodResolver(professionalSchema),
+    defaultValues: {
+      name: "",
+      specialty: "",
+      crm: "",
+      phone: "",
+      email: "",
+      atendimentos: "",
+      photo: "",
+      sexo: "",
+      specialtyId: undefined,
+    },
+  });
+
+  // Form setup for experience only
+  const experienceForm = useForm<ExperienceFormData>({
+    resolver: zodResolver(experienceSchema),
+    defaultValues: {
+      experience: "",
+    },
+  });
+
+  // Form setup for schedule only
+  const scheduleForm = useForm<ScheduleFormData>({
+    resolver: zodResolver(scheduleSchema),
+    defaultValues: {
+      atendimentos: "",
+    },
+  });
+
+  // Calculate statistics
+  const stats: SpecialtyStats = {
+    totalProfessionals: professionals.length,
+    specialties: Array.from(new Set(professionals.map(p => p.specialty))),
+    professionalsBySpecialty: professionals.reduce((acc, prof) => {
+      if (!acc[prof.specialty]) acc[prof.specialty] = [];
+      acc[prof.specialty].push(prof);
+      return acc;
+    }, {} as Record<string, SupabaseProfessional[]>),
+  };
+
+  // Filter professionals by selected specialty
+  const filteredProfessionals = selectedSpecialty === "all" 
+    ? professionals 
+    : professionals.filter(p => p.specialty === selectedSpecialty);
+
+  const onSubmit = (data: ProfessionalFormData) => {
+    console.log("Dados do formulário sendo enviados:", data);
+    if (editingProfessional) {
+      console.log("Atualizando profissional ID:", editingProfessional.id);
+      updateProfessional.mutate({ id: editingProfessional.id, data });
     } else {
-      createMutation.mutate(data);
+      console.log("Criando novo profissional");
+      createProfessional.mutate(data);
     }
   };
 
-  const handleEdit = (doctor: Doctor) => {
-    setEditingDoctor(doctor);
+  const handleEdit = (professional: SupabaseProfessional) => {
+    setEditingProfessional(professional);
+    
+    // Encontrar o ID da especialidade correspondente
+    const specialtyItem = supabaseSpecialties.find(s => s.name === professional.specialty);
+    
     form.reset({
-      name: doctor.name,
-      specialty: doctor.specialty,
-      description: doctor.description,
-      crm: doctor.crm,
-      experience: doctor.experience || "",
+      name: professional.name,
+      specialty: professional.specialty,
+      crm: professional.crm || "",
+      phone: professional.phone || "",
+      email: professional.email || "",
+      atendimentos: professional.atendimentos || professional.experience || "",
+      photo: (professional as any).photo || "",
+      sexo: (professional as any).sexo || "",
+      specialtyId: specialtyItem?.id,
     });
-    setIsDialogOpen(true);
+    setIsAddDialogOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Tem certeza que deseja remover este profissional?")) {
-      deleteMutation.mutate(id);
+  const handleCloseDialog = () => {
+    setIsAddDialogOpen(false);
+    setEditingProfessional(null);
+    form.reset({
+      name: "",
+      specialty: "",
+      crm: "",
+      phone: "",
+      email: "",
+      atendimentos: "",
+      photo: "",
+      sexo: "",
+      specialtyId: undefined,
+    });
+  };
+
+  const handleEditExperience = (professional: SupabaseProfessional) => {
+    setEditingExperience(professional);
+    experienceForm.reset({ experience: professional.experience || "" });
+    setIsExperienceDialogOpen(true);
+  };
+
+  const handleCloseExperienceDialog = () => {
+    setIsExperienceDialogOpen(false);
+    setEditingExperience(null);
+    experienceForm.reset();
+  };
+
+  const onExperienceSubmit = (data: ExperienceFormData) => {
+    if (editingExperience) {
+      updateExperience.mutate({ 
+        id: editingExperience.id, 
+        experience: data.experience 
+      });
     }
   };
 
-  const handleNewDoctor = () => {
-    setEditingDoctor(null);
-    form.reset();
-    setIsDialogOpen(true);
+  const handleEditSchedule = (professional: SupabaseProfessional) => {
+    setEditingSchedule(professional);
+    scheduleForm.reset({ atendimentos: professional.atendimentos || professional.experience || "" });
+    setIsScheduleDialogOpen(true);
+  };
+
+  const handleCloseScheduleDialog = () => {
+    setIsScheduleDialogOpen(false);
+    setEditingSchedule(null);
+    scheduleForm.reset();
+  };
+
+  const onScheduleSubmit = (data: ScheduleFormData) => {
+    if (editingSchedule) {
+      updateSchedule.mutate({ 
+        id: editingSchedule.id, 
+        atendimentos: data.atendimentos 
+      });
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Carregando profissionais...</p>
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <span className="ml-2">Carregando especialidades...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Profissionais</h2>
-          <p className="text-gray-600">Gerencie os profissionais da clínica</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+            Profissionais da Clínica
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Gerenciamento completo dos profissionais e suas especialidades
+          </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleNewDoctor} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Profissional
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingDoctor ? "Editar Profissional" : "Novo Profissional"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingDoctor 
-                  ? "Atualize as informações do profissional." 
-                  : "Adicione um novo profissional à equipe."}
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => testConnection.mutate()} 
+            variant="outline"
+            disabled={testConnection.isPending}
+          >
+            {testConnection.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Sincronizar
+          </Button>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Profissional
+          </Button>
+          
+          <Dialog open={isAddDialogOpen} onOpenChange={handleCloseDialog}>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingProfessional ? "Editar Profissional" : "Novo Profissional"}
+                </DialogTitle>
+                <div className="sr-only">
+                  {editingProfessional 
+                    ? "Formulário para editar dados do profissional selecionado" 
+                    : "Formulário para cadastrar novo profissional na clínica"
+                  }
+                </div>
+              </DialogHeader>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome Completo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Dr(a). Nome do profissional" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <div>
+                  <ImageUpload
+                    label="Foto do Profissional"
+                    value={form.watch("photo") || ""}
+                    onChange={(value) => form.setValue("photo", value)}
+                    placeholder="Adicione uma foto profissional (PNG, JPG até 5MB)"
+                  />
+                  {form.formState.errors.photo && (
+                    <p className="text-sm text-red-600">{form.formState.errors.photo.message}</p>
                   )}
-                />
-                <FormField
-                  control={form.control}
-                  name="specialty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Especialidade</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a especialidade" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {medicalSpecialties.map((specialty) => (
-                            <SelectItem key={specialty} value={specialty}>
-                              {specialty}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Nome Completo *</Label>
+                    <Input
+                      id="name"
+                      {...form.register("name")}
+                      placeholder="Ex: Dr. João Silva"
+                    />
+                    {form.formState.errors.name && (
+                      <p className="text-sm text-red-600">{form.formState.errors.name.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="sexo">Sexo *</Label>
+                    <Select 
+                      onValueChange={(value) => form.setValue("sexo", value)}
+                      defaultValue={form.watch("sexo")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o sexo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Masculino">Masculino</SelectItem>
+                        <SelectItem value="Feminino">Feminino</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {form.formState.errors.sexo && (
+                      <p className="text-sm text-red-600">{form.formState.errors.sexo.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="specialty">Especialidade *</Label>
+                    <Select 
+                      onValueChange={(value) => {
+                        // Atualiza o campo de especialidade com o nome
+                        const specialty = supabaseSpecialties.find(s => s.id.toString() === value);
+                        if (specialty) {
+                          form.setValue("specialty", specialty.name);
+                          form.setValue("specialtyId", specialty.id);
+                        }
+                      }}
+                      defaultValue={
+                        editingProfessional && form.watch("specialtyId") 
+                          ? form.watch("specialtyId").toString() 
+                          : undefined
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a especialidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {supabaseSpecialties
+                          .filter(specialty => specialty.name && specialty.name.trim() !== "")
+                          .map((specialty) => (
+                            <SelectItem key={specialty.id} value={specialty.id.toString()}>
+                              {specialty.name}
                             </SelectItem>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="crm"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CRM</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: 12345-SP" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="experience"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Experiência</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: 10 anos" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Descrição detalhada do profissional e sua atuação..."
-                          className="min-h-[100px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end space-x-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
+                      </SelectContent>
+                    </Select>
+                    {form.formState.errors.specialty && (
+                      <p className="text-sm text-red-600">{form.formState.errors.specialty.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="crm">CRM</Label>
+                    <Input
+                      id="crm"
+                      {...form.register("crm")}
+                      placeholder="Ex: 12345-SP"
+                    />
+                    {form.formState.errors.crm && (
+                      <p className="text-sm text-red-600">{form.formState.errors.crm.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      {...form.register("email")}
+                      placeholder="profissional@exemplo.com"
+                    />
+                    {form.formState.errors.email && (
+                      <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Telefone</Label>
+                    <PhoneInput
+                      id="phone"
+                      value={form.watch("phone") || ""}
+                      onChange={(value) => form.setValue("phone", value)}
+                      placeholder="55(84) 9 9807-1213"
+                    />
+                  </div>
+
+                </div>
+
+                <div>
+                  <Label htmlFor="atendimentos" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-green-600" />
+                    Horários de Atendimento
+                  </Label>
+                  <Textarea
+                    id="atendimentos"
+                    {...form.register("atendimentos")}
+                    placeholder="🕒 Dias e Horários de Atendimento - para uso interno do sistema de marcação
+Segunda: 8h:00 às 13h00
+Terça: 14h:00 às 18h00
+Quarta: ❌ Agenda Fechada
+Quinta: ❌ Agenda Fechada
+Sexta: ❌ Agenda Fechada
+Sábado: 9h00 às 13h00
+Domingo: ❌ Fechado
+Duração da Consulta: 60 Minutos (Obrigatório)
+Intervalo entre Pacientes para atendimento: 5 minutos
+intervalo para o almoço: 12 às 13h00"
+                    className="font-mono text-sm mt-2 resize-none"
+                    rows={10}
+                    disabled={false}
+                  />
+                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs text-green-700 dark:text-green-300">
+                    💡 Configure os horários de atendimento do profissional com duração de consultas e intervalos
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
                     Cancelar
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                    className="bg-blue-600 hover:bg-blue-700"
+                  <Button 
+                    type="submit" 
+                    disabled={createProfessional.isPending || updateProfessional.isPending}
                   >
-                    {(createMutation.isPending || updateMutation.isPending) && (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    )}
-                    {editingDoctor ? "Atualizar" : "Criar"}
+                    {(createProfessional.isPending || updateProfessional.isPending) ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : null}
+                    {editingProfessional ? "Atualizar" : "Cadastrar"}
                   </Button>
                 </div>
               </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {doctors.map((doctor) => (
-          <Card key={doctor.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                    <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="text-base sm:text-lg truncate">{doctor.name}</CardTitle>
-                    <Badge variant="secondary" className="mt-1 text-xs">
-                      {doctor.specialty}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex space-x-2 sm:space-x-1 self-end sm:self-start">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(doctor)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja excluir o profissional <strong>{doctor.name}</strong>? 
-                          Esta ação não pode ser desfeita e todos os dados relacionados serão removidos permanentemente.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(doctor.id)}
-                          className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                        >
-                          Excluir Profissional
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">CRM</p>
-                  <p className="text-sm text-gray-600">{doctor.crm}</p>
-                </div>
-                {doctor.experience && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Experiência</p>
-                    <p className="text-sm text-gray-600">{doctor.experience}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Descrição</p>
-                  <p className="text-sm text-gray-600 line-clamp-3">{doctor.description}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {doctors.length === 0 && (
-        <div className="text-center py-12">
-          <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Nenhum profissional cadastrado
-          </h3>
-          <p className="text-gray-600 mb-4">
-            Comece adicionando o primeiro profissional da equipe.
-          </p>
-          <Button onClick={handleNewDoctor} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Profissional
-          </Button>
+            </DialogContent>
+          </Dialog>
         </div>
-      )}
+      </div>
+
+      {/* Connection Status */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <span className="font-medium text-green-800 dark:text-green-200">
+              Sistema conectado ao cadastro de profissionais
+            </span>
+            <Badge variant="secondary" className="ml-auto">
+              {professionals.length} profissionais
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Profissionais</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.totalProfessionals}</p>
+              </div>
+              <Users className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Especialidades</p>
+                <p className="text-2xl font-bold text-green-600">{stats.specialties.length}</p>
+              </div>
+              <Heart className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Specialty Filter */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Heart className="h-5 w-5" />
+            Filtrar por Especialidade
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedSpecialty === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedSpecialty("all")}
+            >
+              Todas ({professionals.length})
+            </Button>
+            {stats.specialties.map((specialty) => (
+              <Button
+                key={specialty}
+                variant={selectedSpecialty === specialty ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedSpecialty(specialty)}
+              >
+                {specialty} ({stats.professionalsBySpecialty[specialty]?.length || 0})
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Professionals Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Profissionais {selectedSpecialty !== "all" && `- ${selectedSpecialty}`} ({filteredProfessionals.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error ? (
+            <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20">
+              <XCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-700 dark:text-red-400">
+                Erro ao carregar profissionais. Verifique a conexão.
+              </AlertDescription>
+            </Alert>
+          ) : filteredProfessionals.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Nenhum profissional encontrado</p>
+              {selectedSpecialty !== "all" && (
+                <p className="text-sm">para a especialidade {selectedSpecialty}</p>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Foto</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Especialidade</TableHead>
+                    <TableHead>CRM</TableHead>
+                    <TableHead>Telefone</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Sexo</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProfessionals.map((professional) => {
+                    // Fotos fictícias para usar na tabela
+                    const doctorPhotos = [
+                      "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=40&h=40&fit=crop&crop=face",
+                      "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=40&h=40&fit=crop&crop=face",
+                      "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=40&h=40&fit=crop&crop=face",
+                      "https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=40&h=40&fit=crop&crop=face",
+                      "https://images.unsplash.com/photo-1594824475720-aabd8effc566?w=40&h=40&fit=crop&crop=face"
+                    ];
+                    const photoIndex = professional.id % doctorPhotos.length;
+                    
+                    return (
+                      <TableRow key={professional.id}>
+                        <TableCell className="font-medium">{professional.id}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center">
+                            <div className="relative">
+                              <img
+                                src={(professional as any).photo || doctorPhotos[photoIndex]}
+                                alt={`Foto de ${professional.name}`}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                              />
+                              {!(professional as any).photo && (
+                                <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-[8px] font-medium">F</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{professional.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{professional.specialty}</Badge>
+                        </TableCell>
+                        <TableCell>{professional.crm || "—"}</TableCell>
+                        <TableCell>{professional.phone || "—"}</TableCell>
+                        <TableCell>{professional.email || "—"}</TableCell>
+                        <TableCell>{(professional as any).sexo || "—"}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(professional)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja remover <strong>{professional.name}</strong> 
+                                    ({professional.specialty}) do sistema? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteProfessional.mutate(professional.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Confirmar Exclusão
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Experience Edit Dialog */}
+      <Dialog open={isExperienceDialogOpen} onOpenChange={setIsExperienceDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Alterar Experiência</DialogTitle>
+          </DialogHeader>
+          {editingExperience && (
+            <form onSubmit={experienceForm.handleSubmit(onExperienceSubmit)} className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Profissional</Label>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  {editingExperience.name} - {editingExperience.specialty}
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="experience-edit">Experiência</Label>
+                <Input
+                  id="experience-edit"
+                  {...experienceForm.register("experience")}
+                  placeholder="Ex: 10 anos em cardiologia"
+                  className="mt-1"
+                />
+                {experienceForm.formState.errors.experience && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {experienceForm.formState.errors.experience.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleCloseExperienceDialog}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateExperience.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {updateExperience.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Atualizando...
+                    </>
+                  ) : (
+                    "Atualizar"
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Edit Dialog */}
+      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-green-600" />
+              Horários de Atendimento
+            </DialogTitle>
+          </DialogHeader>
+          {editingSchedule && (
+            <form onSubmit={scheduleForm.handleSubmit(onScheduleSubmit)} className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Profissional</Label>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  {editingSchedule.name} - {editingSchedule.specialty}
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="schedule-edit">Configuração de Horários</Label>
+                <Textarea
+                  id="schedule-edit"
+                  {...scheduleForm.register("atendimentos")}
+                  placeholder="🕒 Dias e Horários de Atendimento - para uso interno do sistema de marcação
+Segunda: 8h:00 às 13h00
+Terça: 14h:00 às 18h00
+Quarta: ❌ Agenda Fechada
+Quinta: ❌ Agenda Fechada
+Sexta: ❌ Agenda Fechada
+Sábado: 9h00 às 13h00
+Domingo: ❌ Fechado
+Duração da Consulta: 60 Minutos (Obrigatório)
+Intervalo entre Pacientes para atendimento: 5 minutos
+intervalo para o almoço: 12 às 13h00"
+                  className="mt-1 min-h-[300px] font-mono text-sm"
+                  rows={15}
+                />
+                {scheduleForm.formState.errors.atendimentos && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {scheduleForm.formState.errors.atendimentos.message}
+                  </p>
+                )}
+                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                    💡 Dicas para configuração:
+                  </h4>
+                  <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Use formato: "Dia: Hora início às Hora fim"</li>
+                    <li>• Para dias fechados use: "Dia: ❌ Fechado"</li>
+                    <li>• Defina duração da consulta e intervalos</li>
+                    <li>• Inclua intervalo para almoço se necessário</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleCloseScheduleDialog}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateSchedule.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {updateSchedule.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Atualizando...
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-4 w-4 mr-2" />
+                      Atualizar Horários
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
