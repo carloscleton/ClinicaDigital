@@ -45,7 +45,6 @@ interface SpecialtyStats {
 const professionalSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   specialty: z.string().min(1, "Especialidade é obrigatória"),
-  sexo: z.string().min(1, "Sexo é obrigatório"),
   crm: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
@@ -258,7 +257,6 @@ export default function ProfessionalsManagementWithSupabase() {
     defaultValues: {
       name: "",
       specialty: "",
-      sexo: "",
       crm: "",
       phone: "",
       email: "",
@@ -315,7 +313,6 @@ export default function ProfessionalsManagementWithSupabase() {
     form.reset({
       name: professional.name,
       specialty: professional.specialty,
-      sexo: (professional as any).sexo || "",
       crm: professional.crm || "",
       phone: professional.phone || "",
       email: professional.email || "",
@@ -331,7 +328,6 @@ export default function ProfessionalsManagementWithSupabase() {
     form.reset({
       name: "",
       specialty: "",
-      sexo: "",
       crm: "",
       phone: "",
       email: "",
@@ -483,40 +479,11 @@ export default function ProfessionalsManagementWithSupabase() {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="sexo">Sexo *</Label>
-                    <Select 
-                      onValueChange={(value) => {
-                        console.log("Sexo selecionado:", value);
-                        form.setValue("sexo", value);
-                      }}
-                      value={form.watch("sexo") || undefined}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o sexo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="masculino">Masculino</SelectItem>
-                        <SelectItem value="feminino">Feminino</SelectItem>
-                        <SelectItem value="outro">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.sexo && (
-                      <p className="text-sm text-red-600">{form.formState.errors.sexo.message}</p>
-                    )}
-                  </div>
-                  <div>
                     <Label htmlFor="crm">CRM</Label>
-                    <CRMValidator
-                      value={form.watch("crm") || ""}
-                      onChange={(value) => form.setValue("crm", value)}
-                      onValidationResult={(isValid, data) => {
-                        if (isValid && data) {
-                          // Auto-populate specialty if validated successfully
-                          if (!form.watch("specialty")) {
-                            form.setValue("specialty", data.specialty);
-                          }
-                        }
-                      }}
+                    <Input
+                      id="crm"
+                      {...form.register("crm")}
+                      placeholder="Ex: 12345-SP"
                     />
                     {form.formState.errors.crm && (
                       <p className="text-sm text-red-600">{form.formState.errors.crm.message}</p>
@@ -557,7 +524,7 @@ export default function ProfessionalsManagementWithSupabase() {
                     placeholder="🕒 Dias e Horários de Atendimento - para uso interno do sistema de marcação
 Segunda: 8h:00 às 13h00
 Terça: 14h:00 às 18h00
-Quarta: 7h:00 às 18h00
+Quarta: ❌ Agenda Fechada
 Quinta: ❌ Agenda Fechada
 Sexta: ❌ Agenda Fechada
 Sábado: 9h00 às 13h00
@@ -698,7 +665,6 @@ intervalo para o almoço: 12 às 13h00"
                     <TableHead>ID</TableHead>
                     <TableHead>Foto</TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Sexo</TableHead>
                     <TableHead>Especialidade</TableHead>
                     <TableHead>CRM</TableHead>
                     <TableHead>Telefone</TableHead>
@@ -738,11 +704,6 @@ intervalo para o almoço: 12 às 13h00"
                           </div>
                         </TableCell>
                         <TableCell>{professional.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs">
-                            {(professional as any).sexo || "—"}
-                          </Badge>
-                        </TableCell>
                         <TableCell>
                           <Badge variant="secondary">{professional.specialty}</Badge>
                         </TableCell>
@@ -876,7 +837,7 @@ intervalo para o almoço: 12 às 13h00"
                   placeholder="🕒 Dias e Horários de Atendimento - para uso interno do sistema de marcação
 Segunda: 8h:00 às 13h00
 Terça: 14h:00 às 18h00
-Quarta: 7h:00 às 18h00
+Quarta: ❌ Agenda Fechada
 Quinta: ❌ Agenda Fechada
 Sexta: ❌ Agenda Fechada
 Sábado: 9h00 às 13h00
