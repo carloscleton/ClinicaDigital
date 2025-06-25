@@ -426,13 +426,13 @@ export default function SmartScheduling({
                 <Label className="block text-sm font-medium mb-2">Profissional</Label>
                 <Select 
                   value={selectedProfessional?.toString() || ""}
-                  onValueChange={(value) => setSelectedProfessional(value ? parseInt(value) : null)}
+                  onValueChange={(value) => setSelectedProfessional(value && value !== "none" ? parseInt(value) : null)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um profissional" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Selecione um profissional</SelectItem>
+                    <SelectItem value="none">Selecione um profissional</SelectItem>
                     {professionals.map((prof) => (
                       <SelectItem key={prof.id} value={prof.id.toString()}>
                         {prof.name} - {prof.specialty}
@@ -462,13 +462,13 @@ export default function SmartScheduling({
                   <Label className="block text-sm font-medium mb-2">Serviço</Label>
                   <Select 
                     value={selectedService?.toString() || ""}
-                    onValueChange={(value) => setSelectedService(value ? parseInt(value) : null)}
+                    onValueChange={(value) => setSelectedService(value && value !== "none" ? parseInt(value) : null)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um serviço" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Selecione um serviço</SelectItem>
+                      <SelectItem value="none">Selecione um serviço</SelectItem>
                       {filteredServices.map((service) => (
                         <SelectItem key={service.id} value={service.id.toString()}>
                           {service.servicos} - R$ {service.valorServicos?.toFixed(2) || "0.00"}

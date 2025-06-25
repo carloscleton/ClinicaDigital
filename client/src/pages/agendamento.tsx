@@ -167,12 +167,13 @@ export default function Agendamento() {
                 <Label className="mb-2 block">Profissional</Label>
                 <Select
                   value={selectedProfessional || ""}
-                  onValueChange={setSelectedProfessional}
+                  onValueChange={(value) => setSelectedProfessional(value && value !== "none" ? value : null)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Escolha um profissional" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">Escolha um profissional</SelectItem>
                     {professionals.map((professional) => (
                       <SelectItem key={professional.id} value={professional.id.toString()}>
                         {professional.name} - {professional.specialty}
