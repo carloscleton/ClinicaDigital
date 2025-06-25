@@ -1,40 +1,49 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { 
-  FileText, Plus, Edit, Trash2, Search, 
-  RefreshCw, Loader2, CheckCircle, XCircle, 
-  Calendar, Clock, User, Stethoscope, 
-  Heart, Activity, PlusCircle, MinusCircle,
-  Printer, Download, ExternalLink, FilePlus,
-  Eye, Phone
-} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { 
+  FileText, 
+  Search, 
+  Filter, 
+  Plus, 
+  Calendar, 
+  User, 
+  Stethoscope, 
+  Activity, 
+  Heart, 
+  Edit, 
+  Trash2, 
+  Clock, 
+  Download, 
+  Printer, 
+  Eye, 
+  ArrowRight, 
+  CheckCircle, 
+  XCircle, 
+  Loader2 
+} from "lucide-react";
 
-// Interfaces
+// Interface for medical record
 interface MedicalRecord {
   id: string;
   id_paciente: number;
   id_profissional: number;
   data_consulta: string;
   queixa_principal: string;
-  historia_doenca: string;
+  historia_doenca: string | null;
   sinais_vitais: {
     pressao_arterial?: string;
     frequencia_cardiaca?: number;
@@ -43,27 +52,26 @@ interface MedicalRecord {
     peso?: number;
     altura?: number;
     imc?: number;
-    outros?: Record<string, any>;
-  };
-  exame_fisico: string;
+  } | null;
+  exame_fisico: string | null;
   diagnostico: string;
-  plano_tratamento: string;
+  plano_tratamento: string | null;
   medicamentos: Array<{
     nome: string;
     dosagem: string;
     posologia: string;
     duracao: string;
-  }>;
-  exames_solicitados: string[];
+  }> | null;
+  exames_solicitados: string[] | null;
   retorno: string | null;
-  observacoes: string;
+  observacoes: string | null;
   created_at: string;
   updated_at: string;
   paciente?: {
     id: number;
     nomeCliente: string;
-    telefoneCliente: string;
-    emailCliente: string;
+    telefoneCliente: string | null;
+    emailCliente: string | null;
     nascimentoCliente: string | null;
   };
   profissional?: {
@@ -73,245 +81,239 @@ interface MedicalRecord {
   };
 }
 
+// Interface for patient
 interface Patient {
   id: number;
   nomeCliente: string;
-  telefoneCliente: string;
-  emailCliente: string;
+  telefoneCliente: string | null;
+  emailCliente: string | null;
   nascimentoCliente: string | null;
   CPF: string | null;
 }
 
+// Interface for professional
 interface Professional {
   id: number;
   name: string;
   specialty: string;
 }
 
-// Validation schema for medical record form
-const medicationSchema = z.object({
-  nome: z.string().min(1, "Nome do medicamento é obrigatório"),
-  dosagem: z.string().min(1, "Dosagem é obrigatória"),
-  posologia: z.string().min(1, "Posologia é obrigatória"),
-  duracao: z.string()
-});
-
-const sinaisVitaisSchema = z.object({
-  pressao_arterial: z.string().optional(),
-  frequencia_cardiaca: z.number().min(0).max(300).optional(),
-  temperatura: z.number().min(32).max(45).optional(),
-  saturacao: z.number().min(0).max(100).optional(),
-  peso: z.number().min(0).max(500).optional(),
-  altura: z.number().min(0).max(3).optional(),
-  imc: z.number().min(0).max(100).optional()
-});
-
-const medicalRecordSchema = z.object({
-  id_paciente: z.number(),
-  id_profissional: z.number(),
-  data_consulta: z.string().refine(val => {
-    const date = new Date(val);
-    return !isNaN(date.getTime());
-  }, { message: "Data inválida" }),
-  queixa_principal: z.string().min(1, "Queixa principal é obrigatória"),
-  historia_doenca: z.string().optional(),
-  sinais_vitais: sinaisVitaisSchema,
-  exame_fisico: z.string().optional(),
-  diagnostico: z.string().min(1, "Diagnóstico é obrigatório"),
-  plano_tratamento: z.string(),
-  medicamentos: z.array(medicationSchema),
-  exames_solicitados: z.array(z.string()),
-  retorno: z.string().nullable(),
-  observacoes: z.string().optional()
-});
-
-type MedicalRecordFormData = z.infer<typeof medicalRecordSchema>;
-
 export default function MedicalRecordsManagement() {
-  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<MedicalRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const queryClient = useQueryClient();
+  const [filterProfessional, setFilterProfessional] = useState("all");
+  const [filterPeriod, setFilterPeriod] = useState("all");
+  const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isNewRecordDialogOpen, setIsNewRecordDialogOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null);
+  
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Form setup
-  const form = useForm<MedicalRecordFormData>({
-    resolver: zodResolver(medicalRecordSchema),
-    defaultValues: {
-      id_paciente: 0,
-      id_profissional: 0,
-      data_consulta: new Date().toISOString().split('T')[0],
-      queixa_principal: "",
-      historia_doenca: "",
-      sinais_vitais: {
-        pressao_arterial: "",
-        frequencia_cardiaca: 0,
-        temperatura: 36.5,
-        saturacao: 97,
-        peso: 0,
-        altura: 0,
-        imc: 0
-      },
-      exame_fisico: "",
-      diagnostico: "",
-      plano_tratamento: "",
-      medicamentos: [],
-      exames_solicitados: [],
-      retorno: null,
-      observacoes: ""
+  // Fetch medical records
+  const { data: records = [], isLoading: isLoadingRecords } = useQuery<MedicalRecord[]>({
+    queryKey: ["/api/medical-records"],
+    queryFn: async () => {
+      try {
+        // In a real implementation, fetch from API
+        // const response = await fetch("/api/medical-records");
+        // if (!response.ok) throw new Error("Failed to fetch records");
+        // return response.json();
+        
+        // Mock data for demonstration
+        return [
+          {
+            id: "1",
+            id_paciente: 1,
+            id_profissional: 1,
+            data_consulta: "2025-06-15T10:00:00",
+            queixa_principal: "Dor de cabeça e tontura",
+            historia_doenca: "Paciente relata dor de cabeça há 3 dias, acompanhada de tontura ao se levantar. Nega febre ou outros sintomas. Não tem histórico de enxaqueca. Relata estresse recente no trabalho.",
+            sinais_vitais: {
+              pressao_arterial: "120/80",
+              frequencia_cardiaca: 75,
+              temperatura: 36.5,
+              saturacao: 98,
+              peso: 70,
+              altura: 1.70,
+              imc: 24.2
+            },
+            exame_fisico: "Paciente em bom estado geral, lúcido e orientado. Ausculta cardíaca e pulmonar normais. Sem alterações neurológicas focais.",
+            diagnostico: "Enxaqueca tensional",
+            plano_tratamento: "Repouso, hidratação e medicação conforme prescrição. Orientado sobre técnicas de relaxamento e redução de estresse.",
+            medicamentos: [
+              {
+                nome: "Dipirona",
+                dosagem: "500mg",
+                posologia: "1 comprimido a cada 6 horas se dor",
+                duracao: "5 dias"
+              },
+              {
+                nome: "Metoclopramida",
+                dosagem: "10mg",
+                posologia: "1 comprimido a cada 8 horas se náusea",
+                duracao: "3 dias"
+              }
+            ],
+            exames_solicitados: ["Hemograma completo", "Glicemia em jejum"],
+            retorno: "2025-06-30",
+            observacoes: "Paciente orientado a retornar se sintomas piorarem.",
+            created_at: "2025-06-15T10:30:00",
+            updated_at: "2025-06-15T10:30:00",
+            paciente: {
+              id: 1,
+              nomeCliente: "Maria Silva",
+              telefoneCliente: "(85) 99999-9999",
+              emailCliente: "maria@email.com",
+              nascimentoCliente: "1980-05-15"
+            },
+            profissional: {
+              id: 1,
+              Profissional: "Dr. Antonio",
+              Profissao: "Clínico Geral"
+            }
+          },
+          {
+            id: "2",
+            id_paciente: 2,
+            id_profissional: 14,
+            data_consulta: "2025-06-02T14:00:00",
+            queixa_principal: "Lesão na pele do braço direito",
+            historia_doenca: "Paciente notou lesão há cerca de 2 semanas, sem melhora com hidratante. Refere leve coceira no local. Nega uso de novos produtos de higiene ou roupas.",
+            sinais_vitais: {
+              pressao_arterial: "130/85",
+              frequencia_cardiaca: 80,
+              temperatura: 36.8,
+              saturacao: 99,
+              peso: 71,
+              altura: 1.70,
+              imc: 24.5
+            },
+            exame_fisico: "Lesão eritematosa com bordas definidas no braço direito, medindo aproximadamente 2cm. Sem edema ou calor local.",
+            diagnostico: "Dermatite de contato",
+            plano_tratamento: "Evitar contato com possíveis alérgenos e usar medicação prescrita.",
+            medicamentos: [
+              {
+                nome: "Betametasona creme",
+                dosagem: "0,05%",
+                posologia: "Aplicar na área afetada 2x ao dia",
+                duracao: "7 dias"
+              },
+              {
+                nome: "Loratadina",
+                dosagem: "10mg",
+                posologia: "1 comprimido pela manhã",
+                duracao: "5 dias"
+              }
+            ],
+            exames_solicitados: [],
+            retorno: "2025-07-10",
+            observacoes: "Paciente deve evitar sabonetes perfumados e roupas sintéticas na região afetada.",
+            created_at: "2025-06-02T14:45:00",
+            updated_at: "2025-06-02T14:45:00",
+            paciente: {
+              id: 2,
+              nomeCliente: "João Santos",
+              telefoneCliente: "(85) 88888-8888",
+              emailCliente: "joao@email.com",
+              nascimentoCliente: "1975-10-20"
+            },
+            profissional: {
+              id: 14,
+              Profissional: "Dra. Renata Almeida",
+              Profissao: "Dermatologista"
+            }
+          }
+        ];
+      } catch (error) {
+        console.error("Error fetching medical records:", error);
+        return [];
+      }
     }
   });
 
-  // Setup field array for medications
-  const { fields: medicamentoFields, append: appendMedicamento, remove: removeMedicamento } = 
-    useFieldArray({
-      control: form.control,
-      name: "medicamentos"
-    });
-
-  // Setup field array for exam requests
-  const { fields: exameFields, append: appendExame, remove: removeExame } = 
-    useFieldArray({
-      control: form.control,
-      name: "exames_solicitados"
-    });
-
-  // Fetch patients data
-  const { data: patients = [], isLoading: isLoadingPatients, refetch: refetchPatients } = useQuery<Patient[]>({
-    queryKey: ["/api/supabase/patients"],
-    enabled: true
-  });
-
-  // Fetch professionals data
-  const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery<Professional[]>({
-    queryKey: ["/api/supabase/professionals"],
-  });
-
-  // Fetch medical records data
-  const { data: medicalRecords = [], isLoading: isLoadingRecords, refetch: refetchRecords } = useQuery<MedicalRecord[]>({
-    queryKey: ["/api/medical-records"],
+  // Fetch patients
+  const { data: patients = [], isLoading: isLoadingPatients } = useQuery<Patient[]>({
+    queryKey: ["/api/patients"],
     queryFn: async () => {
-      // Mock data for demonstration - replace with actual API call
-      return [
-        {
-          id: "1",
-          id_paciente: 1,
-          id_profissional: 1,
-          data_consulta: "2025-06-15T10:00:00",
-          queixa_principal: "Dor de cabeça e tontura",
-          historia_doenca: "Paciente relata dor de cabeça há 3 dias, acompanhada de tontura ao se levantar.",
-          sinais_vitais: {
-            pressao_arterial: "120/80",
-            frequencia_cardiaca: 75,
-            temperatura: 36.5,
-            saturacao: 98,
-            peso: 70,
-            altura: 1.70,
-            imc: 24.2
-          },
-          exame_fisico: "Paciente em bom estado geral, lúcido e orientado. Ausculta cardíaca e pulmonar normais.",
-          diagnostico: "Enxaqueca tensional",
-          plano_tratamento: "Repouso, hidratação e medicação conforme prescrição.",
-          medicamentos: [
-            {
-              nome: "Dipirona",
-              dosagem: "500mg",
-              posologia: "1 comprimido a cada 6 horas se dor",
-              duracao: "5 dias"
-            },
-            {
-              nome: "Metoclopramida",
-              dosagem: "10mg",
-              posologia: "1 comprimido a cada 8 horas se náusea",
-              duracao: "3 dias"
-            }
-          ],
-          exames_solicitados: ["Hemograma completo", "Glicemia em jejum"],
-          retorno: "2025-06-30",
-          observacoes: "Paciente orientado a retornar se sintomas piorarem.",
-          created_at: "2025-06-15T10:30:00",
-          updated_at: "2025-06-15T10:30:00",
-          paciente: {
+      try {
+        // In a real implementation, fetch from API
+        // Mock data for demonstration
+        return [
+          {
             id: 1,
             nomeCliente: "Maria Silva",
             telefoneCliente: "(85) 99999-9999",
             emailCliente: "maria@email.com",
-            nascimentoCliente: "1980-05-15"
+            nascimentoCliente: "1980-05-15",
+            CPF: "123.456.789-00"
           },
-          profissional: {
-            id: 1,
-            Profissional: "Dr. Antonio",
-            Profissao: "Clínico Geral"
+          {
+            id: 2,
+            nomeCliente: "João Santos",
+            telefoneCliente: "(85) 88888-8888",
+            emailCliente: "joao@email.com",
+            nascimentoCliente: "1975-10-20",
+            CPF: "987.654.321-00"
+          },
+          {
+            id: 3,
+            nomeCliente: "Ana Oliveira",
+            telefoneCliente: "(85) 77777-7777",
+            emailCliente: "ana@email.com",
+            nascimentoCliente: "1990-03-25",
+            CPF: "456.789.123-00"
           }
-        },
-        {
-          id: "2",
-          id_paciente: 1,
-          id_profissional: 14,
-          data_consulta: "2025-06-20T14:00:00",
-          queixa_principal: "Lesão na pele do braço direito",
-          historia_doenca: "Paciente notou lesão há cerca de 2 semanas, sem melhora com hidratante.",
-          sinais_vitais: {
-            pressao_arterial: "130/85",
-            frequencia_cardiaca: 80,
-            temperatura: 36.8,
-            saturacao: 99,
-            peso: 71,
-            altura: 1.70,
-            imc: 24.5
-          },
-          exame_fisico: "Lesão eritematosa com bordas definidas no braço direito, medindo aproximadamente 2cm.",
-          diagnostico: "Dermatite de contato",
-          plano_tratamento: "Evitar contato com possíveis alérgenos e usar medicação prescrita.",
-          medicamentos: [
-            {
-              nome: "Betametasona creme",
-              dosagem: "0,05%",
-              posologia: "Aplicar na área afetada 2x ao dia",
-              duracao: "7 dias"
-            }
-          ],
-          exames_solicitados: [],
-          retorno: "2025-07-10",
-          observacoes: "Paciente deve evitar sabonetes perfumados e roupas sintéticas na região afetada.",
-          created_at: "2025-06-20T14:45:00",
-          updated_at: "2025-06-20T14:45:00",
-          paciente: {
-            id: 1,
-            nomeCliente: "Maria Silva",
-            telefoneCliente: "(85) 99999-9999",
-            emailCliente: "maria@email.com",
-            nascimentoCliente: "1980-05-15"
-          },
-          profissional: {
-            id: 14,
-            Profissional: "Dra. Renata Almeida",
-            Profissao: "Dermatologista"
-          }
-        }
-      ];
-    },
-    enabled: true
+        ];
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+        return [];
+      }
+    }
   });
 
-  // Create medical record mutation
+  // Fetch professionals
+  const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery<Professional[]>({
+    queryKey: ["/api/professionals"],
+    queryFn: async () => {
+      try {
+        // In a real implementation, fetch from API
+        // Mock data for demonstration
+        return [
+          {
+            id: 1,
+            name: "Dr. Antonio",
+            specialty: "Clínico Geral"
+          },
+          {
+            id: 14,
+            name: "Dra. Renata Almeida",
+            specialty: "Dermatologista"
+          }
+        ];
+      } catch (error) {
+        console.error("Error fetching professionals:", error);
+        return [];
+      }
+    }
+  });
+
+  // Create new medical record mutation
   const createMedicalRecord = useMutation({
-    mutationFn: async (data: MedicalRecordFormData) => {
-      console.log("Submitting medical record:", data);
-      
-      // Mock API call - in production, replace with real API call
-      // const response = await fetch('/api/medical-records', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
+    mutationFn: async (data: any) => {
+      // In a real implementation, post to API
+      // const response = await fetch("/api/medical-records", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
       //   body: JSON.stringify(data)
       // });
+      // if (!response.ok) throw new Error("Failed to create record");
       // return response.json();
       
+      // Mock response
       return {
-        id: Date.now().toString(),
+        id: Math.random().toString(36).substring(2, 9),
         ...data,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -319,295 +321,210 @@ export default function MedicalRecordsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/medical-records"] });
-      setIsAddDialogOpen(false);
+      setIsNewRecordDialogOpen(false);
       toast({
-        title: "Registro médico criado",
-        description: "O histórico médico foi adicionado com sucesso",
+        title: "Registro criado com sucesso",
+        description: "O prontuário foi adicionado ao histórico do paciente",
       });
-      form.reset();
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao criar registro médico",
-        description: error.message || "Tente novamente",
+        title: "Erro ao criar registro",
+        description: error.message || "Ocorreu um erro ao criar o registro médico",
         variant: "destructive",
       });
-    },
-  });
-
-  // Update medical record mutation
-  const updateMedicalRecord = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: MedicalRecordFormData }) => {
-      console.log(`Updating medical record ${id}:`, data);
-      
-      // Mock API call - in production, replace with real API call
-      // const response = await fetch(`/api/medical-records/${id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(data)
-      // });
-      // return response.json();
-      
-      return {
-        id,
-        ...data,
-        updated_at: new Date().toISOString()
-      };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/medical-records"] });
-      setIsAddDialogOpen(false);
-      setEditingRecord(null);
-      toast({
-        title: "Registro médico atualizado",
-        description: "O histórico médico foi atualizado com sucesso",
-      });
-      form.reset();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao atualizar registro médico",
-        description: error.message || "Tente novamente",
-        variant: "destructive",
-      });
-    },
+    }
   });
 
   // Delete medical record mutation
   const deleteMedicalRecord = useMutation({
     mutationFn: async (id: string) => {
-      console.log(`Deleting medical record ${id}`);
-      
-      // Mock API call - in production, replace with real API call
+      // In a real implementation, delete from API
       // const response = await fetch(`/api/medical-records/${id}`, {
-      //   method: 'DELETE'
+      //   method: "DELETE"
       // });
+      // if (!response.ok) throw new Error("Failed to delete record");
       // return response.json();
       
+      // Mock response
       return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/medical-records"] });
       toast({
-        title: "Registro médico excluído",
-        description: "O histórico médico foi removido com sucesso",
+        title: "Registro excluído",
+        description: "O prontuário foi removido com sucesso",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Erro ao excluir registro médico",
-        description: error.message || "Tente novamente",
+        title: "Erro ao excluir registro",
+        description: error.message || "Ocorreu um erro ao excluir o registro médico",
         variant: "destructive",
       });
-    },
+    }
   });
 
-  // Effect to set form values when editing a record
-  useEffect(() => {
-    if (editingRecord) {
-      form.reset({
-        id_paciente: editingRecord.id_paciente,
-        id_profissional: editingRecord.id_profissional,
-        data_consulta: new Date(editingRecord.data_consulta).toISOString().split('T')[0],
-        queixa_principal: editingRecord.queixa_principal,
-        historia_doenca: editingRecord.historia_doenca,
-        sinais_vitais: {
-          pressao_arterial: editingRecord.sinais_vitais.pressao_arterial || "",
-          frequencia_cardiaca: editingRecord.sinais_vitais.frequencia_cardiaca || 0,
-          temperatura: editingRecord.sinais_vitais.temperatura || 36.5,
-          saturacao: editingRecord.sinais_vitais.saturacao || 97,
-          peso: editingRecord.sinais_vitais.peso || 0,
-          altura: editingRecord.sinais_vitais.altura || 0,
-          imc: editingRecord.sinais_vitais.imc || 0
-        },
-        exame_fisico: editingRecord.exame_fisico,
-        diagnostico: editingRecord.diagnostico,
-        plano_tratamento: editingRecord.plano_tratamento,
-        medicamentos: editingRecord.medicamentos,
-        exames_solicitados: editingRecord.exames_solicitados,
-        retorno: editingRecord.retorno,
-        observacoes: editingRecord.observacoes
-      });
+  // Filter records based on search and filters
+  const filteredRecords = records.filter(record => {
+    const matchesSearch = 
+      record.paciente?.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.queixa_principal.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.diagnostico.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesProfessional = 
+      filterProfessional === "all" || 
+      record.id_profissional.toString() === filterProfessional;
+    
+    let matchesPeriod = true;
+    if (filterPeriod !== "all") {
+      const recordDate = new Date(record.data_consulta);
+      const now = new Date();
+      
+      if (filterPeriod === "today") {
+        matchesPeriod = 
+          recordDate.getDate() === now.getDate() &&
+          recordDate.getMonth() === now.getMonth() &&
+          recordDate.getFullYear() === now.getFullYear();
+      } else if (filterPeriod === "week") {
+        const weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 7);
+        matchesPeriod = recordDate >= weekAgo;
+      } else if (filterPeriod === "month") {
+        const monthAgo = new Date();
+        monthAgo.setMonth(now.getMonth() - 1);
+        matchesPeriod = recordDate >= monthAgo;
+      }
     }
-  }, [editingRecord, form]);
+    
+    return matchesSearch && matchesProfessional && matchesPeriod;
+  });
 
-  // Handle form submission
-  const onSubmit = (data: MedicalRecordFormData) => {
-    if (editingRecord) {
-      updateMedicalRecord.mutate({ id: editingRecord.id, data });
-    } else {
-      createMedicalRecord.mutate(data);
-    }
-  };
-
-  // Handle patient selection
-  const handlePatientSelect = (patientId: number) => {
-    setSelectedPatientId(patientId);
-  };
-
-  // Handle adding a new record
-  const handleAddRecord = (patientId?: number) => {
-    const selectedId = patientId || selectedPatientId;
-    if (selectedId) {
-      form.reset({
-        ...form.getValues(),
-        id_paciente: selectedId,
-        id_profissional: professionals[0]?.id || 0,
-        data_consulta: new Date().toISOString().split('T')[0],
-      });
-      setIsAddDialogOpen(true);
-    } else {
-      toast({
-        title: "Paciente não selecionado",
-        description: "Selecione um paciente antes de adicionar um registro médico",
-        variant: "destructive",
-      });
+  // Format date
+  const formatDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, "dd/MM/yyyy", { locale: ptBR }) : dateString;
+    } catch (e) {
+      return dateString;
     }
   };
 
-  // Handle viewing a record
+  // Format date and time
+  const formatDateTime = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, "dd/MM/yyyy HH:mm", { locale: ptBR }) : dateString;
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  // View record details
   const handleViewRecord = (record: MedicalRecord) => {
-    setViewingRecord(record);
+    setSelectedRecord(record);
     setIsViewDialogOpen(true);
   };
 
-  // Handle editing a record
-  const handleEditRecord = (record: MedicalRecord) => {
-    setEditingRecord(record);
-    setIsAddDialogOpen(true);
+  // Create new record
+  const handleCreateRecord = () => {
+    if (!selectedPatient || !selectedProfessional) {
+      toast({
+        title: "Dados incompletos",
+        description: "Selecione o paciente e o profissional para criar o registro",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // In a real implementation, you would collect all the necessary data
+    // and call createMedicalRecord.mutate with the complete record
+    const newRecord = {
+      id_paciente: parseInt(selectedPatient),
+      id_profissional: parseInt(selectedProfessional),
+      data_consulta: new Date().toISOString(),
+      queixa_principal: "Nova consulta",
+      diagnostico: "Em avaliação",
+      // Add other required fields
+    };
+    
+    createMedicalRecord.mutate(newRecord);
   };
 
-  // Handle deleting a record
+  // Delete record
   const handleDeleteRecord = (id: string) => {
     deleteMedicalRecord.mutate(id);
   };
 
-  // Calculate patient's age from birth date
+  // Calculate patient age
   const calculateAge = (birthDate: string | null): string => {
     if (!birthDate) return "N/A";
     
-    const birth = new Date(birthDate);
-    const now = new Date();
-    let age = now.getFullYear() - birth.getFullYear();
-    
-    // Adjust age if birthday hasn't occurred yet this year
-    if (
-      now.getMonth() < birth.getMonth() ||
-      (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())
-    ) {
-      age--;
-    }
-    
-    return `${age} anos`;
-  };
-
-  // Format date to local format
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return isNaN(date.getTime())
-      ? "-"
-      : format(date, "dd/MM/yyyy", { locale: ptBR });
-  };
-
-  // Format datetime to local format
-  const formatDateTime = (dateString: string): string => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return isNaN(date.getTime())
-      ? "-"
-      : format(date, "dd/MM/yyyy HH:mm", { locale: ptBR });
-  };
-
-  // Calculate BMI when height and weight change
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "sinais_vitais.peso" || name === "sinais_vitais.altura") {
-        const peso = form.getValues("sinais_vitais.peso");
-        const altura = form.getValues("sinais_vitais.altura");
-        
-        if (peso > 0 && altura > 0) {
-          // Calculate BMI: weight(kg) / height(m)²
-          const imc = +(peso / (altura * altura)).toFixed(1);
-          form.setValue("sinais_vitais.imc", imc);
-        }
+    try {
+      const today = new Date();
+      const birth = parseISO(birthDate);
+      
+      if (!isValid(birth)) return "N/A";
+      
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
       }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
-
-  // Filter medical records based on search term and selected patient
-  const filteredRecords = medicalRecords.filter(record => {
-    const matchesPatient = !selectedPatientId || record.id_paciente === selectedPatientId;
-    const matchesSearch = searchTerm === "" || 
-      (record.paciente?.nomeCliente && record.paciente.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (record.diagnostico && record.diagnostico.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (record.queixa_principal && record.queixa_principal.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    return matchesPatient && matchesSearch;
-  });
-
-  // Loading state
-  if (isLoadingPatients || isLoadingProfessionals || isLoadingRecords) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500 mr-2" />
-        <span>Carregando histórico médico...</span>
-      </div>
-    );
-  }
+      
+      return `${age} anos`;
+    } catch (e) {
+      return "N/A";
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            Histórico Médico de Pacientes
+            Histórico Médico
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Gerenciamento de prontuários e histórico de consultas
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => refetchRecords()} 
-            variant="outline"
-            disabled={isLoadingRecords}
-          >
-            {isLoadingRecords ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
-            Atualizar
-          </Button>
-          <Button onClick={() => handleAddRecord()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Registro Médico
-          </Button>
-        </div>
+        
+        <Button onClick={() => setIsNewRecordDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Registro
+        </Button>
       </div>
-
-      {/* Patient Selector and Search */}
+      
+      {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label className="mb-2 block">Selecione o Paciente</Label>
-              <Select
-                value={selectedPatientId?.toString() || ""}
-                onValueChange={(value) => handlePatientSelect(Number(value))}
-              >
+              <Label className="mb-2 block">Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Buscar por paciente, queixa ou diagnóstico..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label className="mb-2 block">Profissional</Label>
+              <Select value={filterProfessional} onValueChange={setFilterProfessional}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um paciente" />
+                  <SelectValue placeholder="Todos os profissionais" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os pacientes</SelectItem>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id.toString()}>
-                      {patient.nomeCliente || "Paciente sem nome"} {patient.CPF && `- CPF: ${patient.CPF}`}
+                  <SelectItem value="all">Todos os profissionais</SelectItem>
+                  {professionals.map(prof => (
+                    <SelectItem key={prof.id} value={prof.id.toString()}>
+                      {prof.name} - {prof.specialty}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -615,916 +532,556 @@ export default function MedicalRecordsManagement() {
             </div>
             
             <div>
-              <Label className="mb-2 block">Buscar Registros</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Buscar por diagnóstico ou queixa..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+              <Label className="mb-2 block">Período</Label>
+              <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os períodos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os períodos</SelectItem>
+                  <SelectItem value="today">Hoje</SelectItem>
+                  <SelectItem value="week">Últimos 7 dias</SelectItem>
+                  <SelectItem value="month">Últimos 30 dias</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Patient Info Card (when selected) */}
-      {selectedPatientId && (
-        <Card className="bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-4">
-            {(() => {
-              const patient = patients.find(p => p.id === selectedPatientId);
-              if (!patient) return null;
-              
-              return (
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
-                      <User className="w-8 h-8 text-blue-600 dark:text-blue-300" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-semibold text-blue-900 dark:text-blue-50">
-                        {patient.nomeCliente}
-                      </h2>
-                      <div className="mt-1 text-sm text-blue-700 dark:text-blue-200 space-y-1">
-                        <p>
-                          {patient.nascimentoCliente && (
-                            <>{calculateAge(patient.nascimentoCliente)} • </>
-                          )}
-                          {patient.CPF}
-                        </p>
-                        <p className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          {patient.telefoneCliente}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-white/50 dark:bg-gray-900/50">
-                      {filteredRecords.length} registros médicos
-                    </Badge>
-                    <Button 
-                      size="sm"
-                      onClick={() => handleAddRecord(patient.id)}
-                    >
-                      <FilePlus className="w-4 h-4 mr-2" />
-                      Novo Registro
-                    </Button>
-                  </div>
-                </div>
-              );
-            })()}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Medical Records List */}
+      
+      {/* Records List */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Histórico de Consultas e Procedimentos
+            Registros Médicos ({filteredRecords.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredRecords.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          {isLoadingRecords ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <span className="ml-3">Carregando registros...</span>
+            </div>
+          ) : filteredRecords.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Nenhum registro médico encontrado
+                Nenhum registro encontrado
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-6">
-                {selectedPatientId 
-                  ? "Este paciente ainda não possui registros médicos no sistema." 
-                  : "Selecione um paciente para visualizar seu histórico médico."}
+              <p className="text-gray-500 dark:text-gray-400">
+                Tente ajustar os filtros ou criar um novo registro.
               </p>
-              {selectedPatientId && (
-                <Button onClick={() => handleAddRecord()}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Primeiro Registro
-                </Button>
-              )}
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Paciente</TableHead>
-                      <TableHead>Profissional</TableHead>
-                      <TableHead>Queixa Principal</TableHead>
-                      <TableHead>Diagnóstico</TableHead>
-                      <TableHead>Retorno</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRecords.map((record) => (
-                      <TableRow key={record.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50" onClick={() => handleViewRecord(record)}>
-                        <TableCell className="font-medium">
-                          {formatDateTime(record.data_consulta)}
-                        </TableCell>
-                        <TableCell>
-                          {record.paciente?.nomeCliente || "Paciente não especificado"}
-                        </TableCell>
-                        <TableCell>
-                          {record.profissional?.Profissional || "Profissional não especificado"}
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {record.queixa_principal}
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {record.diagnostico}
-                        </TableCell>
-                        <TableCell>
-                          {record.retorno ? formatDate(record.retorno) : "Não agendado"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewRecord(record);
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditRecord(record);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700"
-                                  onClick={(e) => e.stopPropagation()}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Paciente</TableHead>
+                    <TableHead>Profissional</TableHead>
+                    <TableHead>Queixa Principal</TableHead>
+                    <TableHead>Diagnóstico</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredRecords.map(record => (
+                    <TableRow key={record.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50" onClick={() => handleViewRecord(record)}>
+                      <TableCell>
+                        <div className="font-medium">{formatDate(record.data_consulta)}</div>
+                        <div className="text-xs text-gray-500">{format(parseISO(record.data_consulta), "HH:mm", { locale: ptBR })}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{record.paciente?.nomeCliente}</div>
+                        <div className="text-xs text-gray-500">
+                          {record.paciente?.nascimentoCliente && (
+                            <>{calculateAge(record.paciente.nascimentoCliente)}</>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>{record.profissional?.Profissional}</div>
+                        <Badge variant="outline" className="mt-1">
+                          {record.profissional?.Profissao}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate">{record.queixa_principal}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate">{record.diagnostico}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewRecord(record);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Handle edit (not implemented in this example)
+                              toast({
+                                title: "Edição de registro",
+                                description: "Funcionalidade em implementação",
+                              });
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir este registro médico? Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  className="bg-red-600 hover:bg-red-700"
+                                  onClick={() => handleDeleteRecord(record.id)}
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tem certeza que deseja excluir este registro médico?
-                                    <br /><br />
-                                    <strong>Atenção:</strong> Esta ação não pode ser desfeita e todos os
-                                    dados do registro serão permanentemente removidos.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteRecord(record.id)}
-                                    className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                                  >
-                                    Excluir Registro
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Medical Record Form Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingRecord ? "Editar Registro Médico" : "Novo Registro Médico"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingRecord 
-                ? "Atualize as informações do registro médico" 
-                : "Adicione um novo registro ao histórico médico do paciente"
-              }
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column - Basic Info and Vitals */}
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg border-b pb-2">Informações Básicas</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Paciente*</Label>
-                      <Select
-                        value={form.watch("id_paciente").toString() || ""}
-                        onValueChange={(value) => form.setValue("id_paciente", Number(value))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um paciente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {patients.map((patient) => (
-                            <SelectItem key={patient.id} value={patient.id.toString()}>
-                              {patient.nomeCliente || "Paciente sem nome"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {form.formState.errors.id_paciente && (
-                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.id_paciente.message}</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label>Profissional*</Label>
-                      <Select
-                        value={form.watch("id_profissional").toString() || ""}
-                        onValueChange={(value) => form.setValue("id_profissional", Number(value))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um profissional" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {professionals.map((professional) => (
-                            <SelectItem key={professional.id} value={professional.id.toString()}>
-                              {professional.name} - {professional.specialty}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {form.formState.errors.id_profissional && (
-                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.id_profissional.message}</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Data da Consulta*</Label>
-                      <Input
-                        type="date"
-                        {...form.register("data_consulta")}
-                      />
-                      {form.formState.errors.data_consulta && (
-                        <p className="text-sm text-red-500 mt-1">{form.formState.errors.data_consulta.message}</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label>Data de Retorno</Label>
-                      <Input
-                        type="date"
-                        {...form.register("retorno")}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg border-b pb-2">Sinais Vitais</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Pressão Arterial</Label>
-                      <Input
-                        placeholder="Ex: 120/80"
-                        {...form.register("sinais_vitais.pressao_arterial")}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>Frequência Cardíaca (bpm)</Label>
-                      <Input
-                        type="number"
-                        placeholder="Ex: 75"
-                        {...form.register("sinais_vitais.frequencia_cardiaca", {
-                          valueAsNumber: true
-                        })}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Temperatura (°C)</Label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        placeholder="Ex: 36.5"
-                        {...form.register("sinais_vitais.temperatura", {
-                          valueAsNumber: true
-                        })}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>Saturação O2 (%)</Label>
-                      <Input
-                        type="number"
-                        placeholder="Ex: 98"
-                        {...form.register("sinais_vitais.saturacao", {
-                          valueAsNumber: true
-                        })}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label>Peso (kg)</Label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        placeholder="Ex: 70.5"
-                        {...form.register("sinais_vitais.peso", {
-                          valueAsNumber: true
-                        })}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>Altura (m)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Ex: 1.70"
-                        {...form.register("sinais_vitais.altura", {
-                          valueAsNumber: true
-                        })}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>IMC</Label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        placeholder="Calculado automaticamente"
-                        {...form.register("sinais_vitais.imc", {
-                          valueAsNumber: true
-                        })}
-                        readOnly
-                        className="bg-gray-50 dark:bg-gray-800"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Medications */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-lg">Medicamentos</h3>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => appendMedicamento({ nome: "", dosagem: "", posologia: "", duracao: "" })}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Adicionar
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                    {medicamentoFields.map((field, index) => (
-                      <div key={field.id} className="grid grid-cols-12 gap-3 items-start border rounded-md p-3">
-                        <div className="col-span-12 md:col-span-3">
-                          <Label className="text-xs">Medicamento</Label>
-                          <Input
-                            placeholder="Nome do medicamento"
-                            {...form.register(`medicamentos.${index}.nome`)}
-                          />
-                        </div>
-                        
-                        <div className="col-span-12 md:col-span-2">
-                          <Label className="text-xs">Dosagem</Label>
-                          <Input
-                            placeholder="Ex: 500mg"
-                            {...form.register(`medicamentos.${index}.dosagem`)}
-                          />
-                        </div>
-                        
-                        <div className="col-span-12 md:col-span-4">
-                          <Label className="text-xs">Posologia</Label>
-                          <Input
-                            placeholder="Ex: 1 comprimido a cada 8h"
-                            {...form.register(`medicamentos.${index}.posologia`)}
-                          />
-                        </div>
-                        
-                        <div className="col-span-10 md:col-span-2">
-                          <Label className="text-xs">Duração</Label>
-                          <Input
-                            placeholder="Ex: 7 dias"
-                            {...form.register(`medicamentos.${index}.duracao`)}
-                          />
-                        </div>
-                        
-                        <div className="col-span-2 md:col-span-1 flex justify-end items-end h-full">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeMedicamento(index)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-9 w-9 p-0"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {medicamentoFields.length === 0 && (
-                      <div className="text-center py-6 text-gray-500 dark:text-gray-400 border border-dashed rounded-md">
-                        Nenhum medicamento adicionado
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column - Clinical Data */}
-              <div className="space-y-6">
-                <div>
-                  <Label>Queixa Principal*</Label>
-                  <Input
-                    placeholder="Descrição da queixa principal do paciente"
-                    {...form.register("queixa_principal")}
-                    className="mb-1"
-                  />
-                  {form.formState.errors.queixa_principal && (
-                    <p className="text-sm text-red-500 mt-1">{form.formState.errors.queixa_principal.message}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <Label>História da Doença Atual</Label>
-                  <Textarea
-                    placeholder="Detalhes sobre o histórico da condição atual"
-                    rows={3}
-                    {...form.register("historia_doenca")}
-                  />
-                </div>
-                
-                <div>
-                  <Label>Exame Físico</Label>
-                  <Textarea
-                    placeholder="Achados do exame físico"
-                    rows={3}
-                    {...form.register("exame_fisico")}
-                  />
-                </div>
-                
-                <div>
-                  <Label>Diagnóstico*</Label>
-                  <Input
-                    placeholder="Diagnóstico principal"
-                    {...form.register("diagnostico")}
-                    className="mb-1"
-                  />
-                  {form.formState.errors.diagnostico && (
-                    <p className="text-sm text-red-500 mt-1">{form.formState.errors.diagnostico.message}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <Label>Plano de Tratamento</Label>
-                  <Textarea
-                    placeholder="Plano terapêutico recomendado"
-                    rows={3}
-                    {...form.register("plano_tratamento")}
-                  />
-                </div>
-                
-                {/* Exames */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label>Exames Solicitados</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => appendExame("")}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Adicionar
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2">
-                    {exameFields.map((field, index) => (
-                      <div key={field.id} className="flex gap-2 items-center">
-                        <Input
-                          placeholder="Nome do exame"
-                          className="flex-grow"
-                          {...form.register(`exames_solicitados.${index}`)}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeExame(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-9 w-9 p-0"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    
-                    {exameFields.length === 0 && (
-                      <div className="text-center py-4 text-gray-500 dark:text-gray-400 border border-dashed rounded-md text-sm">
-                        Nenhum exame adicionado
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <Label>Observações</Label>
-                  <Textarea
-                    placeholder="Observações adicionais, recomendações ou notas"
-                    rows={3}
-                    {...form.register("observacoes")}
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => {
-                setIsAddDialogOpen(false);
-                setEditingRecord(null);
-              }}>
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createMedicalRecord.isPending || updateMedicalRecord.isPending}
-              >
-                {(createMedicalRecord.isPending || updateMedicalRecord.isPending) ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  editingRecord ? "Atualizar" : "Salvar"
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Medical Record Detail */}
+      
+      {/* View Record Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Prontuário Médico</DialogTitle>
-            <DialogDescription>
-              Detalhes completos do registro médico
-            </DialogDescription>
+            <DialogTitle>Detalhes do Registro Médico</DialogTitle>
           </DialogHeader>
           
-          {viewingRecord && (
+          {selectedRecord && (
             <div className="space-y-6">
-              {/* Header and Actions */}
-              <div className="flex justify-between items-start border-b pb-4">
+              {/* Header with patient and professional info */}
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 pb-4 border-b">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Consulta de {formatDateTime(viewingRecord.data_consulta)}
-                  </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    ID do Registro: {viewingRecord.id}
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
+                    <Calendar className="h-4 w-4" />
+                    <span>{formatDate(selectedRecord.data_consulta)}</span>
+                    <Clock className="h-4 w-4 ml-2" />
+                    <span>{format(parseISO(selectedRecord.data_consulta), "HH:mm", { locale: ptBR })}</span>
+                  </div>
+                  <h3 className="font-semibold text-xl mt-1">
+                    {selectedRecord.paciente?.nomeCliente}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedRecord.paciente?.nascimentoCliente && (
+                      <>Idade: {calculateAge(selectedRecord.paciente.nascimentoCliente)}</>
+                    )}
                   </p>
                 </div>
                 
+                <div className="flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <div>
+                    <p className="font-medium">{selectedRecord.profissional?.Profissional}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {selectedRecord.profissional?.Profissao}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Quick stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-3 text-center">
+                    <Activity className="h-5 w-5 mx-auto mb-1 text-blue-600" />
+                    <h5 className="text-xs text-gray-500 uppercase">Queixa</h5>
+                    <p className="font-medium truncate" title={selectedRecord.queixa_principal}>
+                      {selectedRecord.queixa_principal.length > 20
+                        ? selectedRecord.queixa_principal.substring(0, 20) + "..."
+                        : selectedRecord.queixa_principal}
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-3 text-center">
+                    <Heart className="h-5 w-5 mx-auto mb-1 text-red-600" />
+                    <h5 className="text-xs text-gray-500 uppercase">Diagnóstico</h5>
+                    <p className="font-medium truncate" title={selectedRecord.diagnostico}>
+                      {selectedRecord.diagnostico}
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-3 text-center">
+                    <Calendar className="h-5 w-5 mx-auto mb-1 text-green-600" />
+                    <h5 className="text-xs text-gray-500 uppercase">Retorno</h5>
+                    <p className="font-medium">
+                      {selectedRecord.retorno ? formatDate(selectedRecord.retorno) : "Não agendado"}
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-3 text-center">
+                    <FileText className="h-5 w-5 mx-auto mb-1 text-purple-600" />
+                    <h5 className="text-xs text-gray-500 uppercase">Exames</h5>
+                    <p className="font-medium">
+                      {selectedRecord.exames_solicitados?.length || 0} solicitados
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Detailed Content Tabs */}
+              <Tabs defaultValue="anamnese" className="w-full">
+                <TabsList className="w-full justify-start border-b mb-6">
+                  <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
+                  <TabsTrigger value="exame-fisico">Exame Físico</TabsTrigger>
+                  <TabsTrigger value="tratamento">Tratamento</TabsTrigger>
+                  <TabsTrigger value="sinais-vitais">Sinais Vitais</TabsTrigger>
+                </TabsList>
+                
+                {/* Anamnese Tab */}
+                <TabsContent value="anamnese" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>História da Doença Atual</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="whitespace-pre-line">
+                        {selectedRecord.historia_doenca || "Não informada"}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Queixa Principal</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {selectedRecord.queixa_principal}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                {/* Exame Físico Tab */}
+                <TabsContent value="exame-fisico" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Exame Físico</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="whitespace-pre-line">
+                        {selectedRecord.exame_fisico || "Sem achados clínicos relevantes"}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Diagnóstico</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {selectedRecord.diagnostico}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                {/* Tratamento Tab */}
+                <TabsContent value="tratamento" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Plano de Tratamento</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="whitespace-pre-line">
+                        {selectedRecord.plano_tratamento || "Não informado"}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  {selectedRecord.medicamentos && selectedRecord.medicamentos.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Medicamentos Prescritos</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {selectedRecord.medicamentos.map((med, index) => (
+                            <div key={index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="font-medium">{med.nome}</h4>
+                                <Badge variant="outline">{med.dosagem}</Badge>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <span className="font-medium">Posologia:</span> {med.posologia}
+                              </p>
+                              {med.duracao && (
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  <span className="font-medium">Duração:</span> {med.duracao}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {selectedRecord.exames_solicitados && selectedRecord.exames_solicitados.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Exames Solicitados</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="list-disc pl-5 space-y-1">
+                          {selectedRecord.exames_solicitados.map((exame, index) => (
+                            <li key={index}>{exame}</li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {selectedRecord.retorno && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Data de Retorno</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-5 w-5 text-blue-600" />
+                          {formatDate(selectedRecord.retorno)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {selectedRecord.observacoes && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Observações Adicionais</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="whitespace-pre-line">
+                          {selectedRecord.observacoes}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+                
+                {/* Sinais Vitais Tab */}
+                <TabsContent value="sinais-vitais">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {selectedRecord.sinais_vitais?.pressao_arterial && (
+                      <Card>
+                        <CardContent className="p-6 text-center">
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Pressão Arterial</h4>
+                          <p className="text-xl font-bold">{selectedRecord.sinais_vitais.pressao_arterial}</p>
+                          <p className="text-xs text-gray-500 mt-1">mmHg</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {selectedRecord.sinais_vitais?.frequencia_cardiaca && (
+                      <Card>
+                        <CardContent className="p-6 text-center">
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Freq. Cardíaca</h4>
+                          <p className="text-xl font-bold">{selectedRecord.sinais_vitais.frequencia_cardiaca}</p>
+                          <p className="text-xs text-gray-500 mt-1">bpm</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {selectedRecord.sinais_vitais?.temperatura && (
+                      <Card>
+                        <CardContent className="p-6 text-center">
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Temperatura</h4>
+                          <p className="text-xl font-bold">{selectedRecord.sinais_vitais.temperatura}</p>
+                          <p className="text-xs text-gray-500 mt-1">°C</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {selectedRecord.sinais_vitais?.saturacao && (
+                      <Card>
+                        <CardContent className="p-6 text-center">
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Saturação O2</h4>
+                          <p className="text-xl font-bold">{selectedRecord.sinais_vitais.saturacao}</p>
+                          <p className="text-xs text-gray-500 mt-1">%</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {selectedRecord.sinais_vitais?.peso && (
+                      <Card>
+                        <CardContent className="p-6 text-center">
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Peso</h4>
+                          <p className="text-xl font-bold">{selectedRecord.sinais_vitais.peso}</p>
+                          <p className="text-xs text-gray-500 mt-1">kg</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {selectedRecord.sinais_vitais?.altura && (
+                      <Card>
+                        <CardContent className="p-6 text-center">
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">Altura</h4>
+                          <p className="text-xl font-bold">{selectedRecord.sinais_vitais.altura}</p>
+                          <p className="text-xs text-gray-500 mt-1">m</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {selectedRecord.sinais_vitais?.imc && (
+                      <Card>
+                        <CardContent className="p-6 text-center">
+                          <h4 className="text-sm font-medium text-gray-500 mb-1">IMC</h4>
+                          <p className="text-xl font-bold">{selectedRecord.sinais_vitais.imc}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {(() => {
+                              const imc = selectedRecord.sinais_vitais.imc;
+                              if (imc < 18.5) return "Abaixo do peso";
+                              if (imc < 25) return "Peso normal";
+                              if (imc < 30) return "Sobrepeso";
+                              if (imc < 35) return "Obesidade Grau I";
+                              if (imc < 40) return "Obesidade Grau II";
+                              return "Obesidade Grau III";
+                            })()}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+              
+              {/* Actions */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div className="text-sm text-gray-500">
+                  Criado em: {formatDateTime(selectedRecord.created_at)}
+                </div>
+                
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.print()}
-                  >
+                  <Button variant="outline" size="sm">
                     <Printer className="h-4 w-4 mr-2" />
                     Imprimir
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditRecord(viewingRecord)}
-                  >
+                  <Button variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
                     Editar
                   </Button>
                 </div>
               </div>
-              
-              {/* Patient and Professional Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <User className="h-8 w-8 text-blue-600" />
-                      <div>
-                        <h3 className="font-semibold">Paciente</h3>
-                        <p>{viewingRecord.paciente?.nomeCliente || "Paciente não especificado"}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {viewingRecord.paciente?.nascimentoCliente && (
-                            <>{calculateAge(viewingRecord.paciente.nascimentoCliente)} • </>
-                          )}
-                          {viewingRecord.paciente?.telefoneCliente}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Stethoscope className="h-8 w-8 text-green-600" />
-                      <div>
-                        <h3 className="font-semibold">Profissional</h3>
-                        <p>{viewingRecord.profissional?.Profissional || "Profissional não especificado"}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {viewingRecord.profissional?.Profissao || "Especialidade não especificada"}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {/* Medical Details */}
-              <div className="space-y-4">
-                <Tabs defaultValue="anamnese">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
-                    <TabsTrigger value="vitals">Sinais Vitais</TabsTrigger>
-                    <TabsTrigger value="diagnostico">Diagnóstico</TabsTrigger>
-                    <TabsTrigger value="prescricoes">Prescrições</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="anamnese" className="space-y-4 mt-4">
-                    <div>
-                      <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Queixa Principal</h4>
-                      <p className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                        {viewingRecord.queixa_principal}
-                      </p>
-                    </div>
-                    
-                    {viewingRecord.historia_doenca && (
-                      <div>
-                        <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">História da Doença Atual</h4>
-                        <p className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md whitespace-pre-line">
-                          {viewingRecord.historia_doenca}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {viewingRecord.exame_fisico && (
-                      <div>
-                        <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Exame Físico</h4>
-                        <p className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md whitespace-pre-line">
-                          {viewingRecord.exame_fisico}
-                        </p>
-                      </div>
-                    )}
-                  </TabsContent>
-                  
-                  <TabsContent value="vitals" className="mt-4">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {viewingRecord.sinais_vitais.pressao_arterial && (
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col items-center">
-                              <Activity className="h-6 w-6 text-red-600 mb-2" />
-                              <h4 className="text-sm font-medium text-gray-500">Pressão Arterial</h4>
-                              <p className="text-xl font-bold">
-                                {viewingRecord.sinais_vitais.pressao_arterial} mmHg
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                      
-                      {viewingRecord.sinais_vitais.frequencia_cardiaca && (
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col items-center">
-                              <Heart className="h-6 w-6 text-red-600 mb-2" />
-                              <h4 className="text-sm font-medium text-gray-500">Freq. Cardíaca</h4>
-                              <p className="text-xl font-bold">
-                                {viewingRecord.sinais_vitais.frequencia_cardiaca} bpm
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                      
-                      {viewingRecord.sinais_vitais.temperatura && (
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col items-center">
-                              <Activity className="h-6 w-6 text-orange-600 mb-2" />
-                              <h4 className="text-sm font-medium text-gray-500">Temperatura</h4>
-                              <p className="text-xl font-bold">
-                                {viewingRecord.sinais_vitais.temperatura} °C
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                      
-                      {viewingRecord.sinais_vitais.saturacao && (
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col items-center">
-                              <Activity className="h-6 w-6 text-blue-600 mb-2" />
-                              <h4 className="text-sm font-medium text-gray-500">Saturação O2</h4>
-                              <p className="text-xl font-bold">
-                                {viewingRecord.sinais_vitais.saturacao}%
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                      
-                      {viewingRecord.sinais_vitais.peso && (
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col items-center">
-                              <Activity className="h-6 w-6 text-green-600 mb-2" />
-                              <h4 className="text-sm font-medium text-gray-500">Peso</h4>
-                              <p className="text-xl font-bold">
-                                {viewingRecord.sinais_vitais.peso} kg
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                      
-                      {viewingRecord.sinais_vitais.altura && (
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col items-center">
-                              <Activity className="h-6 w-6 text-green-600 mb-2" />
-                              <h4 className="text-sm font-medium text-gray-500">Altura</h4>
-                              <p className="text-xl font-bold">
-                                {viewingRecord.sinais_vitais.altura} m
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                      
-                      {viewingRecord.sinais_vitais.imc && (
-                        <Card>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col items-center">
-                              <Activity className="h-6 w-6 text-purple-600 mb-2" />
-                              <h4 className="text-sm font-medium text-gray-500">IMC</h4>
-                              <p className="text-xl font-bold">
-                                {viewingRecord.sinais_vitais.imc}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {(() => {
-                                  const imc = viewingRecord.sinais_vitais.imc;
-                                  if (imc < 18.5) return "Abaixo do peso";
-                                  if (imc < 25) return "Peso normal";
-                                  if (imc < 30) return "Sobrepeso";
-                                  if (imc < 35) return "Obesidade Grau I";
-                                  if (imc < 40) return "Obesidade Grau II";
-                                  return "Obesidade Grau III";
-                                })()}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="diagnostico" className="space-y-4 mt-4">
-                    <div>
-                      <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Diagnóstico</h4>
-                      <p className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                        {viewingRecord.diagnostico}
-                      </p>
-                    </div>
-                    
-                    {viewingRecord.plano_tratamento && (
-                      <div>
-                        <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Plano de Tratamento</h4>
-                        <p className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md whitespace-pre-line">
-                          {viewingRecord.plano_tratamento}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {viewingRecord.exames_solicitados && viewingRecord.exames_solicitados.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Exames Solicitados</h4>
-                        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                          <ul className="list-disc pl-5 space-y-1">
-                            {viewingRecord.exames_solicitados.map((exame, index) => (
-                              <li key={index}>{exame}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {viewingRecord.retorno && (
-                      <div>
-                        <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Data de Retorno</h4>
-                        <p className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md flex items-center">
-                          <Calendar className="h-4 w-4 mr-2 text-blue-600" />
-                          {formatDate(viewingRecord.retorno)}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {viewingRecord.observacoes && (
-                      <div>
-                        <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Observações Adicionais</h4>
-                        <p className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md whitespace-pre-line">
-                          {viewingRecord.observacoes}
-                        </p>
-                      </div>
-                    )}
-                  </TabsContent>
-                  
-                  <TabsContent value="prescricoes" className="mt-4">
-                    {viewingRecord.medicamentos && viewingRecord.medicamentos.length > 0 ? (
-                      <div>
-                        <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-4">Medicamentos Prescritos</h4>
-                        
-                        <div className="space-y-4">
-                          {viewingRecord.medicamentos.map((med, index) => (
-                            <Card key={index}>
-                              <CardContent className="p-4">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h5 className="font-semibold text-gray-900 dark:text-gray-100">{med.nome}</h5>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                      <span className="font-medium">Dosagem:</span> {med.dosagem}
-                                    </p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                      <span className="font-medium">Posologia:</span> {med.posologia}
-                                    </p>
-                                    {med.duracao && (
-                                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        <span className="font-medium">Duração:</span> {med.duracao}
-                                      </p>
-                                    )}
-                                  </div>
-                                  
-                                  <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                                    Medicamento {index + 1}
-                                  </Badge>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <div className="text-2xl mb-2">💊</div>
-                        <p>Nenhuma medicação prescrita nesta consulta</p>
-                      </div>
-                    )}
-                  </TabsContent>
-                </Tabs>
-              </div>
-              
-              {/* Stamp and Signature */}
-              <div className="border-t pt-4 mt-8 text-right text-sm text-gray-500 dark:text-gray-400">
-                <p>Criado em: {formatDateTime(viewingRecord.created_at)}</p>
-                {viewingRecord.updated_at !== viewingRecord.created_at && (
-                  <p>Última atualização: {formatDateTime(viewingRecord.updated_at)}</p>
-                )}
-              </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* New Record Dialog */}
+      <Dialog open={isNewRecordDialogOpen} onOpenChange={setIsNewRecordDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Novo Registro Médico</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>Paciente</Label>
+              <Select value={selectedPatient || "unassigned"} onValueChange={setSelectedPatient}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o paciente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Selecione o paciente</SelectItem>
+                  {patients.map(patient => (
+                    <SelectItem key={patient.id} value={patient.id.toString()}>
+                      {patient.nomeCliente}
+                      {patient.nascimentoCliente && ` - ${calculateAge(patient.nascimentoCliente)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label>Profissional</Label>
+              <Select value={selectedProfessional || "unassigned"} onValueChange={setSelectedProfessional}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Selecione o profissional</SelectItem>
+                  {professionals.map(prof => (
+                    <SelectItem key={prof.id} value={prof.id.toString()}>
+                      {prof.name} - {prof.specialty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label>Queixa Principal</Label>
+              <Textarea placeholder="Descreva a queixa principal do paciente" />
+            </div>
+            
+            <div>
+              <Label>Diagnóstico</Label>
+              <Input placeholder="Diagnóstico" />
+            </div>
+            
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setIsNewRecordDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateRecord} disabled={createMedicalRecord.isPending}>
+                {createMedicalRecord.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Criar Registro
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
