@@ -9,6 +9,10 @@ import { format, addDays, startOfWeek, isSameDay, parseISO, isValid, addMonths, 
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface SmartSchedulingProps {
   professionalId?: number;
@@ -46,9 +50,24 @@ export default function SmartScheduling({
     queryKey: ["/api/supabase/services"],
   });
 
-  // Fetch existing appointments
+  // Fetch existing appointments from CAD_Agenda
   const { data: existingAppointments = [], isLoading: isLoadingAppointments } = useQuery({
     queryKey: ["/api/appointments"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('CAD_Agenda')
+        .select(`
+          id,
+          idProfissional,
+          dt_Agendamento,
+          descricao,
+          idServico,
+          statusPagamento
+        `);
+      
+      if (error) throw error;
+      return data || [];
+    }
   });
 
   // Create appointment mutation
@@ -72,6 +91,7 @@ export default function SmartScheduling({
       setInternalSelectedDate(null);
       setInternalSelectedTime(null);
       setDescription("");
+      setSelectedService(null);
     },
     onError: (error: any) => {
       toast({
@@ -274,9 +294,22 @@ export default function SmartScheduling({
         const minutes = currentMinute % 60;
         const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         
+        // Check if this slot is already booked
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const dateTimeStr = `${dateStr}T${timeString}:00`;
+        
+        const isBooked = existingAppointments.some(apt => {
+          const aptDate = new Date(apt.dt_Agendamento);
+          const slotDate = new Date(dateTimeStr);
+          
+          // Check if this appointment is for the same professional and overlaps with the slot
+          return apt.idProfissional === selectedProfessional && 
+                 Math.abs(aptDate.getTime() - slotDate.getTime()) < (schedule.consultationDuration * 60 * 1000);
+        });
+        
         slots.push({
           time: timeString,
-          available: true // In a real app, check against existing appointments
+          available: !isBooked
         });
       }
     }
@@ -328,7 +361,7 @@ export default function SmartScheduling({
       const [hours, minutes] = internalSelectedTime.split(':').map(Number);
       appointmentDateTime.setHours(hours, minutes, 0, 0);
 
-      // Create appointment data
+      // Create appointment data for CAD_Agenda
       const appointmentData = {
         id_Empresa: 1, // Default empresa ID
         idProfissional: selectedProfessional,
@@ -397,19 +430,23 @@ export default function SmartScheduling({
             {/* Left Column - Selection Form */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Profissional</label>
-                <select 
-                  className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md"
-                  value={selectedProfessional || ""}
-                  onChange={(e) => setSelectedProfessional(e.target.value ? parseInt(e.target.value) : null)}
+                <Label className="block text-sm font-medium mb-2">Profissional</Label>
+                <Select 
+                  value={selectedProfessional?.toString() || ""}
+                  onValueChange={(value) => setSelectedProfessional(value ? parseInt(value) : null)}
                 >
-                  <option value="">Selecione um profissional</option>
-                  {professionals.map((prof) => (
-                    <option key={prof.id} value={prof.id}>
-                      {prof.name} - {prof.specialty}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um profissional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Selecione um profissional</SelectItem>
+                    {professionals.map((prof) => (
+                      <SelectItem key={prof.id} value={prof.id.toString()}>
+                        {prof.name} - {prof.specialty}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {selectedProfessionalData && (
@@ -429,19 +466,23 @@ export default function SmartScheduling({
 
               {selectedProfessionalData && (
                 <div>
-                  <label className="block text-sm font-medium mb-2">Serviço</label>
-                  <select 
-                    className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md"
-                    value={selectedService || ""}
-                    onChange={(e) => setSelectedService(e.target.value ? parseInt(e.target.value) : null)}
+                  <Label className="block text-sm font-medium mb-2">Serviço</Label>
+                  <Select 
+                    value={selectedService?.toString() || ""}
+                    onValueChange={(value) => setSelectedService(value ? parseInt(value) : null)}
                   >
-                    <option value="">Selecione um serviço</option>
-                    {filteredServices.map((service) => (
-                      <option key={service.id} value={service.id}>
-                        {service.servicos} - R$ {service.valorServicos?.toFixed(2) || "0.00"}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um serviço" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Selecione um serviço</SelectItem>
+                      {filteredServices.map((service) => (
+                        <SelectItem key={service.id} value={service.id.toString()}>
+                          {service.servicos} - R$ {service.valorServicos?.toFixed(2) || "0.00"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
@@ -458,14 +499,14 @@ export default function SmartScheduling({
               )}
 
               <div>
-                <label className="block text-sm font-medium mb-2">Descrição (opcional)</label>
-                <textarea 
+                <Label className="block text-sm font-medium mb-2">Descrição (opcional)</Label>
+                <Textarea 
                   className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md"
                   rows={3}
                   placeholder="Descreva o motivo da consulta ou observações importantes"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                ></textarea>
+                />
               </div>
 
               <Button 
@@ -661,21 +702,30 @@ export default function SmartScheduling({
                                 key={index}
                                 className={cn(
                                   "p-3 rounded-md cursor-pointer text-center border",
-                                  internalSelectedTime === slot.time
-                                    ? "bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700"
-                                    : "bg-green-50 dark:bg-green-900/10 hover:bg-green-100 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"
+                                  !slot.available 
+                                    ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 cursor-not-allowed"
+                                    : internalSelectedTime === slot.time
+                                      ? "bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700"
+                                      : "bg-green-50 dark:bg-green-900/10 hover:bg-green-100 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"
                                 )}
                                 onClick={() => {
-                                  setInternalSelectedTime(slot.time);
-                                  
-                                  if (onDateTimeSelected && internalSelectedDate) {
-                                    onDateTimeSelected(internalSelectedDate, slot.time);
+                                  if (slot.available) {
+                                    setInternalSelectedTime(slot.time);
+                                    
+                                    if (onDateTimeSelected && internalSelectedDate) {
+                                      onDateTimeSelected(internalSelectedDate, slot.time);
+                                    }
                                   }
                                 }}
                               >
                                 <div className="font-medium">
                                   {slot.time}
                                 </div>
+                                {!slot.available && (
+                                  <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                    Ocupado
+                                  </div>
+                                )}
                               </div>
                             ));
                           })()}
