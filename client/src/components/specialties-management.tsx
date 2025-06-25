@@ -258,6 +258,7 @@ export default function ProfessionalsManagementWithSupabase() {
     defaultValues: {
       name: "",
       specialty: "",
+      sexo: "",
       crm: "",
       phone: "",
       email: "",
@@ -494,9 +495,9 @@ export default function ProfessionalsManagementWithSupabase() {
                         <SelectValue placeholder="Selecione o sexo" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Masculino">Masculino</SelectItem>
-                        <SelectItem value="Feminino">Feminino</SelectItem>
-                        <SelectItem value="Outro">Outro</SelectItem>
+                        <SelectItem value="masculino">Masculino</SelectItem>
+                        <SelectItem value="feminino">Feminino</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
                       </SelectContent>
                     </Select>
                     {form.formState.errors.sexo && (
