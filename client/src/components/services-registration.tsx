@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,15 +21,15 @@ import { useToast } from "@/hooks/use-toast";
 interface SupabaseService {
   id: number;
   nome: string;
-  descricao: string | null;
+  descricao?: string | null;
   valor: number;
-  duracao: number | null;
+  duracao?: number | null;
   categoria: string;
   ativo: boolean;
-  requisitos: string | null;
-  id_Profissional: number | null;
-  created_at: string;
-  updated_at: string;
+  requisitos?: string | null;
+  id_Profissional?: number | null;
+  created_at?: string;
+  updated_at?: string;
   // Professional relationship
   professional?: {
     id: number;
