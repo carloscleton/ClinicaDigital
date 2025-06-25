@@ -205,30 +205,27 @@ intervalo para o almoço: 12 às 14h00`
           const daySchedule = schedule.days[dayName];
           const slots = [];
           
-          // Calcular o número total de minutos no dia de trabalho
+          // Converter horários de início e fim para minutos para facilitar cálculos
           const startMinutes = daySchedule.start.hour * 60 + daySchedule.start.minute;
           const endMinutes = daySchedule.end.hour * 60 + daySchedule.end.minute;
-          const totalMinutes = endMinutes - startMinutes;
           
-          // Calcular quantos slots cabem no dia (incluindo o último que termina exatamente no horário de fim)
+          // Duração total de um slot (consulta + intervalo)
           const slotDuration = schedule.duration + schedule.interval;
-          const numberOfSlots = Math.floor((totalMinutes - schedule.duration) / slotDuration) + 1;
           
-          // Gerar os slots
-          for (let i = 0; i < numberOfSlots; i++) {
-              const slotStartMinutes = startMinutes + (i * slotDuration);
-              const slotStartHour = Math.floor(slotStartMinutes / 60);
-              const slotStartMinute = slotStartMinutes % 60;
+          // Calcular quantos slots completos cabem no período
+          // O último slot deve terminar antes ou exatamente no horário de fim
+          // Portanto, o último slot pode começar no máximo em (endMinutes - schedule.duration)
+          const maxStartMinute = endMinutes - schedule.duration;
+          
+          // Gerar slots
+          for (let currentMinute = startMinutes; currentMinute <= maxStartMinute; currentMinute += slotDuration) {
+              // Converter minutos de volta para hora e minuto
+              const currentHour = Math.floor(currentMinute / 60);
+              const currentMin = currentMinute % 60;
               
-              // Verificar se o slot termina antes ou no horário de encerramento
-              const slotEndMinutes = slotStartMinutes + schedule.duration;
-              if (slotEndMinutes > endMinutes) {
-                  continue; // Pular este slot se ele terminar depois do horário de encerramento
-              }
-              
-              // Criar o objeto de data para o horário do slot
+              // Criar objeto de data para o horário do slot
               const slotTime = new Date(date);
-              slotTime.setHours(slotStartHour, slotStartMinute, 0, 0);
+              slotTime.setHours(currentHour, currentMin, 0, 0);
               
               // Verificar se o slot conflita com o horário de almoço
               let conflictsWithLunch = false;
@@ -236,8 +233,9 @@ intervalo para o almoço: 12 às 14h00`
                   const lunchStartMinutes = schedule.lunch.start.hour * 60 + schedule.lunch.start.minute;
                   const lunchEndMinutes = schedule.lunch.end.hour * 60 + schedule.lunch.end.minute;
                   
-                  // Verificar se o slot começa antes do fim do almoço e termina depois do início do almoço
-                  if (slotStartMinutes < lunchEndMinutes && slotEndMinutes > lunchStartMinutes) {
+                  // O slot conflita se começar antes do fim do almoço e terminar depois do início do almoço
+                  const slotEndMinute = currentMinute + schedule.duration;
+                  if (currentMinute < lunchEndMinutes && slotEndMinute > lunchStartMinutes) {
                       conflictsWithLunch = true;
                   }
               }
