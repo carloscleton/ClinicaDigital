@@ -205,16 +205,15 @@ intervalo para o almoço: 12 às 14h00`
           const daySchedule = schedule.days[dayName];
           const slots = [];
           
-          // Converter horários de início e fim para minutos para facilitar cálculos
+          // Converter horários para minutos para facilitar cálculos
           const startMinutes = daySchedule.start.hour * 60 + daySchedule.start.minute;
           const endMinutes = daySchedule.end.hour * 60 + daySchedule.end.minute;
           
           // Duração total de um slot (consulta + intervalo)
           const slotDuration = schedule.duration + schedule.interval;
           
-          // Calcular quantos slots completos cabem no período
-          // O último slot deve terminar antes ou exatamente no horário de fim
-          // Portanto, o último slot pode começar no máximo em (endMinutes - schedule.duration)
+          // Calcular o último horário possível para iniciar uma consulta
+          // Uma consulta pode começar no máximo em (endMinutes - duration)
           const maxStartMinute = endMinutes - schedule.duration;
           
           // Gerar slots
