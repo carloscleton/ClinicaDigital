@@ -57,7 +57,7 @@ export default function PatientsManagement() {
   const [selectedTab, setSelectedTab] = useState("all");
   const [viewingPatient, setViewingPatient] = useState<number | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  queryClient = useQueryClient();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Fetch patients from CAD_Clientes table
