@@ -1,7 +1,281 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, Clock, User, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Grid, LayoutList } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format, addDays, startOfWeek, isSameDay, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-export default function SmartScheduling() {
+interface SmartSchedulingProps {
+  professionalId?: number;
+  onDateTimeSelected?: (date: Date, time: string) => void;
+  selectedDate?: Date | null;
+  selectedTime?: string | null;
+}
+
+export default function SmartScheduling({ 
+  professionalId,
+  onDateTimeSelected,
+  selectedDate = null,
+  selectedTime = null
+}: SmartSchedulingProps = {}) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<"week" | "month">("month");
+  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(professionalId?.toString() || null);
+  const [internalSelectedDate, setInternalSelectedDate] = useState<Date | null>(selectedDate);
+  const [internalSelectedTime, setInternalSelectedTime] = useState<string | null>(selectedTime);
+  const [selectedDay, setSelectedDay] = useState<string>("Segunda");
+  const [professionalSchedule, setProfessionalSchedule] = useState<any | null>(null);
+
+  // Fetch professionals data
+  const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery<any[]>({
+    queryKey: ["/api/supabase/professionals"],
+  });
+
+  // Get the selected professional's details
+  const selectedProfessionalDetails = selectedProfessional 
+    ? professionals.find(p => p.id.toString() === selectedProfessional) 
+    : null;
+
+  // Parse the professional's schedule configuration from the atendimentos field
+  useEffect(() => {
+    if (selectedProfessionalDetails?.atendimentos) {
+      const schedule = parseAtendimentos(selectedProfessionalDetails.atendimentos);
+      setProfessionalSchedule(schedule);
+    } else {
+      setProfessionalSchedule(null);
+    }
+  }, [selectedProfessionalDetails]);
+
+  // Parser for atendimentos field
+  const parseAtendimentos = (atendimentosText: string) => {
+    const lines = atendimentosText.split('\n');
+    const schedule = {
+      days: {
+        "Segunda": null,
+        "Terça": null,
+        "Quarta": null,
+        "Quinta": null,
+        "Sexta": null,
+        "Sábado": null,
+        "Domingo": null
+      },
+      duration: 60,
+      interval: 5,
+      lunch: null
+    };
+
+    lines.forEach(line => {
+      line = line.trim();
+      
+      // Parse dias da semana
+      const dayMatch = line.match(/^(Segunda|Terça|Quarta|Quinta|Sexta|Sábado|Domingo):\s*(.+)$/);
+      if (dayMatch) {
+        const day = dayMatch[1];
+        const hours = dayMatch[2];
+        
+        if (hours.includes('❌') || hours.toLowerCase().includes('fechad')) {
+          schedule.days[day] = null;
+        } else {
+          const timeMatch = hours.match(/(\d+)h?:?(\d+)?\s*às?\s*(\d+)h?:?(\d+)?/);
+          if (timeMatch) {
+            const startHour = parseInt(timeMatch[1]);
+            const startMin = parseInt(timeMatch[2] || 0);
+            const endHour = parseInt(timeMatch[3]);
+            const endMin = parseInt(timeMatch[4] || 0);
+            
+            schedule.days[day] = {
+              start: { hour: startHour, minute: startMin },
+              end: { hour: endHour, minute: endMin }
+            };
+          }
+        }
+      }
+      
+      // Parse duração da consulta
+      if (line.includes('Duração da Consulta')) {
+        const durationMatch = line.match(/(\d+)\s*Minutos/);
+        if (durationMatch) {
+          schedule.duration = parseInt(durationMatch[1]);
+        }
+      }
+      
+      // Parse intervalo entre pacientes
+      if (line.includes('Intervalo entre Pacientes')) {
+        const intervalMatch = line.match(/(\d+)\s*minutos/);
+        if (intervalMatch) {
+          schedule.interval = parseInt(intervalMatch[1]);
+        }
+      }
+      
+      // Parse intervalo de almoço
+      if (line.includes('intervalo para o almoço') && !line.includes('❌')) {
+        const lunchMatch = line.match(/(\d+)\s*às?\s*(\d+)h?:?(\d+)?/);
+        if (lunchMatch) {
+          schedule.lunch = {
+            start: { hour: parseInt(lunchMatch[1]), minute: 0 },
+            end: { hour: parseInt(lunchMatch[2]), minute: parseInt(lunchMatch[3] || 0) }
+          };
+        }
+      }
+    });
+
+    return schedule;
+  };
+
+  // Check if a day is available based on the professional's schedule
+  const isDayAvailable = (date: Date) => {
+    if (!professionalSchedule) return false;
+    
+    const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const dayName = dayNames[date.getDay()];
+    
+    return professionalSchedule.days[dayName] !== null && professionalSchedule.days[dayName] !== undefined;
+  };
+
+  // Generate time slots for a specific date
+  const generateTimeSlots = (date: Date) => {
+    if (!professionalSchedule) return [];
+    
+    const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const dayName = dayNames[date.getDay()];
+    
+    if (!professionalSchedule.days[dayName]) {
+      return [];
+    }
+
+    const daySchedule = professionalSchedule.days[dayName];
+    const slots = [];
+    
+    let currentTime = new Date(date);
+    currentTime.setHours(daySchedule.start.hour, daySchedule.start.minute, 0, 0);
+    
+    const endTime = new Date(date);
+    endTime.setHours(daySchedule.end.hour, daySchedule.end.minute, 0, 0);
+    
+    while (currentTime < endTime) {
+      const slotEndTime = new Date(currentTime.getTime() + professionalSchedule.duration * 60000);
+      
+      // Check for lunch break
+      let conflictsWithLunch = false;
+      if (professionalSchedule.lunch) {
+        const lunchStart = new Date(date);
+        lunchStart.setHours(professionalSchedule.lunch.start.hour, professionalSchedule.lunch.start.minute, 0, 0);
+        const lunchEnd = new Date(date);
+        lunchEnd.setHours(professionalSchedule.lunch.end.hour, professionalSchedule.lunch.end.minute, 0, 0);
+        
+        if (currentTime < lunchEnd && slotEndTime > lunchStart) {
+          conflictsWithLunch = true;
+        }
+      }
+      
+      if (!conflictsWithLunch && slotEndTime <= endTime) {
+        slots.push({
+          time: currentTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}),
+          available: Math.random() > 0.3 // Simula disponibilidade
+        });
+      }
+      
+      currentTime = new Date(currentTime.getTime() + (professionalSchedule.duration + professionalSchedule.interval) * 60000);
+    }
+    
+    return slots;
+  };
+
+  // Handle professional selection
+  const handleProfessionalChange = (value: string) => {
+    setSelectedProfessional(value);
+    setInternalSelectedDate(null);
+    setInternalSelectedTime(null);
+    
+    // Reset selected day to match professional's schedule
+    const professional = professionals.find(p => p.id.toString() === value);
+    if (professional?.atendimentos) {
+      const schedule = parseAtendimentos(professional.atendimentos);
+      // Find first available day
+      const availableDay = Object.entries(schedule.days).find(([day, hours]) => hours !== null);
+      if (availableDay) {
+        setSelectedDay(availableDay[0]);
+      }
+    }
+  };
+
+  // Handle date selection
+  const handleDateSelect = (date: Date) => {
+    setInternalSelectedDate(date);
+    
+    // Update selected day based on date
+    const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    setSelectedDay(dayNames[date.getDay()]);
+    
+    // Clear time selection
+    setInternalSelectedTime(null);
+    
+    // Generate time slots for this date
+    const timeSlots = generateTimeSlots(date);
+    
+    // If there's only one time slot, select it automatically
+    if (timeSlots.length === 1 && timeSlots[0].available) {
+      handleTimeSelect(timeSlots[0].time);
+    }
+  };
+
+  // Handle time selection
+  const handleTimeSelect = (time: string) => {
+    setInternalSelectedTime(time);
+    
+    if (internalSelectedDate && onDateTimeSelected) {
+      onDateTimeSelected(internalSelectedDate, time);
+    }
+  };
+
+  // Generate calendar days for the current month
+  const generateCalendarDays = () => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
+    
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    
+    return days.map(day => ({
+      date: day,
+      isCurrentMonth: isSameMonth(day, currentDate),
+      isToday: isSameDay(day, new Date()),
+      isSelected: internalSelectedDate ? isSameDay(day, internalSelectedDate) : false,
+      isAvailable: isDayAvailable(day) && isSameMonth(day, currentDate)
+    }));
+  };
+
+  // Generate week days
+  const generateWeekDays = () => {
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+    
+    return Array.from({ length: 7 }).map((_, index) => {
+      const date = addDays(weekStart, index);
+      return {
+        date,
+        isToday: isSameDay(date, new Date()),
+        isSelected: internalSelectedDate ? isSameDay(date, internalSelectedDate) : false,
+        isAvailable: isDayAvailable(date)
+      };
+    });
+  };
+
+  // Format date for display
+  const formatDateForDisplay = (date: Date) => {
+    return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  };
+
+  // Calendar days
+  const calendarDays = viewMode === "month" ? generateCalendarDays() : generateWeekDays();
+  
+  // Time slots for selected date
+  const timeSlots = internalSelectedDate ? generateTimeSlots(internalSelectedDate) : [];
+
   return (
     <div className="space-y-6">
       <div className="mb-6">
@@ -13,762 +287,237 @@ export default function SmartScheduling() {
         </p>
       </div>
       
-      <iframe 
-        srcDoc={`
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Agendamento Médico</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8fafc;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 30px;
-            padding: 30px;
-        }
-
-        .sidebar {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            height: fit-content;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #2c3e50;
-            font-size: 1.1rem;
-        }
-
-        .form-select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            font-size: 1rem;
-            background: white;
-            transition: all 0.3s ease;
-        }
-
-        .form-select:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
-
-        .professional-info {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #e9ecef;
-            margin-top: 15px;
-        }
-
-        .professional-info h4 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .schedule-info {
-            font-size: 0.9rem;
-            line-height: 1.6;
-            color: #666;
-        }
-
-        .calendar-section {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-        }
-
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .calendar-nav {
-            background: #3498db;
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-        }
-
-        .calendar-nav:hover {
-            background: #2980b9;
-            transform: scale(1.1);
-        }
-
-        .calendar-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-bottom: 20px;
-        }
-
-        .calendar-day-header {
-            text-align: center;
-            font-weight: 600;
-            color: #666;
-            padding: 10px;
-            font-size: 0.9rem;
-        }
-
-        .calendar-day {
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            font-weight: 500;
-        }
-
-        .calendar-day.available {
-            background: #e8f5e8;
-            color: #27ae60;
-            border: 2px solid #27ae60;
-        }
-
-        .calendar-day.available:hover {
-            background: #27ae60;
-            color: white;
-            transform: scale(1.05);
-        }
-
-        .calendar-day.unavailable {
-            background: #ffebee;
-            color: #e74c3c;
-            border: 2px solid #e74c3c;
-            cursor: not-allowed;
-        }
-
-        .calendar-day.other-month {
-            background: #f5f5f5;
-            color: #bbb;
-            cursor: not-allowed;
-        }
-
-        .calendar-day.today {
-            background: #3498db;
-            color: white;
-            font-weight: bold;
-        }
-
-        .calendar-day.selected {
-            background: #8e44ad !important;
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .time-slots {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .time-slot {
-            padding: 12px 15px;
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .time-slot.available {
-            border-color: #27ae60;
-            color: #27ae60;
-        }
-
-        .time-slot.available:hover {
-            background: #27ae60;
-            color: white;
-        }
-
-        .time-slot.occupied {
-            background: #ffebee;
-            border-color: #e74c3c;
-            color: #e74c3c;
-            cursor: not-allowed;
-        }
-
-        .time-slot.selected {
-            background: #8e44ad;
-            border-color: #8e44ad;
-            color: white;
-        }
-
-        .confirm-button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .confirm-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
-        }
-
-        .confirm-button:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .status-message {
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            text-align: center;
-            font-weight: 500;
-        }
-
-        .status-message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-message.info {
-            background: #cce7ff;
-            color: #004085;
-            border: 1px solid #99d3ff;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                padding: 20px;
-            }
-            
-            .calendar-day {
-                font-size: 0.9rem;
-            }
-            
-            .time-slots {
-                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            }
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🏥 Sistema de Agendamento</h1>
-            <p>Agende sua consulta de forma rápida e fácil</p>
-        </div>
-
-        <div class="main-content">
-            <div class="sidebar">
-                <div class="form-group">
-                    <label for="profissional">Selecione o Profissional:</label>
-                    <select id="profissional" class="form-select">
-                        <option value="">Escolha um profissional...</option>
-                        <option value="daniel">Daniel - Dermato</option>
-                        <option value="george">George - Clínico Geral</option>
-                        <option value="maria">Maria - Ginecologista</option>
-                        <option value="antonio">Antonio - Cirurgião</option>
-                        <option value="renata">Renata - Dermato</option>
-                    </select>
-                </div>
-
-                <div class="professional-info" id="professionalInfo" style="display: none;">
-                    <h4>📋 Informações do Profissional</h4>
-                    <div class="schedule-info" id="scheduleInfo"></div>
-                </div>
-
-                <button class="confirm-button" id="confirmButton" disabled>
-                    📅 Confirmar Agendamento
-                </button>
-
-                <div class="status-message" id="statusMessage" style="display: none;"></div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Agendamento de Consulta
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Professional Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Selecione o Profissional</label>
+              <Select value={selectedProfessional || ""} onValueChange={handleProfessionalChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {professionals.map(professional => (
+                    <SelectItem key={professional.id} value={professional.id.toString()}>
+                      {professional.name} - {professional.specialty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-
-            <div class="calendar-section">
-                <div class="calendar-header">
-                    <button class="calendar-nav" id="prevMonth">‹</button>
-                    <div class="calendar-title" id="calendarTitle">Junho 2025</div>
-                    <button class="calendar-nav" id="nextMonth">›</button>
-                </div>
-
-                <div class="calendar-grid" id="calendarGrid">
-                    <div class="calendar-day-header">Dom</div>
-                    <div class="calendar-day-header">Seg</div>
-                    <div class="calendar-day-header">Ter</div>
-                    <div class="calendar-day-header">Qua</div>
-                    <div class="calendar-day-header">Qui</div>
-                    <div class="calendar-day-header">Sex</div>
-                    <div class="calendar-day-header">Sáb</div>
-                </div>
-
-                <div class="time-slots" id="timeSlots" style="display: none;"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Dados simulados dos profissionais
-        const profissionais = {
-            daniel: {
-                nome: "Daniel - Dermato",
-                atendimentos: \`🕒 Dias e Horários de Atendimento - para uso interno do sistema de marcação
-Segunda: 8h:00 às 13h00
-Terça: 14h:00 às 18h00
-Quarta: ❌ Agenda Fechada
-Quinta: ❌ Agenda Fechada
-Sexta: ❌ Agenda Fechada
-Sábado: 9h00 às 13h00
-Domingo: ❌ Fechado
-Duração da Consulta: 60 Minutos (Obrigatório)
-Intervalo entre Pacientes para atendimento: 5 minutos
-intervalo para o almoço: 12 às 13h00\`
-            },
-            george: {
-                nome: "George - Clínico Geral",
-                atendimentos: \`🕒 Dias e Horários de Atendimento - para uso interno do sistema de marcação
-Segunda: 7h:00 às 12h00
-Terça: 7h:00 às 12h00
-Quarta: 14h:00 às 18h00
-Quinta: 14h:00 às 18h00
-Sexta: 7h:00 às 12h00
-Sábado: ❌ Agenda Fechada
-Domingo: ❌ Fechado
-Duração da Consulta: 30 Minutos (Obrigatório)
-Intervalo entre Pacientes para atendimento: 10 minutos
-intervalo para o almoço: ❌\`
-            },
-            maria: {
-                nome: "Maria - Ginecologista",
-                atendimentos: \`🕒 Dias e Horários de Atendimento - para uso interno do sistema de marcação
-Segunda: 8h:00 às 17h00
-Terça: 8h:00 às 17h00
-Quarta: 8h:00 às 17h00
-Quinta: 8h:00 às 17h00
-Sexta: 8h:00 às 12h00
-Sábado: ❌ Agenda Fechada
-Domingo: ❌ Fechado
-Duração da Consulta: 45 Minutos (Obrigatório)
-Intervalo entre Pacientes para atendimento: 15 minutos
-intervalo para o almoço: 12 às 14h00\`
-            }
-        };
-
-        let currentDate = new Date();
-        let selectedProfessional = null;
-        let selectedDate = null;
-        let selectedTime = null;
-        let professionalSchedule = null;
-
-        // Elementos DOM
-        const profissionalSelect = document.getElementById('profissional');
-        const professionalInfo = document.getElementById('professionalInfo');
-        const scheduleInfo = document.getElementById('scheduleInfo');
-        const calendarGrid = document.getElementById('calendarGrid');
-        const calendarTitle = document.getElementById('calendarTitle');
-        const timeSlots = document.getElementById('timeSlots');
-        const confirmButton = document.getElementById('confirmButton');
-        const statusMessage = document.getElementById('statusMessage');
-
-        // Parser do campo atendimentos
-        function parseAtendimentos(atendimentosText) {
-            const lines = atendimentosText.split('\\n');
-            const schedule = {
-                days: {},
-                duration: 60,
-                interval: 5,
-                lunch: null
-            };
-
-            lines.forEach(line => {
-                line = line.trim();
+            
+            {selectedProfessionalDetails && (
+              <>
+                {/* Professional Schedule Info */}
+                {selectedProfessionalDetails.atendimentos && (
+                  <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                          <Clock className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-blue-800 dark:text-blue-300">Horários de Atendimento</h3>
+                          <div className="mt-2 text-sm text-blue-700 dark:text-blue-300 whitespace-pre-line">
+                            {selectedProfessionalDetails.atendimentos}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
                 
-                // Parse dias da semana
-                const dayMatch = line.match(/^(Segunda|Terça|Quarta|Quinta|Sexta|Sábado|Domingo):\\s*(.+)$/);
-                if (dayMatch) {
-                    const day = dayMatch[1];
-                    const hours = dayMatch[2];
+                {/* Calendar View */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCurrentDate(prevDate => viewMode === "month" ? subMonths(prevDate, 1) : addDays(prevDate, -7))}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-2" />
+                      {viewMode === "month" ? "Mês Anterior" : "Semana Anterior"}
+                    </Button>
                     
-                    if (hours.includes('❌') || hours.includes('Fechad')) {
-                        schedule.days[day] = null;
-                    } else {
-                        const timeMatch = hours.match(/(\d+)h?:?(\d+)?\\s*às?\\s*(\d+)h?:?(\d+)?/);
-                        if (timeMatch) {
-                            const startHour = parseInt(timeMatch[1]);
-                            const startMin = parseInt(timeMatch[2] || 0);
-                            const endHour = parseInt(timeMatch[3]);
-                            const endMin = parseInt(timeMatch[4] || 0);
-                            
-                            schedule.days[day] = {
-                                start: { hour: startHour, minute: startMin },
-                                end: { hour: endHour, minute: endMin }
-                            };
-                        }
-                    }
-                }
-                
-                // Parse duração da consulta
-                if (line.includes('Duração da Consulta')) {
-                    const durationMatch = line.match(/(\d+)\\s*Minutos/);
-                    if (durationMatch) {
-                        schedule.duration = parseInt(durationMatch[1]);
-                    }
-                }
-                
-                // Parse intervalo entre pacientes
-                if (line.includes('Intervalo entre Pacientes')) {
-                    const intervalMatch = line.match(/(\d+)\\s*minutos/);
-                    if (intervalMatch) {
-                        schedule.interval = parseInt(intervalMatch[1]);
-                    }
-                }
-                
-                // Parse intervalo de almoço
-                if (line.includes('intervalo para o almoço') && !line.includes('❌')) {
-                    const lunchMatch = line.match(/(\d+)\\s*às?\\s*(\d+)h?:?(\d+)?/);
-                    if (lunchMatch) {
-                        schedule.lunch = {
-                            start: { hour: parseInt(lunchMatch[1]), minute: 0 },
-                            end: { hour: parseInt(lunchMatch[2]), minute: parseInt(lunchMatch[3] || 0) }
-                        };
-                    }
-                }
-            });
-
-            return schedule;
-        }
-
-        // Gerar slots de horário
-        function generateTimeSlots(date, schedule) {
-            const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-            const dayName = dayNames[date.getDay()];
-            
-            if (!schedule.days[dayName]) {
-                return [];
-            }
-
-            const daySchedule = schedule.days[dayName];
-            const slots = [];
-            
-            let currentTime = new Date(date);
-            currentTime.setHours(daySchedule.start.hour, daySchedule.start.minute, 0, 0);
-            
-            const endTime = new Date(date);
-            endTime.setHours(daySchedule.end.hour, daySchedule.end.minute, 0, 0);
-            
-            while (currentTime < endTime) {
-                const slotEndTime = new Date(currentTime.getTime() + schedule.duration * 60000);
-                
-                // Verificar se o slot conflita com o horário de almoço
-                let conflictsWithLunch = false;
-                if (schedule.lunch) {
-                    const lunchStart = new Date(date);
-                    lunchStart.setHours(schedule.lunch.start.hour, schedule.lunch.start.minute, 0, 0);
-                    const lunchEnd = new Date(date);
-                    lunchEnd.setHours(schedule.lunch.end.hour, schedule.lunch.end.minute, 0, 0);
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-semibold">
+                        {viewMode === "month" 
+                          ? format(currentDate, "MMMM yyyy", { locale: ptBR }) 
+                          : `${format(startOfWeek(currentDate, { weekStartsOn: 0 }), "dd/MM")} - ${format(addDays(startOfWeek(currentDate, { weekStartsOn: 0 }), 6), "dd/MM")}`}
+                      </h2>
+                      
+                      <div className="flex rounded-md border border-gray-200 dark:border-gray-700">
+                        <Button
+                          variant={viewMode === "month" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setViewMode("month")}
+                          className="rounded-r-none"
+                        >
+                          <Grid className="h-4 w-4 mr-2" />
+                          Mês
+                        </Button>
+                        <Button
+                          variant={viewMode === "week" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setViewMode("week")}
+                          className="rounded-l-none"
+                        >
+                          <LayoutList className="h-4 w-4 mr-2" />
+                          Semana
+                        </Button>
+                      </div>
+                    </div>
                     
-                    if (currentTime < lunchEnd && slotEndTime > lunchStart) {
-                        conflictsWithLunch = true;
-                    }
-                }
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCurrentDate(prevDate => viewMode === "month" ? addMonths(prevDate, 1) : addDays(prevDate, 7))}
+                    >
+                      {viewMode === "month" ? "Próximo Mês" : "Próxima Semana"}
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                  
+                  {viewMode === "month" ? (
+                    <div className="grid grid-cols-7 gap-1">
+                      {/* Days of Week Header */}
+                      {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+                        <div key={day} className="text-center p-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          {day}
+                        </div>
+                      ))}
+                      
+                      {/* Calendar Days */}
+                      {calendarDays.map((day, index) => (
+                        <div
+                          key={index}
+                          className={cn(
+                            "min-h-[60px] p-2 border rounded-md transition-colors",
+                            day.isCurrentMonth 
+                              ? day.isAvailable 
+                                ? day.isSelected
+                                  ? "bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-800 cursor-pointer"
+                                  : "bg-green-50 dark:bg-green-900/10 hover:bg-green-100 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800 cursor-pointer"
+                                : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                              : "bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-600 border-gray-100 dark:border-gray-800"
+                          )}
+                          onClick={() => day.isCurrentMonth && day.isAvailable && handleDateSelect(day.date)}
+                        >
+                          <div className="text-right text-sm font-medium">
+                            {format(day.date, 'd')}
+                          </div>
+                          
+                          {day.isCurrentMonth && day.isAvailable && (
+                            <div className="mt-1 text-xs">
+                              <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/10 dark:text-green-300">
+                                Disponível
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div>
+                      {/* Week View */}
+                      <div className="grid grid-cols-7 gap-2 mb-4">
+                        {calendarDays.map((day, index) => (
+                          <div 
+                            key={index}
+                            className={cn(
+                              "text-center p-2 rounded-md",
+                              day.isSelected && "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300",
+                              day.isAvailable 
+                                ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50" 
+                                : "opacity-50"
+                            )}
+                            onClick={() => day.isAvailable && handleDateSelect(day.date)}
+                          >
+                            <div className="font-medium">
+                              {format(day.date, 'EEE', { locale: ptBR })}
+                            </div>
+                            <div className="text-sm">
+                              {format(day.date, 'dd/MM')}
+                            </div>
+                            {day.isToday && (
+                              <div className="mt-1">
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/10 dark:text-blue-300">
+                                  Hoje
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
-                if (!conflictsWithLunch && slotEndTime <= endTime) {
-                    slots.push({
-                        time: new Date(currentTime),
-                        available: Math.random() > 0.3 // Simula disponibilidade
-                    });
-                }
+                {/* Time Slots */}
+                {internalSelectedDate && (
+                  <div>
+                    <h3 className="font-medium mb-3">
+                      Horários disponíveis para {formatDateForDisplay(internalSelectedDate)}
+                    </h3>
+                    
+                    {timeSlots.length === 0 ? (
+                      <div className="text-center p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <Clock className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                        <p className="text-gray-500 dark:text-gray-400">
+                          Não há horários disponíveis para esta data
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                        {timeSlots.map((slot, index) => (
+                          <div
+                            key={index}
+                            className={cn(
+                              "p-2 text-center border rounded-md cursor-pointer transition-colors",
+                              slot.available
+                                ? internalSelectedTime === slot.time
+                                  ? "bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700"
+                                  : "bg-green-50 dark:bg-green-900/10 hover:bg-green-100 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"
+                                : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-not-allowed"
+                            )}
+                            onClick={() => slot.available && handleTimeSelect(slot.time)}
+                          >
+                            {slot.time}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 
-                currentTime = new Date(currentTime.getTime() + (schedule.duration + schedule.interval) * 60000);
-            }
-            
-            return slots;
-        }
-
-        // Event Listeners
-        profissionalSelect.addEventListener('change', (e) => {
-            const selectedValue = e.target.value;
-            
-            if (selectedValue && profissionais[selectedValue]) {
-                selectedProfessional = selectedValue;
-                professionalSchedule = parseAtendimentos(profissionais[selectedValue].atendimentos);
-                
-                // Mostrar informações do profissional
-                professionalInfo.style.display = 'block';
-                scheduleInfo.innerHTML = profissionais[selectedValue].atendimentos.replace(/\\n/g, '<br>');
-                
-                // Atualizar calendário
-                renderCalendar();
-                
-                // Limpar seleções
-                selectedDate = null;
-                selectedTime = null;
-                timeSlots.style.display = 'none';
-                updateConfirmButton();
-            } else {
-                professionalInfo.style.display = 'none';
-                selectedProfessional = null;
-                professionalSchedule = null;
-                renderCalendar();
-                timeSlots.style.display = 'none';
-                updateConfirmButton();
-            }
-        });
-
-        // Navegação do calendário
-        document.getElementById('prevMonth').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            renderCalendar();
-        });
-
-        document.getElementById('nextMonth').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            renderCalendar();
-        });
-
-        // Confirmar agendamento
-        confirmButton.addEventListener('click', () => {
-            if (selectedProfessional && selectedDate && selectedTime) {
-                showStatusMessage(\`✅ Agendamento confirmado para \${selectedDate.toLocaleDateString('pt-BR')} às \${selectedTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} com \${profissionais[selectedProfessional].nome}\`, 'success');
-                
-                // Reset
-                selectedDate = null;
-                selectedTime = null;
-                timeSlots.style.display = 'none';
-                renderCalendar();
-                updateConfirmButton();
-            }
-        });
-
-        // Renderizar calendário
-        function renderCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            
-            // Atualizar título
-            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-                              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-            calendarTitle.textContent = \`\${monthNames[month]} \${year}\`;
-            
-            // Limpar grid
-            const existingDays = calendarGrid.querySelectorAll('.calendar-day');
-            existingDays.forEach(day => day.remove());
-            
-            // Primeiro dia do mês e último dia
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startCalendar = new Date(firstDay);
-            startCalendar.setDate(startCalendar.getDate() - firstDay.getDay());
-            
-            // Renderizar dias
-            for (let i = 0; i < 42; i++) {
-                const date = new Date(startCalendar);
-                date.setDate(startCalendar.getDate() + i);
-                
-                const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day';
-                dayElement.textContent = date.getDate();
-                
-                // Classificar tipo de dia
-                if (date.getMonth() !== month) {
-                    dayElement.classList.add('other-month');
-                } else if (date.toDateString() === new Date().toDateString()) {
-                    dayElement.classList.add('today');
-                } else if (professionalSchedule && isDayAvailable(date)) {
-                    dayElement.classList.add('available');
-                    dayElement.addEventListener('click', () => selectDate(date));
-                } else if (professionalSchedule) {
-                    dayElement.classList.add('unavailable');
-                }
-                
-                if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
-                    dayElement.classList.add('selected');
-                }
-                
-                calendarGrid.appendChild(dayElement);
-            }
-        }
-
-        // Verificar se o dia está disponível
-        function isDayAvailable(date) {
-            if (!professionalSchedule) return false;
-            
-            const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-            const dayName = dayNames[date.getDay()];
-            
-            return professionalSchedule.days[dayName] !== null && professionalSchedule.days[dayName] !== undefined;
-        }
-
-        // Selecionar data
-        function selectDate(date) {
-            selectedDate = date;
-            selectedTime = null;
-            renderCalendar();
-            renderTimeSlots(date);
-            updateConfirmButton();
-        }
-
-        // Renderizar slots de horário
-        function renderTimeSlots(date) {
-            const slots = generateTimeSlots(date, professionalSchedule);
-            timeSlots.innerHTML = '';
-            
-            if (slots.length === 0) {
-                timeSlots.innerHTML = '<div class="status-message info">Nenhum horário disponível para este dia.</div>';
-                timeSlots.style.display = 'block';
-                return;
-            }
-            
-            slots.forEach(slot => {
-                const slotElement = document.createElement('div');
-                slotElement.className = 'time-slot';
-                slotElement.textContent = slot.time.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-                
-                if (slot.available) {
-                    slotElement.classList.add('available');
-                    slotElement.addEventListener('click', () => selectTime(slot.time, slotElement));
-                } else {
-                    slotElement.classList.add('occupied');
-                }
-                
-                timeSlots.appendChild(slotElement);
-            });
-            
-            timeSlots.style.display = 'grid';
-        }
-
-        // Selecionar horário
-        function selectTime(time, element) {
-            // Remover seleção anterior
-            document.querySelectorAll('.time-slot.selected').forEach(slot => {
-                slot.classList.remove('selected');
-            });
-            
-            selectedTime = time;
-            element.classList.add('selected');
-            updateConfirmButton();
-        }
-
-        // Atualizar botão de confirmação
-        function updateConfirmButton() {
-            confirmButton.disabled = !(selectedProfessional && selectedDate && selectedTime);
-        }
-
-        // Mostrar mensagem de status
-        function showStatusMessage(message, type) {
-            statusMessage.textContent = message;
-            statusMessage.className = \`status-message \${type}\`;
-            statusMessage.style.display = 'block';
-            
-            setTimeout(() => {
-                statusMessage.style.display = 'none';
-            }, 5000);
-        }
-
-        // Inicializar
-        renderCalendar();
-    </script>
-</body>
-</html>
-        `}
-        style={{ width: '100%', height: '800px', border: 'none', borderRadius: '8px' }}
-        title="Agenda Semanal"
-      />
+                {/* Selected Date & Time Summary */}
+                {internalSelectedDate && internalSelectedTime && (
+                  <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
+                        <CalendarIcon className="w-5 h-5 text-green-600 dark:text-green-300" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-green-800 dark:text-green-300">Horário Selecionado</h3>
+                        <p className="text-green-700 dark:text-green-400">
+                          {formatDateForDisplay(internalSelectedDate)} às {internalSelectedTime} com {selectedProfessionalDetails.name}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
