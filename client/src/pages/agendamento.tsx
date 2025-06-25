@@ -1,44 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { format, addDays, startOfWeek, isSameDay, parseISO, isValid } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Calendar, Clock, User, ChevronLeft, ChevronRight, Phone, Mail, CalendarDays, CheckCircle, XCircle } from "lucide-react";
-import SmartScheduling from "@/components/smart-scheduling";
-import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, Clock, User, Phone, Mail, CheckCircle } from "lucide-react";
+import AppointmentScheduler from "@/components/appointment-scheduler";
 
 export default function Agendamento() {
-  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  
-  // Form fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [message, setMessage] = useState("");
+  const [appointmentCreated, setAppointmentCreated] = useState(false);
   
-  // Fetch professionals data
-  const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery<any[]>({
-    queryKey: ["/api/supabase/professionals"],
-  });
-  
-  // Get the selected professional's details
-  const selectedProfessionalDetails = selectedProfessional 
-    ? professionals.find(p => p.id.toString() === selectedProfessional) 
-    : null;
-
   const handleNextStep = () => {
-    if (step === 1 && selectedProfessional) {
+    if (step === 1) {
       setStep(2);
-    } else if (step === 2 && selectedDate && selectedTime) {
+    } else if (step === 2) {
       setStep(3);
     } else if (step === 3) {
       // Submit form logic would go here
@@ -54,26 +36,22 @@ export default function Agendamento() {
   };
   
   const resetForm = () => {
-    setSelectedProfessional(null);
-    setSelectedDate(null);
-    setSelectedTime(null);
     setName("");
     setEmail("");
     setPhone("");
-    setMessage("");
     setStep(1);
+    setAppointmentCreated(false);
   };
 
   const isNextButtonDisabled = () => {
-    if (step === 1) return !selectedProfessional;
-    if (step === 2) return !selectedDate || !selectedTime;
+    if (step === 1) return !appointmentCreated;
     if (step === 3) return !name || !email || !phone;
-    return true;
+    return false;
   };
 
   const getButtonText = () => {
-    if (step === 1) return "Selecionar Horário";
-    if (step === 2) return "Inserir Informações";
+    if (step === 1) return "Próximo: Informações Pessoais";
+    if (step === 2) return "Revisar Agendamento";
     return "Confirmar Agendamento";
   };
 
@@ -102,7 +80,7 @@ export default function Agendamento() {
                   "font-medium",
                   step >= 1 ? "text-blue-600 dark:text-blue-400" : "text-gray-500"
                 )}>
-                  Profissional
+                  Agendamento
                 </p>
               </div>
             </div>
@@ -126,7 +104,7 @@ export default function Agendamento() {
                   "font-medium",
                   step >= 2 ? "text-blue-600 dark:text-blue-400" : "text-gray-500"
                 )}>
-                  Horário
+                  Dados Pessoais
                 </p>
               </div>
             </div>
@@ -161,89 +139,31 @@ export default function Agendamento() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6">
           {step === 1 && (
             <div>
-              <h2 className="text-xl font-semibold mb-4">Selecione o Profissional</h2>
+              <h2 className="text-xl font-semibold mb-4">Selecione o Horário</h2>
               
-              <div className="mb-6">
-                <Label className="mb-2 block">Profissional</Label>
-                <Select
-                  value={selectedProfessional || ""}
-                  onValueChange={(value) => setSelectedProfessional(value && value !== "none" ? value : null)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Escolha um profissional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Escolha um profissional</SelectItem>
-                    {professionals.map((professional) => (
-                      <SelectItem key={professional.id} value={professional.id.toString()}>
-                        {professional.name} - {professional.specialty}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <AppointmentScheduler 
+                onAppointmentCreated={() => setAppointmentCreated(true)} 
+              />
               
-              {selectedProfessionalDetails && (
-                <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
-                        <User className="w-6 h-6 text-blue-600 dark:text-blue-300" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-blue-800 dark:text-blue-300">{selectedProfessionalDetails.name}</h3>
-                        <p className="text-blue-600 dark:text-blue-400 text-sm">{selectedProfessionalDetails.specialty}</p>
-                        <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                          {selectedProfessionalDetails.crm && <p>CRM: {selectedProfessionalDetails.crm}</p>}
-                          {selectedProfessionalDetails.phone && (
-                            <p className="flex items-center gap-1 mt-1">
-                              <Phone className="w-3 h-3" />
-                              {selectedProfessionalDetails.phone}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {appointmentCreated && (
+                <div className="mt-6 bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <h3 className="font-medium text-green-800 dark:text-green-300">
+                      Horário agendado com sucesso!
+                    </h3>
+                  </div>
+                  <p className="mt-2 text-green-700 dark:text-green-400 text-sm">
+                    Agora, vamos completar seu cadastro para confirmar o agendamento.
+                  </p>
+                </div>
               )}
             </div>
           )}
           
           {step === 2 && (
             <div>
-              <h2 className="text-xl font-semibold mb-4">Selecione o Horário</h2>
-              
-              {selectedProfessionalDetails && (
-                <SmartScheduling 
-                  professionalId={parseInt(selectedProfessional!)}
-                  onDateTimeSelected={(date, time) => {
-                    setSelectedDate(date);
-                    setSelectedTime(time);
-                  }}
-                  selectedDate={selectedDate}
-                  selectedTime={selectedTime}
-                />
-              )}
-            </div>
-          )}
-          
-          {step === 3 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Complete seu Agendamento</h2>
-              
-              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg mb-6 border border-green-200 dark:border-green-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <User className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <span className="font-medium">{selectedProfessionalDetails?.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <span className="font-medium">
-                    {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} às {selectedTime}
-                  </span>
-                </div>
-              </div>
+              <h2 className="text-xl font-semibold mb-4">Complete seus Dados</h2>
               
               <div className="space-y-4">
                 <div>
@@ -279,16 +199,50 @@ export default function Agendamento() {
                     />
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="message">Observações (opcional)</Label>
-                  <Textarea
-                    id="message"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Informe sintomas, dúvidas ou observações relevantes para o profissional"
-                    rows={4}
-                  />
+              </div>
+            </div>
+          )}
+          
+          {step === 3 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Confirme seu Agendamento</h2>
+              
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800 mb-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <User className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-blue-800 dark:text-blue-300">Dados Pessoais</p>
+                      <p className="text-blue-700 dark:text-blue-400 text-sm">{name}</p>
+                      <div className="flex flex-col sm:flex-row sm:gap-4 text-sm text-blue-600 dark:text-blue-500 mt-1">
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          <span>{email}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          <span>{phone}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-blue-800 dark:text-blue-300">Detalhes do Agendamento</p>
+                      <p className="text-blue-700 dark:text-blue-400 text-sm">
+                        Consulta agendada com sucesso! Você receberá uma confirmação por e-mail.
+                      </p>
+                    </div>
+                  </div>
                 </div>
+              </div>
+              
+              <div className="text-center">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Ao confirmar, você concorda com nossos termos de serviço e política de privacidade.
+                </p>
               </div>
             </div>
           )}
@@ -297,7 +251,6 @@ export default function Agendamento() {
           <div className="mt-8 flex justify-between">
             {step > 1 ? (
               <Button variant="outline" onClick={handlePreviousStep}>
-                <ChevronLeft className="w-4 h-4 mr-2" />
                 Voltar
               </Button>
             ) : (
@@ -308,7 +261,6 @@ export default function Agendamento() {
               disabled={isNextButtonDisabled()}
             >
               {getButtonText()}
-              <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>
@@ -320,4 +272,9 @@ export default function Agendamento() {
       </div>
     </div>
   );
+}
+
+// Helper function
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
 }
