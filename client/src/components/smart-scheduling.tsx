@@ -193,7 +193,7 @@ intervalo para o almoço: 12 às 14h00`
           return schedule;
       }
 
-      // Gerar slots de horário
+      // Gerar slots de horário - VERSÃO CORRIGIDA
       function generateTimeSlots(date, schedule) {
           const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
           const dayName = dayNames[date.getDay()];
@@ -205,38 +205,49 @@ intervalo para o almoço: 12 às 14h00`
           const daySchedule = schedule.days[dayName];
           const slots = [];
           
-          let currentTime = new Date(date);
-          currentTime.setHours(daySchedule.start.hour, daySchedule.start.minute, 0, 0);
+          // Calcular o número total de minutos no dia de trabalho
+          const startMinutes = daySchedule.start.hour * 60 + daySchedule.start.minute;
+          const endMinutes = daySchedule.end.hour * 60 + daySchedule.end.minute;
+          const totalMinutes = endMinutes - startMinutes;
           
-          const endTime = new Date(date);
-          endTime.setHours(daySchedule.end.hour, daySchedule.end.minute, 0, 0);
+          // Calcular quantos slots cabem no dia (incluindo o último que termina exatamente no horário de fim)
+          const slotDuration = schedule.duration + schedule.interval;
+          const numberOfSlots = Math.floor((totalMinutes - schedule.duration) / slotDuration) + 1;
           
-          while (currentTime < endTime) {
-              const slotEndTime = new Date(currentTime.getTime() + schedule.duration * 60000);
+          // Gerar os slots
+          for (let i = 0; i < numberOfSlots; i++) {
+              const slotStartMinutes = startMinutes + (i * slotDuration);
+              const slotStartHour = Math.floor(slotStartMinutes / 60);
+              const slotStartMinute = slotStartMinutes % 60;
+              
+              // Verificar se o slot termina antes ou no horário de encerramento
+              const slotEndMinutes = slotStartMinutes + schedule.duration;
+              if (slotEndMinutes > endMinutes) {
+                  continue; // Pular este slot se ele terminar depois do horário de encerramento
+              }
+              
+              // Criar o objeto de data para o horário do slot
+              const slotTime = new Date(date);
+              slotTime.setHours(slotStartHour, slotStartMinute, 0, 0);
               
               // Verificar se o slot conflita com o horário de almoço
               let conflictsWithLunch = false;
               if (schedule.lunch) {
-                  const lunchStart = new Date(date);
-                  lunchStart.setHours(schedule.lunch.start.hour, schedule.lunch.start.minute, 0, 0);
-                  const lunchEnd = new Date(date);
-                  lunchEnd.setHours(schedule.lunch.end.hour, schedule.lunch.end.minute, 0, 0);
+                  const lunchStartMinutes = schedule.lunch.start.hour * 60 + schedule.lunch.start.minute;
+                  const lunchEndMinutes = schedule.lunch.end.hour * 60 + schedule.lunch.end.minute;
                   
-                  if (currentTime < lunchEnd && slotEndTime > lunchStart) {
+                  // Verificar se o slot começa antes do fim do almoço e termina depois do início do almoço
+                  if (slotStartMinutes < lunchEndMinutes && slotEndMinutes > lunchStartMinutes) {
                       conflictsWithLunch = true;
                   }
               }
               
-              // Permite agendamento se o slot COMEÇAR antes do horário de encerramento
-              // Exemplo: Sábado 9h às 13h com consulta de 60min - último slot às 12h (termina 13h)
-              if (!conflictsWithLunch && currentTime < endTime) {
+              if (!conflictsWithLunch) {
                   slots.push({
-                      time: new Date(currentTime),
+                      time: slotTime,
                       available: Math.random() > 0.3 // Simula disponibilidade
                   });
               }
-              
-              currentTime = new Date(currentTime.getTime() + (schedule.duration + schedule.interval) * 60000);
           }
           
           return slots;
