@@ -122,7 +122,7 @@ export default function ReportsDashboard() {
       name: prof.name,
       quantity: profServices.length,
       value: totalValue,
-      specialty: prof.specialty
+      specialty: prof.specialty || "Não especificado"
     };
   });
 
@@ -161,6 +161,16 @@ export default function ReportsDashboard() {
     }
     return acc;
   }, [] as Array<{ specialty: string; count: number }>);
+
+  // Get unique specialties from appointments, filtering out empty values
+  const appointmentSpecialties = Array.from(
+    new Set(
+      appointments
+        .map(a => a.specialty)
+        .filter(s => s && typeof s === 'string' && s.trim() !== '')
+        .map(s => s.trim())
+    )
+  );
 
   // Payment status pie chart
   const paymentStatus = [
@@ -383,6 +393,7 @@ export default function ReportsDashboard() {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="count"
+                      nameKey="specialty"
                     >
                       {specialtyDistribution.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
