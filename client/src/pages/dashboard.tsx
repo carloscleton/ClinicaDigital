@@ -105,7 +105,7 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center mb-2">
           <img 
-            src="/attached_assets/image copy.png" 
+            src="/attached_assets/image.png" 
             alt="Dashboard San Mathews" 
             className="h-8 mr-3" 
           />
@@ -121,6 +121,9 @@ export default function Dashboard() {
       <nav className="space-y-2">
         {sidebarItems.map((item) => {
           const Icon = item.icon;
+          const isActive = selectedSidebarItem === item.id;
+          const isHighlighted = item.highlight;
+          
           return (
             <button
               key={item.id}
@@ -129,14 +132,14 @@ export default function Dashboard() {
                 onItemSelect?.();
               }}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
-                selectedSidebarItem === item.id
-                  ? item.highlight
+                isActive
+                  ? isHighlighted
                     ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                     : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
               }`}
             >
-              <Icon className={`w-5 h-5 ${selectedSidebarItem === item.id && item.highlight ? 'text-blue-600 dark:text-blue-400' : ''}`} />
+              <Icon className={`w-5 h-5 ${isActive && isHighlighted ? 'text-blue-600 dark:text-blue-400' : ''}`} />
               <span className="font-medium">{item.label}</span>
             </button>
           );
@@ -152,7 +155,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
             <img 
-              src="/attached_assets/image copy.png" 
+              src="/attached_assets/image.png" 
               alt="Dashboard San Mathews" 
               className="h-6 mr-3" 
             />
@@ -186,7 +189,7 @@ export default function Dashboard() {
           <div className="hidden lg:block mb-8">
             <div className="flex items-center">
               <img 
-                src="/attached_assets/image copy.png" 
+                src="/attached_assets/image.png" 
                 alt="Dashboard San Mathews" 
                 className="h-10 mr-4" 
               />
