@@ -105,7 +105,7 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center mb-2">
           <img 
-            src="/attached_assets/image.png" 
+            src="/dashboard-icon.png" 
             alt="Dashboard San Mathews" 
             className="h-8 mr-3" 
           />
@@ -155,7 +155,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
             <img 
-              src="/attached_assets/image.png" 
+              src="/dashboard-icon.png" 
               alt="Dashboard San Mathews" 
               className="h-6 mr-3" 
             />
@@ -189,7 +189,7 @@ export default function Dashboard() {
           <div className="hidden lg:block mb-8">
             <div className="flex items-center">
               <img 
-                src="/attached_assets/image.png" 
+                src="/dashboard-icon.png" 
                 alt="Dashboard San Mathews" 
                 className="h-10 mr-4" 
               />

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Calendar } from "lucide-react";
+import { Menu, X, Phone, Calendar, LayoutDashboard } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import SanMathewsLogo from "@/components/san-mathews-logo";
@@ -77,6 +77,16 @@ export default function Header() {
             <div className="hidden sm:block">
               <ThemeToggle />
             </div>
+            <Link href="/dashboard">
+              <Button 
+                variant="outline"
+                className="hidden md:inline-flex border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:border-gray-500 shadow-sm"
+                size="sm"
+              >
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+            </Link>
             <Link href="/login">
               <Button 
                 variant="outline"
@@ -114,6 +124,16 @@ export default function Header() {
                   </div>
                   
                   <nav className="flex flex-col space-y-2 py-6 flex-1">
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsOpen(false)}
+                      className="px-4 py-3 rounded-lg text-base font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                    >
+                      <div className="flex items-center">
+                        <LayoutDashboard className="w-5 h-5 mr-3 text-blue-600 dark:text-blue-400" />
+                        Dashboard
+                      </div>
+                    </Link>
                     {navItems.map((item) => (
                       <Link
                         key={item.href}
