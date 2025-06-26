@@ -103,9 +103,16 @@ export default function Dashboard() {
   const SidebarContent = ({ onItemSelect }: { onItemSelect?: () => void }) => (
     <div className="p-6 space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
-          Dashboard San Mathews
-        </h2>
+        <div className="flex items-center mb-2">
+          <img 
+            src="/attached_assets/image copy.png" 
+            alt="Dashboard San Mathews" 
+            className="h-8 mr-3" 
+          />
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            Dashboard San Mathews
+          </h2>
+        </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Sistema de gerenciamento clínico
         </p>
@@ -143,9 +150,16 @@ export default function Dashboard() {
       {/* Mobile Header with Menu Button */}
       <div className="lg:hidden bg-white dark:bg-gray-950 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40">
         <div className="flex items-center justify-between p-4">
-          <div>
-            <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">Dashboard</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">San Mathews Clínica</p>
+          <div className="flex items-center">
+            <img 
+              src="/attached_assets/image copy.png" 
+              alt="Dashboard San Mathews" 
+              className="h-6 mr-3" 
+            />
+            <div>
+              <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">Dashboard</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">San Mathews Clínica</p>
+            </div>
           </div>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -170,8 +184,17 @@ export default function Dashboard() {
         <div className="flex-1 p-4 sm:p-6 lg:p-8">
           {/* Desktop Header */}
           <div className="hidden lg:block mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Dashboard Administrativo</h1>
-            <p className="text-gray-600 dark:text-gray-400">Visão geral e gerenciamento da San Mathews Clínica e Laboratório</p>
+            <div className="flex items-center">
+              <img 
+                src="/attached_assets/image copy.png" 
+                alt="Dashboard San Mathews" 
+                className="h-10 mr-4" 
+              />
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Dashboard Administrativo</h1>
+                <p className="text-gray-600 dark:text-gray-400">Visão geral e gerenciamento da San Mathews Clínica e Laboratório</p>
+              </div>
+            </div>
           </div>
 
           {/* Content based on sidebar selection */}
