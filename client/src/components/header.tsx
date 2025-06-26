@@ -12,7 +12,6 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { href: "/dashboard", label: "Dashboard", highlight: true },
     { href: "/", label: "Início" },
     { href: "/services", label: "Serviços" },
     { href: "/specialties", label: "Especialidades" },
@@ -55,23 +54,16 @@ export default function Header() {
                   href={item.href}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive(item.href)
-                      ? item.highlight 
-                        ? "bg-blue-600 text-white shadow-sm"
-                        : item.cta
-                          ? "bg-green-600 text-white shadow-sm"
-                          : "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                      : item.highlight
-                        ? "text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-800/30"
-                        : item.cta
-                          ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
-                          : "text-gray-600 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800/50"
+                      ? item.cta
+                        ? "bg-green-600 text-white shadow-sm"
+                        : "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                      : item.cta
+                        ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
+                        : "text-gray-600 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800/50"
                   }`}
                 >
                   {item.label}
                 </Link>
-                {index === 0 && (
-                  <div className="mx-3 h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
-                )}
               </div>
             ))}
           </div>
@@ -129,16 +121,12 @@ export default function Header() {
                         onClick={() => setIsOpen(false)}
                         className={`px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
                           isActive(item.href)
-                            ? item.highlight 
-                              ? "bg-blue-600 text-white shadow-sm"
-                              : item.cta
-                                ? "bg-green-600 text-white shadow-sm"
-                                : "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                            : item.highlight
-                              ? "text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-800/30"
-                              : item.cta
-                                ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
-                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800/50"
+                            ? item.cta
+                              ? "bg-green-600 text-white shadow-sm"
+                              : "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                            : item.cta
+                              ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
+                              : "text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800/50"
                         }`}
                       >
                         {item.label}
@@ -185,5 +173,5 @@ export default function Header() {
         </div>
       </nav>
     </header>
-  );
+  )
 }
