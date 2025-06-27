@@ -16,6 +16,7 @@ import Contact from "@/pages/contact";
 import Booking from "@/pages/booking";
 import Agendamento from "@/pages/agendamento";
 import Dashboard from "@/pages/dashboard";
+import ProfessionalsCrudPage from "@/pages/professionals-crud";
 import RulerDemo from "@/pages/ruler-demo";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/booking" component={Booking} />
       <Route path="/agendamento" component={Agendamento} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/professionals-crud" component={ProfessionalsCrudPage} />
       <Route path="/ruler" component={RulerDemo} />
       <Route component={NotFound} />
     </Switch>
