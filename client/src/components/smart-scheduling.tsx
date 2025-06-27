@@ -1,45 +1,37 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Clock, User, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Grid, LayoutList, Check } from "lucide-react";
+import { Calendar, Clock, User, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { format, addDays, startOfWeek, isSameDay, parseISO, isValid, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
 
-interface SmartSchedulingProps {
-  professionalId?: number;
-  onDateTimeSelected?: (date: Date, time: string) => void;
-  selectedDate?: Date | null;
-  selectedTime?: string | null;
+interface AppointmentSchedulerProps {
+  onAppointmentCreated?: () => void;
 }
 
-export default function SmartScheduling({ 
-  professionalId,
-  onDateTimeSelected,
-  selectedDate = null,
-  selectedTime = null
-}: SmartSchedulingProps) {
+export default function SmartScheduling({ onAppointmentCreated }: AppointmentSchedulerProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<"week" | "month">("month");
+  const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [selectedDay, setSelectedDay] = useState<string>("Segunda");
-  const [internalSelectedDate, setInternalSelectedDate] = useState<Date | null>(selectedDate);
-  const [internalSelectedTime, setInternalSelectedTime] = useState<string | null>(selectedTime);
-  const [selectedProfessional, setSelectedProfessional] = useState<number | null>(professionalId || null);
-  const [selectedService, setSelectedService] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
   const [description, setDescription] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch professionals data
+  // Fetch professionals data from CAD_Profissional
   const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery({
     queryKey: ["/api/supabase/professionals"],
   });
@@ -49,30 +41,36 @@ export default function SmartScheduling({
     queryKey: ["/api/supabase/services"],
   });
 
-  // Fetch existing appointments through backend API
+  // Fetch existing appointments
   const { data: existingAppointments = [], isLoading: isLoadingAppointments } = useQuery({
     queryKey: ["/api/appointments"],
     queryFn: async () => {
-      const response = await fetch("/api/appointments");
-      if (!response.ok) {
-        throw new Error("Failed to fetch appointments");
+      try {
+        const { data, error } = await supabase
+          .from('CAD_Agenda')
+          .select('*')
+          .order('dt_Agendamento', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+        return [];
       }
-      return response.json();
     }
   });
 
   // Create appointment mutation
   const createAppointment = useMutation({
     mutationFn: async (appointmentData: any) => {
-      const response = await fetch("/api/appointments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(appointmentData),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to create appointment");
-      }
-      return response.json();
+      // Insert into CAD_Agenda table
+      const { data, error } = await supabase
+        .from('CAD_Agenda')
+        .insert([appointmentData])
+        .select();
+
+      if (error) throw new Error(error.message);
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -81,10 +79,13 @@ export default function SmartScheduling({
         description: "Sua consulta foi agendada com sucesso.",
       });
       // Reset form
-      setInternalSelectedDate(null);
-      setInternalSelectedTime(null);
+      setSelectedDate(null);
+      setSelectedTime(null);
       setDescription("");
       setSelectedService(null);
+      if (onAppointmentCreated) {
+        onAppointmentCreated();
+      }
     },
     onError: (error: any) => {
       toast({
@@ -94,27 +95,6 @@ export default function SmartScheduling({
       });
     },
   });
-
-  // Effect to update internal state when props change
-  useEffect(() => {
-    if (selectedDate) {
-      setInternalSelectedDate(selectedDate);
-      // Also update selected day
-      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-      setSelectedDay(dayNames[selectedDate.getDay()]);
-    }
-    
-    if (selectedTime) {
-      setInternalSelectedTime(selectedTime);
-    }
-
-    if (professionalId) {
-      setSelectedProfessional(professionalId);
-    }
-  }, [selectedDate, selectedTime, professionalId]);
-
-  // Get the selected professional's data
-  const selectedProfessionalData = professionals.find(p => p.id === selectedProfessional);
 
   // Parse the professional's schedule configuration from the atendimentos field
   const parseScheduleConfig = (atendimentos?: string) => {
@@ -233,18 +213,20 @@ export default function SmartScheduling({
     return schedule;
   };
 
+  // Get the selected professional's data
+  const selectedProfessionalData = professionals.find(p => p.id.toString() === selectedProfessional);
   const scheduleConfig = parseScheduleConfig(selectedProfessionalData?.atendimentos);
 
   // Generate time slots for a specific day
-  const generateTimeSlots = (date: Date, schedule: any) => {
+  const generateTimeSlots = (date: Date) => {
     const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const dayName = dayNames[date.getDay()];
     
-    if (!schedule.weekDays[dayName].isOpen) {
+    if (!scheduleConfig.weekDays[dayName].isOpen) {
       return [];
     }
 
-    const daySchedule = schedule.weekDays[dayName];
+    const daySchedule = scheduleConfig.weekDays[dayName];
     const slots = [];
     
     // Convert start and end times to minutes for easier calculation
@@ -255,15 +237,15 @@ export default function SmartScheduling({
     const endTimeInMinutes = endHour * 60 + endMinute;
     
     // Duration of each slot (consultation + interval)
-    const slotDuration = schedule.consultationDuration + schedule.patientInterval;
+    const slotDuration = scheduleConfig.consultationDuration + scheduleConfig.patientInterval;
     
     // Calculate lunch break in minutes if exists
     let lunchStartMinutes = -1;
     let lunchEndMinutes = -1;
     
-    if (schedule.lunchBreak) {
-      const [lunchStartHour, lunchStartMin] = schedule.lunchBreak.startTime.split(':').map(Number);
-      const [lunchEndHour, lunchEndMin] = schedule.lunchBreak.endTime.split(':').map(Number);
+    if (scheduleConfig.lunchBreak) {
+      const [lunchStartHour, lunchStartMin] = scheduleConfig.lunchBreak.startTime.split(':').map(Number);
+      const [lunchEndHour, lunchEndMin] = scheduleConfig.lunchBreak.endTime.split(':').map(Number);
       
       lunchStartMinutes = lunchStartHour * 60 + lunchStartMin;
       lunchEndMinutes = lunchEndHour * 60 + lunchEndMin;
@@ -271,11 +253,11 @@ export default function SmartScheduling({
     
     // Generate slots
     // The last slot can start at most (endTimeInMinutes - consultationDuration) minutes
-    const maxStartTime = endTimeInMinutes - schedule.consultationDuration;
+    const maxStartTime = endTimeInMinutes - scheduleConfig.consultationDuration;
     
     for (let currentMinute = startTimeInMinutes; currentMinute <= maxStartTime; currentMinute += slotDuration) {
       // Check if this slot conflicts with lunch break
-      const slotEndMinute = currentMinute + schedule.consultationDuration;
+      const slotEndMinute = currentMinute + scheduleConfig.consultationDuration;
       const conflictsWithLunch = 
         lunchStartMinutes >= 0 && 
         lunchEndMinutes >= 0 && 
@@ -292,12 +274,14 @@ export default function SmartScheduling({
         const dateTimeStr = `${dateStr}T${timeString}:00`;
         
         const isBooked = existingAppointments.some(apt => {
-          const aptDate = new Date(apt.appointmentDate);
+          if (!apt.dt_Agendamento) return false;
+          
+          const aptDate = new Date(apt.dt_Agendamento);
           const slotDate = new Date(dateTimeStr);
           
           // Check if this appointment is for the same professional and overlaps with the slot
-          return apt.professionalId === selectedProfessional && 
-                 Math.abs(aptDate.getTime() - slotDate.getTime()) < (schedule.consultationDuration * 60 * 1000);
+          return apt.idProfissional === parseInt(selectedProfessional || '0') && 
+                 Math.abs(aptDate.getTime() - slotDate.getTime()) < (scheduleConfig.consultationDuration * 60 * 1000);
         });
         
         slots.push({
@@ -322,12 +306,8 @@ export default function SmartScheduling({
 
   // Handle slot selection
   const handleSlotSelect = (date: Date, time: string) => {
-    setInternalSelectedDate(date);
-    setInternalSelectedTime(time);
-    
-    if (onDateTimeSelected) {
-      onDateTimeSelected(date, time);
-    }
+    setSelectedDate(date);
+    setSelectedTime(time);
   };
 
   // Format date for display
@@ -337,7 +317,7 @@ export default function SmartScheduling({
 
   // Handle form submission
   const handleSubmit = async () => {
-    if (!selectedProfessional || !internalSelectedDate || !internalSelectedTime || !selectedService) {
+    if (!selectedProfessional || !selectedDate || !selectedTime || !selectedService) {
       toast({
         title: "Dados incompletos",
         description: "Por favor, selecione todos os campos obrigatórios.",
@@ -350,17 +330,17 @@ export default function SmartScheduling({
 
     try {
       // Format date and time for database
-      const appointmentDateTime = new Date(internalSelectedDate);
-      const [hours, minutes] = internalSelectedTime.split(':').map(Number);
+      const appointmentDateTime = new Date(selectedDate);
+      const [hours, minutes] = selectedTime.split(':').map(Number);
       appointmentDateTime.setHours(hours, minutes, 0, 0);
 
       // Create appointment data for CAD_Agenda
       const appointmentData = {
         id_Empresa: 1, // Default empresa ID
-        idProfissional: selectedProfessional,
+        idProfissional: parseInt(selectedProfessional),
         dt_Agendamento: appointmentDateTime.toISOString(),
         descricao: description || "Agendamento via sistema",
-        idServico: selectedService,
+        idServico: parseInt(selectedService),
         statusPagamento: false // Default to unpaid
       };
 
@@ -381,14 +361,14 @@ export default function SmartScheduling({
 
   // Get available time slots for the selected date
   const getAvailableTimeSlots = () => {
-    if (!internalSelectedDate || !selectedProfessionalData) return [];
+    if (!selectedDate || !selectedProfessionalData) return [];
     
-    return generateTimeSlots(internalSelectedDate, scheduleConfig);
+    return generateTimeSlots(selectedDate);
   };
 
   // Filter services by selected professional
   const filteredServices = selectedProfessional 
-    ? services.filter(service => service.idProfissional === selectedProfessional)
+    ? services.filter(service => service.idProfissional === parseInt(selectedProfessional))
     : [];
 
   if (isLoadingProfessionals) {
@@ -402,15 +382,6 @@ export default function SmartScheduling({
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-          Agenda Semanal
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Visualização completa dos agendamentos da semana
-        </p>
-      </div>
-
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -425,8 +396,8 @@ export default function SmartScheduling({
               <div>
                 <Label className="block text-sm font-medium mb-2">Profissional</Label>
                 <Select 
-                  value={selectedProfessional?.toString() || ""}
-                  onValueChange={(value) => setSelectedProfessional(value && value !== "none" ? parseInt(value) : null)}
+                  value={selectedProfessional || ""}
+                  onValueChange={(value) => setSelectedProfessional(value !== "none" ? value : null)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um profissional" />
@@ -461,8 +432,8 @@ export default function SmartScheduling({
                 <div>
                   <Label className="block text-sm font-medium mb-2">Serviço</Label>
                   <Select 
-                    value={selectedService?.toString() || ""}
-                    onValueChange={(value) => setSelectedService(value && value !== "none" ? parseInt(value) : null)}
+                    value={selectedService || ""}
+                    onValueChange={(value) => setSelectedService(value !== "none" ? value : null)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um serviço" />
@@ -479,14 +450,14 @@ export default function SmartScheduling({
                 </div>
               )}
 
-              {internalSelectedDate && internalSelectedTime && (
+              {selectedDate && selectedTime && (
                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
                   <h3 className="font-medium text-green-800 dark:text-green-300 mb-2">
                     Horário Selecionado
                   </h3>
                   <div className="text-sm text-green-700 dark:text-green-400">
-                    <p><strong>Data:</strong> {formatDateForDisplay(internalSelectedDate)}</p>
-                    <p><strong>Horário:</strong> {internalSelectedTime}</p>
+                    <p><strong>Data:</strong> {formatDateForDisplay(selectedDate)}</p>
+                    <p><strong>Horário:</strong> {selectedTime}</p>
                   </div>
                 </div>
               )}
@@ -504,7 +475,7 @@ export default function SmartScheduling({
 
               <Button 
                 className="w-full" 
-                disabled={!selectedProfessional || !internalSelectedDate || !internalSelectedTime || !selectedService || isSubmitting}
+                disabled={!selectedProfessional || !selectedDate || !selectedTime || !selectedService || isSubmitting}
                 onClick={handleSubmit}
               >
                 {isSubmitting ? (
@@ -551,7 +522,6 @@ export default function SmartScheduling({
                         onClick={() => setViewMode("month")}
                         className="rounded-r-none"
                       >
-                        <Grid className="h-4 w-4 mr-2" />
                         Mês
                       </Button>
                       <Button
@@ -560,7 +530,6 @@ export default function SmartScheduling({
                         onClick={() => setViewMode("week")}
                         className="rounded-l-none"
                       >
-                        <LayoutList className="h-4 w-4 mr-2" />
                         Semana
                       </Button>
                     </div>
@@ -581,7 +550,6 @@ export default function SmartScheduling({
                         
                         {/* Calendar Days */}
                         <div className="grid grid-cols-7 gap-1">
-                          {/* Generate days for the month view */}
                           {(() => {
                             const monthStart = startOfMonth(currentDate);
                             const monthEnd = endOfMonth(currentDate);
@@ -593,7 +561,7 @@ export default function SmartScheduling({
                             return days.map((day, i) => {
                               const isCurrentMonth = isSameMonth(day, currentDate);
                               const isToday = isSameDay(day, new Date());
-                              const isSelected = internalSelectedDate ? isSameDay(day, internalSelectedDate) : false;
+                              const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
                               const isAvailable = isCurrentMonth && isDayAvailable(day);
                               
                               return (
@@ -611,7 +579,7 @@ export default function SmartScheduling({
                                   )}
                                   onClick={() => {
                                     if (isCurrentMonth && isAvailable) {
-                                      setInternalSelectedDate(day);
+                                      setSelectedDate(day);
                                       
                                       // Update selected day
                                       const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -661,7 +629,7 @@ export default function SmartScheduling({
                                 onClick={() => {
                                   if (isAvailable) {
                                     setSelectedDay(day);
-                                    setInternalSelectedDate(date);
+                                    setSelectedDate(date);
                                   }
                                 }}
                               >
@@ -677,7 +645,7 @@ export default function SmartScheduling({
                         {/* Time Slots */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-4 max-h-[300px] overflow-y-auto p-2">
                           {(() => {
-                            if (!internalSelectedDate) return null;
+                            if (!selectedDate) return null;
                             
                             const slots = getAvailableTimeSlots();
                             
@@ -697,17 +665,13 @@ export default function SmartScheduling({
                                   "p-3 rounded-md cursor-pointer text-center border",
                                   !slot.available 
                                     ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 cursor-not-allowed"
-                                    : internalSelectedTime === slot.time
+                                    : selectedTime === slot.time
                                       ? "bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700"
                                       : "bg-green-50 dark:bg-green-900/10 hover:bg-green-100 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"
                                 )}
                                 onClick={() => {
                                   if (slot.available) {
-                                    setInternalSelectedTime(slot.time);
-                                    
-                                    if (onDateTimeSelected && internalSelectedDate) {
-                                      onDateTimeSelected(internalSelectedDate, slot.time);
-                                    }
+                                    handleSlotSelect(selectedDate, slot.time);
                                   }
                                 }}
                               >
